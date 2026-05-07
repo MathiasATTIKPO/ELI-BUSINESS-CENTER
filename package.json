@@ -1,0 +1,14 @@
+{
+  "name": "eli-business-center",
+  "version": "1.0.0",
+  "description": "Plateforme complète de gestion pour centre d'affaires",
+  "scripts": {
+    "install:all": "npm install && cd admin && npm install && cd ../client && npm install && cd ../backend && npm install",
+    "dev": "echo 'Démarrez chaque service dans des terminaux séparés:' && echo '  Terminal 1: cd backend && npm run dev' && echo '  Terminal 2: cd admin && npm run dev' && echo '  Terminal 3: cd client && npm run dev'",
+    "build": "cd admin && npm run build && cd ../client && npm run build",
+    "start": "cd backend && npm start"
+  },
+  "keywords": ["business", "management", "react", "nodejs", "mongodb"],
+  "author": "ELI Business Center",
+  "license": "MIT"
+}
