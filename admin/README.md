@@ -34,6 +34,12 @@ npm run dev
 
 > ⚠️ À modifier dans le backend pour la production
 
+## 🧩 Organisation du code
+
+- L'interface admin est codée en React avec Vite et Tailwind.
+- Les pages de réparations et d'échanges partagent des composants et des helpers pour garantir une UI cohérente.
+- Le fichier `admin/src/utils/formatReference.js` formate les références de demande en `REF-xxxxxx` afin d'éviter l'affichage direct des `_id` MongoDB.
+
 ## 📑 Pages disponibles
 
 ### 1. **Login** (`/admin/login`)

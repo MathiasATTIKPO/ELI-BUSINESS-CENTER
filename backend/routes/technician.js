@@ -98,7 +98,7 @@ router.get('/repair/:id', technicianController.getMyRepairById);
  *             properties:
  *               status:
  *                 type: string
- *                 enum: [pending, in-progress, completed]
+ *                 enum: [assigned, diagnosing, repairing, ready, completed]
  *     responses:
  *       200:
  *         description: Repair status updated
@@ -107,10 +107,111 @@ router.put('/repair/:id/status', technicianController.updateRepairStatus);
 
 /**
  * @openapi
+ * /api/technician/tradeins:
+ *   get:
+ *     tags:
+ *       - Technician - Trade-Ins
+ *     summary: Get my trade-ins
+ *     description: Get all trade-in requests assigned to this technician
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Trade-ins list retrieved
+ */
+router.post('/tradeins', technicianController.createTradein);
+router.get('/tradeins', technicianController.getMyTradeins);
+
+/**
+ * @openapi
+ * /api/technician/notifications:
+ *   get:
+ *     tags:
+ *       - Technician - Notifications
+ *     summary: Get all notifications for technician
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Notifications list retrieved
+ */
+router.get('/notifications', technicianController.getTechnicianNotifications);
+
+/**
+ * @openapi
+ * /api/technician/notifications/{id}/read:
+ *   put:
+ *     tags:
+ *       - Technician - Notifications
+ *     summary: Mark notification as read
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Notification marked as read
+ */
+router.put('/notifications/:id/read', technicianController.markTechnicianNotificationRead);
+
+/**
+ * @openapi
+ * /api/technician/notifications/read-all:
+ *   put:
+ *     tags:
+ *       - Technician - Notifications
+ *     summary: Mark all notifications as read
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: All notifications marked as read
+ */
+router.put('/notifications/read-all', technicianController.markAllTechnicianNotificationsRead);
+
+/**
+ * @openapi
+ * /api/technician/tradein/{id}/status:
+ *   put:
+ *     tags:
+ *       - Technician - Trade-Ins
+ *     summary: Update trade-in status
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - status
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [pending, accepted, refused, completed]
+ *     responses:
+ *       200:
+ *         description: Trade-in status updated
+ */
+router.put('/tradein/:id/status', technicianController.updateTradeinStatus);
+
+/**
+ * @openapi
  * /api/technician/history:
  *   get:
  *     tags:
- *       - Technician - Repairs
+ *       - Technician - History
  *     summary: Get repair history
  *     description: Get history of all completed repairs
  *     security:
@@ -120,5 +221,43 @@ router.put('/repair/:id/status', technicianController.updateRepairStatus);
  *         description: Repair history retrieved
  */
 router.get('/history', technicianController.getRepairHistory);
+
+// ===== ROUTES POUR L'HISTORIQUE DES ÉCHANGES - AJOUTÉES =====
+/**
+ * @openapi
+ * /api/technician/tradeins/history:
+ *   get:
+ *     tags:
+ *       - Technician - History
+ *     summary: Get trade-in history
+ *     description: Get history of all completed trade-ins for this technician
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Trade-in history retrieved
+ */
+router.get('/tradeins/history', technicianController.getTradeinHistory);
+
+/**
+ * @openapi
+ * /api/technician/tradein/{id}:
+ *   get:
+ *     tags:
+ *       - Technician - Trade-Ins
+ *     summary: Get trade-in by ID
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Trade-in retrieved
+ */
+router.get('/tradein/:id', technicianController.getMyTradeinById);
 
 module.exports = router;

@@ -1,201 +1,669 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useTechnicianAuth } from '../../context/TechnicianAuthContext'
-import api from '../../services/api'
+import {
+  ListChecks, LogOut, FileText, Wrench, RefreshCw, Plus, AlertCircle,
+  Smartphone, Phone, ChevronLeft, ChevronRight, Eye, Clock, CheckCircle,
+  XCircle, User, Calendar, DollarSign, MessageSquare, Search, Filter,
+  SlidersHorizontal, ChevronDown, X, Zap, Star, TrendingUp, Package,
+  ArrowUpRight, ArrowDownRight, BarChart3, Activity
+} from 'lucide-react'
+import api, { API_BASE_URL } from '../../services/api'
 import Toast from '../../components/Toast'
 
 export default function TechnicianDashboard() {
   const { user, logout } = useTechnicianAuth()
+  const navigate = useNavigate()
   const [repairs, setRepairs] = useState([])
+  const [tradeins, setTradeins] = useState([])
   const [loading, setLoading] = useState(true)
   const [toast, setToast] = useState(null)
 
+  const [activeTab, setActiveTab] = useState('repairs')
+  const [showNewRepair, setShowNewRepair] = useState(false)
+  const [showNewTradein, setShowNewTradein] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [isFilterExpanded, setIsFilterExpanded] = useState(false)
+
+  const [productsInStock, setProductsInStock] = useState([]);
+  const [loadingProducts, setLoadingProducts] = useState(false);
+
+  const fetchProductsInStock = async () => {
+    setLoadingProducts(true);
+    try {
+      // Adapte l'URL selon ton API
+      const response = await api.get('/api/products/');
+      setProductsInStock(response.data.data || []);
+    } catch (error) {
+      console.error('Erreur lors du chargement des produits:', error);
+      setProductsInStock([]);
+    } finally {
+      setLoadingProducts(false);
+    }
+  };
+
+  const [newRepair, setNewRepair] = useState({
+    clientName: '', clientWhatsapp: '', deviceModel: '',
+    issueDescription: '', estimatedCost: '', notes: ''
+  })
+
+  const [newTradein, setNewTradein] = useState({
+    clientName: '', clientWhatsapp: '', deviceModel: '',
+    targetProduct: '', proposedValue: '', condition: 'good', notes: ''
+  })
+
+  const [currentPage, setCurrentPage] = useState({ repairs: 1, tradeins: 1 })
+  const itemsPerPage = 6
+
+
   useEffect(() => {
-    fetchRepairs()
+    fetchData();
+    fetchProductsInStock();
   }, [])
 
-  const fetchRepairs = async () => {
+  const fetchData = async () => {
     try {
-      const response = await api.get('/api/technician/repairs')
-      setRepairs(response.data.data || [])
+      const [repairsResponse, tradeinsResponse] = await Promise.all([
+        api.get('/api/technician/repairs'),
+        api.get('/api/technician/tradeins')
+      ])
+      setRepairs(repairsResponse.data.data || [])
+      setTradeins(tradeinsResponse.data.data || [])
     } catch (error) {
-      setToast({ type: 'error', message: 'Erreur lors du chargement des réparations' })
+      setToast({ type: 'error', message: 'Erreur lors du chargement des données' })
     } finally {
       setLoading(false)
     }
   }
 
-  const getStatusColor = (status) => {
-    const colors = {
-      pending: 'bg-yellow-100 text-yellow-800',
-      assigned: 'bg-blue-100 text-blue-800',
-      diagnosing: 'bg-purple-100 text-purple-800',
-      repairing: 'bg-orange-100 text-orange-800',
-      ready: 'bg-green-100 text-green-800',
-      completed: 'bg-gray-100 text-gray-800',
-      cancelled: 'bg-red-100 text-red-800'
+  const handleCreateRepair = async (e) => {
+    e.preventDefault()
+    if (!newRepair.clientName || !newRepair.clientWhatsapp || !newRepair.deviceModel) {
+      setToast({ type: 'error', message: 'Veuillez remplir tous les champs obligatoires' })
+      return
     }
-    return colors[status] || 'bg-gray-100 text-gray-800'
+
+    try {
+      await api.post('/api/technician/repairs', {
+        ...newRepair,
+        estimatedCost: parseFloat(newRepair.estimatedCost) || 0,
+        assignedTo: user?._id,
+        status: 'assigned'
+      })
+      setToast({ type: 'success', message: 'Réparation créée avec succès' })
+      setShowNewRepair(false)
+      setNewRepair({ clientName: '', clientWhatsapp: '', deviceModel: '', issueDescription: '', estimatedCost: '', notes: '' })
+      fetchData()
+    } catch (error) {
+      setToast({ type: 'error', message: 'Erreur lors de la création' })
+    }
   }
 
-  const getStatusText = (status) => {
-    const texts = {
-      pending: 'En attente',
-      assigned: 'Assignée',
-      diagnosing: 'Diagnostic',
-      repairing: 'En réparation',
-      ready: 'Prête',
-      completed: 'Terminée',
-      cancelled: 'Annulée'
+  const handleCreateTradein = async (e) => {
+    e.preventDefault()
+    if (!newTradein.clientName || !newTradein.clientWhatsapp || !newTradein.deviceModel) {
+      setToast({ type: 'error', message: 'Veuillez remplir tous les champs obligatoires' })
+      return
     }
-    return texts[status] || status
+
+    try {
+      await api.post('/api/technician/tradeins', {
+        ...newTradein,
+        proposedValue: parseFloat(newTradein.proposedValue) || 0,
+        assignedTo: user?._id,
+        status: 'pending'
+      })
+      setToast({ type: 'success', message: 'Échange créé avec succès' })
+      setShowNewTradein(false)
+      setNewTradein({ clientName: '', clientWhatsapp: '', deviceModel: '', targetProduct: '', proposedValue: '', condition: 'good', notes: '' })
+      fetchData()
+    } catch (error) {
+      setToast({ type: 'error', message: 'Erreur lors de la création' })
+    }
+  }
+
+  const handleUpdateTradeinStatus = async (tradeinId, status) => {
+    try {
+      await api.put(`/api/technician/tradein/${tradeinId}/status`, { status })
+      setToast({ type: 'success', message: `Statut mis à jour : ${status === 'accepted' ? 'Accepté' : status === 'refused' ? 'Refusé' : 'Finalisé'}` })
+      fetchData()
+    } catch (error) {
+      setToast({ type: 'error', message: 'Impossible de mettre à jour le statut.' })
+    }
+  }
+
+  const getStatusConfig = (status) => {
+    const configs = {
+      pending: { color: 'bg-amber-50 text-amber-700 border-amber-200', icon: Clock, label: 'En attente' },
+      accepted: { color: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: CheckCircle, label: 'Accepté' },
+      refused: { color: 'bg-red-50 text-red-700 border-red-200', icon: XCircle, label: 'Refusé' },
+      completed: { color: 'bg-green-50 text-green-700 border-green-200', icon: CheckCircle, label: 'Terminé' },
+      paid: { color: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: CheckCircle, label: 'Payée' },
+      assigned: { color: 'bg-blue-50 text-blue-700 border-blue-200', icon: User, label: 'Assignée' },
+      diagnosing: { color: 'bg-purple-50 text-purple-700 border-purple-200', icon: Search, label: 'Diagnostic' },
+      repairing: { color: 'bg-orange-50 text-orange-700 border-orange-200', icon: Wrench, label: 'En réparation' },
+      ready: { color: 'bg-teal-50 text-teal-700 border-teal-200', icon: Package, label: 'Prête' },
+      cancelled: { color: 'bg-red-50 text-red-700 border-red-200', icon: XCircle, label: 'Annulée' }
+    }
+    return configs[status] || { color: 'bg-gray-50 text-gray-700 border-gray-200', icon: AlertCircle, label: status }
+  }
+
+  // Statistiques
+  const stats = useMemo(() => ({
+    totalRepairs: repairs.length,
+    pendingRepairs: repairs.filter(r => ['assigned', 'diagnosing', 'repairing'].includes(r.status)).length,
+    completedRepairs: repairs.filter(r => r.status === 'paid').length,
+    readyRepairs: repairs.filter(r => r.status === 'ready' || r.status === 'completed').length,
+    pendingTradeins: tradeins.filter(t => t.status === 'pending').length,
+    readyTradeins: tradeins.filter(t => t.status === 'paid' || t.status === 'accepted').length,
+    totalTradeins: tradeins.length
+  }), [repairs, tradeins])
+
+  // Filtrage
+  const filteredRepairs = useMemo(() => {
+    let filtered = [...repairs]
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase()
+      filtered = filtered.filter(r =>
+        r.clientName?.toLowerCase().includes(term) ||
+        r.deviceModel?.toLowerCase().includes(term) ||
+        r.clientWhatsapp?.toLowerCase().includes(term)
+      )
+    }
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(r => r.status === statusFilter)
+    }
+    return filtered
+  }, [repairs, searchTerm, statusFilter])
+
+  const filteredTradeins = useMemo(() => {
+    let filtered = [...tradeins]
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase()
+      filtered = filtered.filter(t =>
+        t.clientName?.toLowerCase().includes(term) ||
+        t.deviceModel?.toLowerCase().includes(term) ||
+        t.targetProduct?.toLowerCase().includes(term)
+      )
+    }
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(t => t.status === statusFilter)
+    }
+    return filtered
+  }, [tradeins, searchTerm, statusFilter])
+
+  // Pagination
+  const currentData = activeTab === 'repairs' ? filteredRepairs : filteredTradeins
+  const totalPages = Math.ceil(currentData.length / itemsPerPage)
+  const paginatedData = currentData.slice(
+    ((activeTab === 'repairs' ? currentPage.repairs : currentPage.tradeins) - 1) * itemsPerPage,
+    (activeTab === 'repairs' ? currentPage.repairs : currentPage.tradeins) * itemsPerPage
+  )
+
+  const clearFilters = () => {
+    setSearchTerm('')
+    setStatusFilter('all')
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-900"></div>
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/30">
+        <div className="flex flex-col items-center gap-4">
+          <div className="relative">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-200"></div>
+            <div className="absolute top-0 left-0 animate-spin rounded-full h-16 w-16 border-4 border-t-blue-600"></div>
+            <Wrench className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-blue-600" size={24} />
+          </div>
+          <p className="text-gray-600 animate-pulse font-medium">Chargement de votre espace...</p>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {toast && <Toast type={toast.type} message={toast.message} />}
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/30">
+      {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
 
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Espace Technicien</h1>
-              <p className="text-sm text-gray-600">Bienvenue, {user?.name}</p>
-            </div>
-            <button
-              onClick={logout}
-              className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition"
-            >
-              Déconnexion
-            </button>
-          </div>
-        </div>
-      </header>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                  <span className="text-white text-sm font-semibold">R</span>
-                </div>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Réparations</p>
-                <p className="text-2xl font-semibold text-gray-900">{repairs.length}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center">
-                  <span className="text-white text-sm font-semibold">E</span>
-                </div>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">En cours</p>
-                <p className="text-2xl font-semibold text-gray-900">
-                  {repairs.filter(r => ['assigned', 'diagnosing', 'repairing'].includes(r.status)).length}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                  <span className="text-white text-sm font-semibold">T</span>
-                </div>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Terminées</p>
-                <p className="text-2xl font-semibold text-gray-900">
-                  {repairs.filter(r => r.status === 'completed').length}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
-                  <span className="text-white text-sm font-semibold">P</span>
-                </div>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Prêtes</p>
-                <p className="text-2xl font-semibold text-gray-900">
-                  {repairs.filter(r => r.status === 'ready').length}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Repairs List */}
-        <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Mes Réparations</h2>
-          </div>
-
-          <div className="divide-y divide-gray-200">
-            {repairs.length === 0 ? (
-              <div className="px-6 py-8 text-center text-gray-500">
-                Aucune réparation assignée pour le moment.
-              </div>
-            ) : (
-              repairs.map((repair) => (
-                <div key={repair._id} className="px-6 py-4 hover:bg-gray-50">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3">
-                        <h3 className="text-sm font-medium text-gray-900">
-                          {repair.deviceModel || 'Modèle non spécifié'}
-                        </h3>
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(repair.status)}`}>
-                          {getStatusText(repair.status)}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-600 mt-1">
-                        {repair.clientName} • {repair.clientWhatsapp}
-                      </p>
-                      <p className="text-sm text-gray-500 mt-1">
-                        {repair.issueDescription}
-                      </p>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm text-gray-500">
-                        {new Date(repair.createdAt).toLocaleDateString('fr-FR')}
-                      </span>
-                      <button
-                        onClick={() => window.location.href = `/technician/repair/${repair._id}`}
-                        className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition"
-                      >
-                        Voir détails
-                      </button>
-                    </div>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        {/* Cartes statistiques */}
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+          {[
+            { label: 'Mes réparations', value: stats.totalRepairs, icon: Wrench, gradient: 'from-blue-500 to-cyan-500' },
+            { label: 'En cours', value: stats.pendingRepairs, icon: Activity, gradient: 'from-amber-500 to-orange-500' },
+            { label: 'Terminées', value: stats.completedRepairs, icon: CheckCircle, gradient: 'from-emerald-500 to-green-500' },
+            { label: 'Prêtes', value: stats.readyRepairs, icon: Package, gradient: 'from-teal-500 to-cyan-500' },
+            { label: 'Échanges', value: stats.pendingTradeins, icon: RefreshCw, gradient: 'from-purple-500 to-violet-500' },
+            { label: 'Échanges Terminés', value: stats.readyTradeins, icon: CheckCircle, gradient: 'from-purple-500 to-violet-500' },
+          ].map((stat) => {
+            const Icon = stat.icon
+            return (
+              <div key={stat.label} className="relative overflow-hidden bg-white rounded-2xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-all duration-200 group">
+                <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${stat.gradient}`}></div>
+                <div className="flex items-start justify-between">
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-500 font-medium">{stat.label}</p>
+                    <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
+                  </div>
+                  <div className={`p-2.5 rounded-xl bg-gradient-to-r ${stat.gradient} group-hover:scale-110 transition-transform duration-200`}>
+                    <Icon size={20} className="text-white" />
                   </div>
                 </div>
-              ))
-            )}
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Onglets */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+            <nav className="flex gap-2">
+              <button
+                onClick={() => { setActiveTab('repairs'); setCurrentPage(prev => ({ ...prev, repairs: 1 })); }}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${activeTab === 'repairs'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+              >
+                <Wrench size={18} />
+                Réparations
+                <span className={`px-2 py-0.5 rounded-full text-xs ${activeTab === 'repairs' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-600'
+                  }`}>
+                  {repairs.length}
+                </span>
+              </button>
+
+              <button
+                onClick={() => { setActiveTab('tradeins'); setCurrentPage(prev => ({ ...prev, tradeins: 1 })); }}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${activeTab === 'tradeins'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+              >
+                <RefreshCw size={18} />
+                Échanges
+                <span className={`px-2 py-0.5 rounded-full text-xs ${activeTab === 'tradeins' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-600'
+                  }`}>
+                  {tradeins.length}
+                </span>
+              </button>
+            </nav>
+
+            <button
+              onClick={() => activeTab === 'repairs' ? setShowNewRepair(true) : setShowNewTradein(true)}
+              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-xl hover:from-blue-700 hover:to-cyan-700 transition-all duration-200 shadow-sm hover:shadow-md font-medium"
+            >
+              <Plus size={18} />
+              <span className="hidden sm:inline">Nouveau</span>
+            </button>
           </div>
+
+          {/* Barre de recherche et filtres */}
+          <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                <input
+                  type="text"
+                  placeholder={`Rechercher dans les ${activeTab === 'repairs' ? 'réparations' : 'échanges'}...`}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-12 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white"
+                />
+                {searchTerm && (
+                  <button onClick={() => setSearchTerm('')} className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                    <X size={18} />
+                  </button>
+                )}
+              </div>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              >
+                <option value="all">Tous les statuts</option>
+                {activeTab === 'repairs' ? (
+                  <>
+                    <option value="assigned">Assignée</option>
+                    <option value="diagnosing">Diagnostic</option>
+                    <option value="repairing">En réparation</option>
+                    <option value="ready">Prête</option>
+                    <option value="completed">Terminée</option>
+                  </>
+                ) : (
+                  <>
+                    <option value="pending">En attente</option>
+                    <option value="accepted">Accepté</option>
+                    <option value="refused">Refusé</option>
+                    <option value="completed">Terminé</option>
+                  </>
+                )}
+              </select>
+              {(searchTerm || statusFilter !== 'all') && (
+                <button onClick={clearFilters} className="px-4 py-2.5 text-red-600 hover:bg-red-50 rounded-xl transition-colors flex items-center gap-2">
+                  <X size={16} />
+                  Reset
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Liste des éléments */}
+          {currentData.length === 0 ? (
+            <div className="p-16 text-center">
+              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gray-100 mb-6">
+                <AlertCircle className="text-gray-400" size={32} />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                {repairs.length === 0 && tradeins.length === 0
+                  ? 'Aucune tâche assignée'
+                  : 'Aucun résultat trouvé'}
+              </h3>
+              <p className="text-gray-500 mb-6">
+                {repairs.length === 0 && tradeins.length === 0
+                  ? 'Créez une nouvelle réparation ou un échange pour commencer'
+                  : 'Modifiez vos critères de recherche'}
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="divide-y divide-gray-100">
+                {paginatedData.map((item) => {
+                  const statusConfig = getStatusConfig(item.status)
+                  const StatusIcon = statusConfig.icon
+
+                  return (
+                    <div key={item._id} className="p-6 hover:bg-gray-50/50 transition-colors duration-150">
+                      <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+                        <div className="flex-1 space-y-3">
+                          <div className="flex items-center flex-wrap gap-3">
+                            <div className="flex items-center gap-2">
+                              <Smartphone size={18} className="text-gray-400" />
+                              <h3 className="font-semibold text-gray-900">
+                                {item.deviceModel || 'Modèle non spécifié'}
+                              </h3>
+                            </div>
+                            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${statusConfig.color}`}>
+                              <StatusIcon size={12} />
+                              {statusConfig.label}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-4 text-sm text-gray-600">
+                            <span className="flex items-center gap-1.5">
+                              <User size={14} className="text-gray-400" />
+                              {item.clientName || 'Non spécifié'}
+                            </span>
+                            {item.clientWhatsapp && (
+                              <a href={`https://wa.me/${item.clientWhatsapp.replace(/^\+/, '')}`}
+                                target="_blank" rel="noreferrer"
+                                className="flex items-center gap-1.5 text-green-600 hover:text-green-700">
+                                <Phone size={14} />
+                                {item.clientWhatsapp}
+                              </a>
+                            )}
+                          </div>
+
+                          {activeTab === 'tradeins' && item.targetProduct && (
+                            <p className="text-sm text-purple-600 flex items-center gap-1.5">
+                              <RefreshCw size={14} />
+                              Échange contre : {item.targetProduct}
+                            </p>
+                          )}
+
+                          {(item.estimatedCost || item.proposedValue) && (
+                            <p className="text-sm font-semibold text-emerald-600 flex items-center gap-1.5">
+                              <DollarSign size={14} />
+                              {activeTab === 'repairs'
+                                ? `Devis: ${item.estimatedCost?.toLocaleString('fr-FR')} FCFA`
+                                : `Valeur: ${item.proposedValue?.toLocaleString('fr-FR')} FCFA`
+                              }
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => navigate(`/technician/${activeTab === 'repairs' ? 'repair' : 'tradein'}/${item._id}`)}
+                            className="px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md flex items-center gap-2 font-medium"
+                          >
+                            <Eye size={16} />
+                            Détails
+                          </button>
+
+                          {activeTab === 'tradeins' && item.status === 'pending' && (
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleUpdateTradeinStatus(item._id, 'accepted')}
+                                className="px-3 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-all duration-200 text-sm font-medium"
+                              >
+                                Accepter
+                              </button>
+                              <button
+                                onClick={() => handleUpdateTradeinStatus(item._id, 'refused')}
+                                className="px-3 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all duration-200 text-sm font-medium"
+                              >
+                                Refuser
+                              </button>
+                            </div>
+                          )}
+
+                          {activeTab === 'tradeins' && item.status === 'accepted' && (
+                            <button
+                              onClick={() => handleUpdateTradeinStatus(item._id, 'completed')}
+                              className="px-3 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-all duration-200 text-sm font-medium"
+                            >
+                              Finaliser
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100 bg-gray-50/50">
+                  <div className="text-sm text-gray-600">
+                    <span className="font-medium">
+                      {((activeTab === 'repairs' ? currentPage.repairs : currentPage.tradeins) - 1) * itemsPerPage + 1}
+                    </span>
+                    {' - '}
+                    <span className="font-medium">
+                      {Math.min((activeTab === 'repairs' ? currentPage.repairs : currentPage.tradeins) * itemsPerPage, currentData.length)}
+                    </span>
+                    {' sur '}
+                    <span className="font-medium">{currentData.length}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setCurrentPage(prev => ({
+                        ...prev,
+                        [activeTab]: Math.max(1, prev[activeTab] - 1)
+                      }))}
+                      disabled={(activeTab === 'repairs' ? currentPage.repairs : currentPage.tradeins) === 1}
+                      className="p-2 rounded-lg transition-all disabled:text-gray-300 disabled:cursor-not-allowed text-gray-600 hover:bg-white hover:shadow-sm"
+                    >
+                      <ChevronLeft size={18} />
+                    </button>
+
+                    {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                      const current = activeTab === 'repairs' ? currentPage.repairs : currentPage.tradeins
+                      let pageNum
+                      if (totalPages <= 5) pageNum = i + 1
+                      else if (current <= 3) pageNum = i + 1
+                      else if (current >= totalPages - 2) pageNum = totalPages - 4 + i
+                      else pageNum = current - 2 + i
+
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => setCurrentPage(prev => ({ ...prev, [activeTab]: pageNum }))}
+                          className={`w-10 h-10 rounded-lg text-sm font-medium transition-all ${current === pageNum
+                            ? 'bg-blue-600 text-white shadow-sm'
+                            : 'text-gray-600 hover:bg-white hover:shadow-sm'
+                            }`}
+                        >
+                          {pageNum}
+                        </button>
+                      )
+                    })}
+
+                    <button
+                      onClick={() => setCurrentPage(prev => ({
+                        ...prev,
+                        [activeTab]: Math.min(totalPages, prev[activeTab] + 1)
+                      }))}
+                      disabled={(activeTab === 'repairs' ? currentPage.repairs : currentPage.tradeins) === totalPages}
+                      className="p-2 rounded-lg transition-all disabled:text-gray-300 disabled:cursor-not-allowed text-gray-600 hover:bg-white hover:shadow-sm"
+                    >
+                      <ChevronRight size={18} />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </main>
-    </div>
-  )
+
+      {/* Modal Nouvelle Réparation */}
+      {showNewRepair && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowNewRepair(false)}>
+          <div className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="sticky top-0 bg-white border-b border-gray-100 p-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500">
+                  <Wrench size={20} className="text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">Nouvelle réparation</h3>
+                  <p className="text-sm text-gray-500">Créez une nouvelle réparation manuellement</p>
+                </div>
+              </div>
+            </div>
+            <form onSubmit={handleCreateRepair} className="p-6 space-y-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-gray-700">Nom du client *</label>
+                  <input type="text" value={newRepair.clientName} onChange={(e) => setNewRepair({ ...newRepair, clientName: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" required />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-gray-700">WhatsApp *</label>
+                  <input type="text" value={newRepair.clientWhatsapp} onChange={(e) => setNewRepair({ ...newRepair, clientWhatsapp: e.target.value })} placeholder="+225 XX XX XX XX" className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500" required />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-gray-700">Modèle *</label>
+                <input type="text" value={newRepair.deviceModel} onChange={(e) => setNewRepair({ ...newRepair, deviceModel: e.target.value })} placeholder="iPhone 13, Samsung..." className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500" required />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-gray-700">Description</label>
+                <textarea value={newRepair.issueDescription} onChange={(e) => setNewRepair({ ...newRepair, issueDescription: e.target.value })} rows="3" className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 resize-none" />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-gray-700">Devis (FCFA)</label>
+                  <input type="number" value={newRepair.estimatedCost} onChange={(e) => setNewRepair({ ...newRepair, estimatedCost: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-gray-700">Notes</label>
+                  <textarea value={newRepair.notes} onChange={(e) => setNewRepair({ ...newRepair, notes: e.target.value })} rows="2" className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 resize-none" />
+                </div>
+              </div>
+              <div className="flex gap-3 justify-end pt-4 border-t border-gray-100">
+                <button type="button" onClick={() => setShowNewRepair(false)} className="px-5 py-2.5 border-2 border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 font-medium">Annuler</button>
+                <button type="submit" className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-xl hover:from-blue-700 hover:to-cyan-700 font-medium shadow-sm">Créer la réparation</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Nouvel Échange */}
+      {showNewTradein && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowNewTradein(false)}>
+          <div className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="sticky top-0 bg-white border-b border-gray-100 p-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-gradient-to-r from-purple-500 to-violet-500">
+                  <RefreshCw size={20} className="text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">Nouvel échange</h3>
+                  <p className="text-sm text-gray-500">Créez une nouvelle demande d'échange</p>
+                </div>
+              </div>
+            </div>
+            <form onSubmit={handleCreateTradein} className="p-6 space-y-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-gray-700">Nom du client *</label>
+                  <input type="text" value={newTradein.clientName} onChange={(e) => setNewTradein({ ...newTradein, clientName: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500" required />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-gray-700">WhatsApp *</label>
+                  <input type="text" value={newTradein.clientWhatsapp} onChange={(e) => setNewTradein({ ...newTradein, clientWhatsapp: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500" required />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-gray-700">Modèle *</label>
+                  <input type="text" value={newTradein.deviceModel} onChange={(e) => setNewTradein({ ...newTradein, deviceModel: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500" required />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-gray-700">Produit souhaité</label>
+                  {loadingProducts ? (
+                    <div className="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50 text-gray-500 animate-pulse">
+                      Chargement des produits...
+                    </div>
+                  ) : (
+                    <select
+                      value={newTradein.targetProduct}
+                      onChange={(e) => setNewTradein({ ...newTradein, targetProduct: e.target.value })}
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500"
+                    >
+                      <option value="">Sélectionnez un produit</option>
+                      {productsInStock
+                        .filter(p => p.stock > 0)
+                        .map(product => (
+                          <option key={product._id} value={product.name}>
+                            {product.name} - {product.price?.toLocaleString('fr-FR') || ''} FCFA ({product.stock} en stock)
+                          </option>
+                        ))
+                      }
+                    </select>
+                  )}
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-gray-700">Valeur (FCFA)</label>
+                  <input type="number" value={newTradein.proposedValue} onChange={(e) => setNewTradein({ ...newTradein, proposedValue: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-gray-700">État</label>
+                  <select value={newTradein.condition} onChange={(e) => setNewTradein({ ...newTradein, condition: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500">
+                    <option value="new">Neuf</option>
+                    <option value="like-new">Comme neuf</option>
+                    <option value="good">Bon état</option>
+                    <option value="fair">État moyen</option>
+                    <option value="poor">Mauvais état</option>
+                  </select>
+                </div>
+              </div>
+              <div className="flex gap-3 justify-end pt-4 border-t border-gray-100">
+                <button type="button" onClick={() => setShowNewTradein(false)} className="px-5 py-2.5 border-2 border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 font-medium">Annuler</button>
+                <button type="submit" className="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-violet-600 text-white rounded-xl hover:from-purple-700 hover:to-violet-700 font-medium shadow-sm">Créer l'échange</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+    </div>)
+
 }

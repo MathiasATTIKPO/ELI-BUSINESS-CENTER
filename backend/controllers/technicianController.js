@@ -1,7 +1,28 @@
 const RepairRequest = require('../models/RepairRequest');
+const TradeinRequest = require('../models/TradeinRequest');
+const Employee = require('../models/Employee');
+const Notification = require('../models/Notification');
+
+const createNotification = async (recipientId, recipientRole, type, title, message, requestId, clientName, reference) => {
+  try {
+    await Notification.create({ recipientId, recipientRole, type, title, message, requestId, clientName, reference });
+  } catch (error) {
+    console.error('Erreur création notification:', error.message);
+  }
+};
+
+const notifyAdmins = async (type, title, message, requestId, clientName, reference) => {
+  try {
+    const admins = await Employee.find({ role: 'admin', isActive: true });
+    for (const admin of admins) {
+      await createNotification(admin._id, 'admin', type, title, message, requestId, clientName, reference);
+    }
+  } catch (error) {
+    console.error('Erreur notification admins:', error.message);
+  }
+};
 
 // ===== FONCTIONS POUR LES TECHNICIENS =====
-
 // Obtenir les réparations assignées au technicien
 exports.getMyRepairs = async (req, res) => {
   try {
@@ -12,6 +33,7 @@ exports.getMyRepairs = async (req, res) => {
 
     res.json({ success: true, data: repairs, message: 'Vos réparations assignées.' });
   } catch (error) {
+    console.error('Erreur getMyRepairs:', error);
     res.status(500).json({ success: false, data: null, message: error.message });
   }
 };
@@ -31,6 +53,7 @@ exports.getMyRepairById = async (req, res) => {
 
     res.json({ success: true, data: repair, message: 'Détail de la réparation.' });
   } catch (error) {
+    console.error('Erreur getMyRepairById:', error);
     res.status(500).json({ success: false, data: null, message: error.message });
   }
 };
@@ -68,8 +91,28 @@ exports.updateRepairStatus = async (req, res) => {
     const updatedRepair = await RepairRequest.findByIdAndUpdate(req.params.id, updateData, { new: true })
       .populate('assignedTo', 'name email');
 
+    // Notifier les admins et caissiers des changements de statut importants
+    if (status === 'completed' || status === 'ready') {
+      const Notification = require('../models/Notification');
+      const Employee = require('../models/Employee');
+      const admins = await Employee.find({ role: 'admin', isActive: true });
+      for (const admin of admins) {
+        await Notification.create({
+          recipientId: admin._id,
+          recipientRole: 'admin',
+          type: 'repair_completed',
+          title: 'Réparation terminée',
+          message: `Réparation pour ${updatedRepair.deviceModel || 'appareil'} marquée comme ${status === 'completed' ? 'complétée' : 'prête'}`,
+          requestId: updatedRepair._id,
+          clientName: updatedRepair.clientName,
+          reference: updatedRepair._id.toString().slice(-6)
+        });
+      }
+    }
+
     res.json({ success: true, data: updatedRepair, message: 'Statut de réparation mis à jour.' });
   } catch (error) {
+    console.error('Erreur updateRepairStatus:', error);
     res.status(500).json({ success: false, data: null, message: error.message });
   }
 };
@@ -80,13 +123,233 @@ exports.getRepairHistory = async (req, res) => {
     const technicianId = req.user.id;
     const repairs = await RepairRequest.find({
       assignedTo: technicianId,
-      status: 'completed'
+      status: { $in: ['completed', 'paid'] }
     })
       .populate('assignedTo', 'name email')
       .sort({ completedAt: -1 });
 
     res.json({ success: true, data: repairs, message: 'Historique de vos réparations terminées.' });
   } catch (error) {
+    console.error('Erreur getRepairHistory:', error);
+    res.status(500).json({ success: false, data: null, message: error.message });
+  }
+};
+
+// ===== FONCTIONS POUR LES ÉCHANGES =====
+
+// Obtenir les échanges assignés au technicien
+exports.getMyTradeins = async (req, res) => {
+  try {
+    const technicianId = req.user.id;
+    const tradeins = await TradeinRequest.find({ assignedTo: technicianId })
+      .populate('assignedTo', 'name email')
+      .populate('exchangeProduct', 'name price stock')
+      .sort({ createdAt: -1 });
+
+    res.json({ success: true, data: tradeins, message: 'Échanges assignés à vous.' });
+  } catch (error) {
+    console.error('Erreur getMyTradeins:', error);
+    res.status(500).json({ success: false, data: null, message: error.message });
+  }
+};
+
+// Créer un échange depuis l'interface technicien
+exports.createTradein = async (req, res) => {
+  try {
+    const technicianId = req.user.id;
+    const { clientName, clientWhatsapp, deviceModel, condition, targetProduct, description } = req.body;
+
+    if (!clientWhatsapp || !deviceModel) {
+      return res.status(400).json({ success: false, data: null, message: 'Le numéro WhatsApp et le modèle sont obligatoires.' });
+    }
+
+    const tradein = await TradeinRequest.create({
+      clientName: clientName || 'Client',
+      clientWhatsapp,
+      deviceModel,
+      condition: condition || 'good',
+      targetProduct: targetProduct || '',
+      description: description || '',
+      assignedTo: technicianId,
+      status: 'assigned'
+    });
+
+    await notifyAdmins(
+      'tradein_pending',
+      'Nouvelle demande d\'échange',
+      `Nouvelle demande d'échange pour ${deviceModel} par ${clientName || 'Client'}`,
+      tradein._id,
+      clientName || 'Client',
+      tradein._id.toString().slice(-6)
+    );
+
+    res.status(201).json({
+      success: true,
+      data: { requestId: tradein._id, reference: tradein._id.toString().slice(-6) },
+      message: 'Échange créé avec succès.'
+    });
+  } catch (error) {
+    console.error('Erreur createTradein technicien:', error);
+    res.status(500).json({ success: false, data: null, message: error.message });
+  }
+};
+
+// Obtenir le détail d'un échange spécifique
+exports.getMyTradeinById = async (req, res) => {
+  try {
+    const technicianId = req.user.id;
+    const tradein = await TradeinRequest.findOne({
+      _id: req.params.id,
+      assignedTo: technicianId
+    }).populate('assignedTo', 'name email').populate('exchangeProduct', 'name price stock');
+
+    if (!tradein) {
+      return res.status(404).json({ success: false, data: null, message: 'Échange introuvable ou non assigné à vous.' });
+    }
+
+    res.json({ success: true, data: tradein, message: 'Détail de l\'échange.' });
+  } catch (error) {
+    console.error('Erreur getMyTradeinById:', error);
+    res.status(500).json({ success: false, data: null, message: error.message });
+  }
+};
+
+// Mettre à jour le statut d'un échange
+exports.updateTradeinStatus = async (req, res) => {
+  try {
+    const technicianId = req.user.id;
+    const { status, technicianReport } = req.body;
+
+    const tradein = await TradeinRequest.findOne({ 
+      _id: req.params.id, 
+      assignedTo: technicianId 
+    });
+    
+    if (!tradein) {
+      return res.status(404).json({ success: false, data: null, message: 'Échange introuvable ou non assigné à vous.' });
+    }
+
+    // Vérifier que le statut est valide pour un technicien
+    const allowedStatuses = ['accepted', 'refused']; // Le technicien ne peut plus "finaliser" (completed)
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({ success: false, data: null, message: 'Statut non autorisé pour un technicien.' });
+    }
+
+    const updateData = { status };
+    if (technicianReport !== undefined) {
+      updateData.technicianReport = technicianReport;
+    }
+
+    const updatedTradein = await TradeinRequest.findByIdAndUpdate(req.params.id, updateData, { new: true })
+      .populate('assignedTo', 'name email');
+
+    // Notifier les admins des changements de statut importants par le technicien
+    if (status === 'accepted') {
+      const Notification = require('../models/Notification');
+      const Employee = require('../models/Employee');
+      const admins = await Employee.find({ role: 'admin', isActive: true });
+      for (const admin of admins) {
+        await Notification.create({
+          recipientId: admin._id,
+          recipientRole: 'admin',
+          type: 'tradein_accepted_by_technician', // Nouveau type de notification
+          title: 'Échange accepté par technicien',
+          message: `Le technicien ${req.user.name} a accepté l'échange pour ${updatedTradein.deviceModel || 'appareil'} (${updatedTradein.clientName}).`,
+          requestId: updatedTradein._id,
+          clientName: updatedTradein.clientName,
+          reference: updatedTradein._id.toString().slice(-6)
+        });
+      }
+    } else if (status === 'refused') {
+      const Notification = require('../models/Notification');
+      const Employee = require('../models/Employee');
+      const admins = await Employee.find({ role: 'admin', isActive: true });
+      for (const admin of admins) {
+        await Notification.create({
+          recipientId: admin._id,
+          recipientRole: 'admin',
+          type: 'tradein_refused_by_technician', // Nouveau type de notification
+          title: 'Échange refusé par technicien',
+          message: `Le technicien ${req.user.name} a refusé l'échange pour ${updatedTradein.deviceModel || 'appareil'} (${updatedTradein.clientName}).`,
+          requestId: updatedTradein._id,
+          clientName: updatedTradein.clientName,
+          reference: updatedTradein._id.toString().slice(-6)
+        });
+      }
+    }
+
+    res.json({ success: true, data: updatedTradein, message: 'Statut de l\'échange mis à jour.' });
+  } catch (error) {
+    console.error('Erreur updateTradeinStatus:', error);
+    res.status(500).json({ success: false, data: null, message: error.message });
+  }
+};
+
+// Obtenir l'historique des échanges terminés
+exports.getTradeinHistory = async (req, res) => {
+  try {
+    const technicianId = req.user.id;
+    const tradeins = await TradeinRequest.find({
+      assignedTo: technicianId,
+      status: { $in: ['completed', 'paid'] }
+    })
+      .populate('assignedTo', 'name email')
+      .sort({ completedAt: -1 });
+
+    res.json({ success: true, data: tradeins, message: 'Historique de vos échanges terminés.' });
+  } catch (error) {
+    console.error('Erreur getTradeinHistory:', error);
+    res.status(500).json({ success: false, data: null, message: error.message });
+  }
+};
+
+// ==================== NOTIFICATIONS POUR TECHNICIEN ====================
+exports.getTechnicianNotifications = async (req, res) => {
+  try {
+    const technicianId = req.user.id;
+    const notifications = await Notification.find({
+      recipientId: technicianId,
+      recipientRole: 'technician'
+    }).sort({ createdAt: -1 });
+    
+    res.json({ success: true, data: notifications, message: 'Notifications récupérées.' });
+  } catch (error) {
+    console.error('Erreur getTechnicianNotifications:', error);
+    res.status(500).json({ success: false, data: null, message: error.message });
+  }
+};
+
+exports.markTechnicianNotificationRead = async (req, res) => {
+  try {
+    const notification = await Notification.findByIdAndUpdate(
+      req.params.id,
+      { read: true },
+      { new: true }
+    );
+    
+    if (!notification) {
+      return res.status(404).json({ success: false, data: null, message: 'Notification introuvable.' });
+    }
+    
+    res.json({ success: true, data: notification, message: 'Notification marquée comme lue.' });
+  } catch (error) {
+    console.error('Erreur markTechnicianNotificationRead:', error);
+    res.status(500).json({ success: false, data: null, message: error.message });
+  }
+};
+
+exports.markAllTechnicianNotificationsRead = async (req, res) => {
+  try {
+    const technicianId = req.user.id;
+    
+    await Notification.updateMany(
+      { recipientId: technicianId, recipientRole: 'technician', read: false },
+      { read: true }
+    );
+    
+    res.json({ success: true, data: null, message: 'Toutes les notifications marquées comme lues.' });
+  } catch (error) {
+    console.error('Erreur markAllTechnicianNotificationsRead:', error);
     res.status(500).json({ success: false, data: null, message: error.message });
   }
 };

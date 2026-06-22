@@ -1,379 +1,1394 @@
 import React, { useState, useEffect } from 'react'
-import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
-import { TrendingUp, Users, Wrench, DollarSign, AlertCircle, RefreshCw } from 'lucide-react'
+import { 
+  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, AreaChart, Area,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+  ComposedChart, RadialBarChart, RadialBar 
+} from 'recharts'
+import { 
+  Wrench, RefreshCw, DollarSign, Users, Smartphone, Package, 
+  ShoppingCart, History, FileText, Activity, Grid, AlertCircle,
+  ChevronLeft, ChevronRight, Eye, LogOut, TrendingUp, TrendingDown,
+  Clock, CheckCircle, XCircle, Zap, Star, Target, Award,
+  ArrowUpRight, ArrowDownRight, BarChart3, PieChartIcon,
+  Filter, Download, Calendar, Search, MoreVertical, Home,
+  TrendingUp as TrendingUpIcon, TrendingDown as TrendingDownIcon
+} from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 import api from '../services/api'
 import Toast from '../components/Toast'
 
 export default function Dashboard() {
-  const [data, setData] = useState({
-    totalRepairs: 0,
-    completedRepairs: 0,
-    inProgressRepairs: 0,
-    pendingRepairs: 0,
-    repairRevenue: 0,
-    tradeinRevenue: 0,
-    totalRevenue: 0,
-    averageRepairPrice: 0,
-    technicians: 0,
-    employees: 0,
-    totalTradeins: 0,
-    pendingTradeins: 0,
-    repairsByStatus: [],
-    repairsByTechnician: [],
-    tradeinsByStatus: [],
-    monthlyRevenue: []
-  })
+  const navigate = useNavigate()
+  const { logout } = useAuth()
+  const [activeMainTab, setActiveMainTab] = useState('dashboard')
+  const [activeSubTab, setActiveSubTab] = useState('overview')
   const [loading, setLoading] = useState(true)
   const [toast, setToast] = useState(null)
+  
+  const [stats, setStats] = useState({
+    totalRepairs: 0, completedRepairsCount: 0, inProgressRepairs: 0,
+    repairRevenue: 0, tradeinRevenue: 0, phoneSalesRevenue: 0, totalRevenue: 0,
+    technicians: 0, cashiers: 0, employees: 0,
+    totalTradeins: 0, pendingTradeins: 0, totalPhoneSales: 0,
+    repairsByStatus: [], tradeinsByStatus: [], monthlyRevenue: [],
+    recentRepairs: [], recentSales: [], recentTradeins: [], recentPhoneSales: []
+  })
+
+  // Données pour les graphiques d'évolution
+  const [salesEvolution, setSalesEvolution] = useState([])
+  const [repairsEvolution, setRepairsEvolution] = useState([])
+  const [tradeinsEvolution, setTradeinsEvolution] = useState([])
+  const [weeklyActivity, setWeeklyActivity] = useState([])
+
+  // Compteurs pour les badges
+  const [pendingRepairsCount, setPendingRepairsCount] = useState(0)
+  const [pendingTradeinsCount, setPendingTradeinsCount] = useState(0)
+
+  const [invoicesData, setInvoicesData] = useState([])
+  const [invoiceFilters, setInvoiceFilters] = useState({
+    type: 'all',
+    startDate: '',
+    endDate: ''
+  })
+  
+  const [products, setProducts] = useState([])
+  const [inventory, setInventory] = useState([])
+  const [employees, setEmployees] = useState([])
+  const [sales, setSales] = useState([])
+  const [historyList, setHistoryList] = useState([])
+  
+  const [currentPage, setCurrentPage] = useState({
+    products: 1,
+    inventory: 1,
+    employees: 1,
+    sales: 1,
+    invoices: 1,
+    history: 1
+  })
+  const itemsPerPage = 10
 
   useEffect(() => {
-    fetchDashboardData()
+    fetchAllData()
   }, [])
 
-  const fetchDashboardData = async () => {
+  const fetchAllData = async () => {
     try {
       setLoading(true)
-      const [repairsRes, employeesRes, tradeinsRes] = await Promise.all([
+      
+      const [repairsRes, employeesRes, tradeinsRes, productsRes, inventoryRes, phoneSalesRes] = await Promise.all([
         api.get('/api/admin/repairs'),
         api.get('/api/admin/employees'),
         api.get('/api/admin/tradeins'),
+        api.get('/api/admin/products'),
+        api.get('/api/admin/inventory'),
+        api.get('/api/admin/sales')
       ])
 
       const repairs = repairsRes.data.data || []
-      const employees = employeesRes.data.data || []
+      const employeesList = employeesRes.data.data || []
       const tradeins = tradeinsRes.data.data || []
+      const productsList = productsRes.data.data || []
+      const inventoryList = inventoryRes.data.data || []
+      const phoneSalesRaw = phoneSalesRes.data.data || []
 
-      const totalTradeins = tradeins.length
-      const pendingTradeins = tradeins.filter(t => t.status === 'pending').length
+      // Compter les réparations et échanges en attente
+      setPendingRepairsCount(repairs.filter(r => r.status === 'pending').length)
+      setPendingTradeinsCount(tradeins.filter(t => t.status === 'pending').length)
 
-      // Statistiques générales
-      const totalRepairs = repairs.length
-      const completedRepairs = repairs.filter(r => r.status === 'completed' || r.status === 'paid').length
-      const inProgressRepairs = repairs.filter(r => r.status === 'repairing' || r.status === 'assigned').length
-      const pendingRepairs = repairs.filter(r => r.status === 'pending').length
-      const repairRevenue = repairs.reduce((sum, r) => sum + (r.saleInfo?.amountPaid || r.saleInfo?.amount || r.price || 0), 0)
-      const tradeinRevenue = tradeins.reduce((sum, t) => sum + (t.saleInfo?.amount || 0), 0)
-      const totalRevenue = repairRevenue + tradeinRevenue
-      const averageRepairPrice = totalRepairs > 0 ? repairRevenue / totalRepairs : 0
+      // 1. Réparations payées
+      const paidRepairsList = repairs
+        .filter(r => r.status === 'paid')
+        .map(r => ({
+          _id: r._id,
+          type: 'repair',
+          clientName: r.clientName || 'Client',
+          productName: r.deviceModel || 'Appareil',
+          amount: r.saleInfo?.amountPaid || r.price || 0,
+          date: r.saleInfo?.paymentDate || r.completedAt || r.updatedAt,
+          status: r.status
+        }))
 
-      const technicians = employees.filter(e => e.role === 'technician').length
-      const allEmployees = employees.length
+      // 2. Échanges complétés
+      const completedTradeinsList = tradeins
+        .filter(t => t.status === 'completed' || t.status === 'paid')
+        .map(t => ({
+          _id: t._id,
+          type: 'tradein',
+          clientName: t.clientName || 'Client',
+          productName: t.deviceModel || 'Appareil',
+          amount: t.saleInfo?.amount || t.proposedValue || 0,
+          date: t.saleInfo?.paymentDate || t.completedAt || t.updatedAt,
+          status: t.status
+        }))
 
-      // Réparations par statut
+      // 3. Ventes de téléphones
+      const phoneSalesList = phoneSalesRaw
+        .filter(s => s.type === 'product' || s.type === 'phone')
+        .map(s => ({
+          _id: s._id,
+          type: 'phone',
+          clientName: s.clientName || 'Client',
+          productName: s.productName || 'Téléphone',
+          amount: s.totalAmount || s.amount || s.saleInfo?.amount || 0,
+          date: s.paymentDate || s.createdAt || s.saleInfo?.paymentDate || new Date(),
+          status: s.status || 'completed'
+        }))
+
+      // 4. Toutes les transactions
+      const allTransactions = [...paidRepairsList, ...completedTradeinsList, ...phoneSalesList]
+      
+      allTransactions.sort((a, b) => {
+        const dateA = a.date ? new Date(a.date) : new Date(0)
+        const dateB = b.date ? new Date(b.date) : new Date(0)
+        return dateB - dateA
+      })
+
+      // Calculs des revenus
+      const repairRevenue = paidRepairsList.reduce((sum, r) => sum + (r.amount || 0), 0)
+      const tradeinRevenue = completedTradeinsList.reduce((sum, t) => sum + (t.amount || 0), 0)
+      const phoneSalesRevenue = phoneSalesList.reduce((sum, p) => sum + (p.amount || 0), 0)
+      const totalRevenue = repairRevenue + tradeinRevenue + phoneSalesRevenue
+
+      // Statistiques par statut
       const statusCounts = {
         pending: repairs.filter(r => r.status === 'pending').length,
         assigned: repairs.filter(r => r.status === 'assigned').length,
         repairing: repairs.filter(r => r.status === 'repairing').length,
         completed: repairs.filter(r => r.status === 'completed' || r.status === 'paid').length,
       }
-
+      
       const repairsByStatus = Object.entries(statusCounts).map(([name, value]) => ({
-        name: name === 'pending' ? 'En attente' :
-              name === 'assigned' ? 'Attribuée' :
-              name === 'repairing' ? 'En réparation' :
-              'Complétée',
+        name: name === 'pending' ? 'En attente' : name === 'assigned' ? 'Assignée' : name === 'repairing' ? 'En réparation' : 'Terminée',
         value,
-        color: name === 'pending' ? '#f39c12' :
-               name === 'assigned' ? '#1e2a5e' :
-               name === 'repairing' ? '#3B82F6' :
-               '#22c55e'
+        color: name === 'pending' ? '#f59e0b' : name === 'assigned' ? '#3b82f6' : name === 'repairing' ? '#f97316' : '#22c55e'
       }))
 
-      // Réparations par technicien
-      const technicianStats = {}
-      repairs.forEach(repair => {
-        if (repair.assignedTo) {
-          const techName = repair.assignedTo.name || 'Unknown'
-          if (!technicianStats[techName]) {
-            technicianStats[techName] = { repairs: 0, revenue: 0 }
-          }
-          technicianStats[techName].repairs += 1
-          technicianStats[techName].revenue += repair.price || 0
-        }
-      })
-
-      const repairsByTechnician = Object.entries(technicianStats).map(([name, stats]) => ({
-        name,
-        repairs: stats.repairs,
-        revenue: stats.revenue
-      }))
-
-      // Revenus mensuels
-      const monthlyData = {}
-      repairs.forEach(repair => {
-        if (repair.completedAt) {
-          const date = new Date(repair.completedAt)
-          const month = date.toLocaleString('fr-FR', { month: 'short', year: 'numeric' })
-          if (!monthlyData[month]) monthlyData[month] = 0
-          monthlyData[month] += repair.price || 0
-        }
-      })
-
-      const monthlyRevenue = Object.entries(monthlyData).map(([month, revenue]) => ({
-        month,
-        revenue
-      }))
-
-      // Échanges par statut
-      const tradeinStatusCounts = {
+      const tradeinCounts = {
         pending: tradeins.filter(t => t.status === 'pending').length,
         accepted: tradeins.filter(t => t.status === 'accepted').length,
-        completed: tradeins.filter(t => t.status === 'completed').length,
+        completed: tradeins.filter(t => t.status === 'completed' || t.status === 'paid').length,
         refused: tradeins.filter(t => t.status === 'refused').length,
       }
-
-      const tradeinsByStatus = Object.entries(tradeinStatusCounts).map(([name, value]) => ({
-        name: name === 'pending' ? 'En attente' :
-              name === 'accepted' ? 'Acceptée' :
-              name === 'completed' ? 'Complétée' :
-              'Refusée',
+      
+      const tradeinsByStatus = Object.entries(tradeinCounts).map(([name, value]) => ({
+        name: name === 'pending' ? 'En attente': name === 'paid' ? 'payé'  : name === 'accepted' ? 'Acceptée' : name === 'completed' ? 'Terminée' : 'Refusée',
         value,
-        color: name === 'pending' ? '#f39c12' :
-               name === 'accepted' ? '#3B82F6' :
-               name === 'completed' ? '#22c55e' :
-               '#ef4444'
+        color: name === 'pending' ? '#f59e0b' : name === 'accepted' ? '#3b82f6' : name === 'completed' ? '#22c55e' : name === 'paid' ? '#22c55e': '#ef4444'
       }))
 
-      setData({
-        totalRepairs,
-        completedRepairs,
-        inProgressRepairs,
-        pendingRepairs,
+      // Revenus mensuels et évolutions
+      const monthlyData = {}
+      const repairMonthlyData = {}
+      const tradeinMonthlyData = {}
+      const phoneMonthlyData = {}
+      
+      paidRepairsList.forEach(r => {
+        if (r.date) {
+          const month = new Date(r.date).toLocaleString('fr-FR', { month: 'short', year: 'numeric' })
+          monthlyData[month] = (monthlyData[month] || 0) + (r.amount || 0)
+          repairMonthlyData[month] = (repairMonthlyData[month] || 0) + (r.amount || 0)
+        }
+      })
+      
+      completedTradeinsList.forEach(t => {
+        if (t.date) {
+          const month = new Date(t.date).toLocaleString('fr-FR', { month: 'short', year: 'numeric' })
+          monthlyData[month] = (monthlyData[month] || 0) + (t.amount || 0)
+          tradeinMonthlyData[month] = (tradeinMonthlyData[month] || 0) + (t.amount || 0)
+        }
+      })
+      
+      phoneSalesList.forEach(s => {
+        if (s.date) {
+          const month = new Date(s.date).toLocaleString('fr-FR', { month: 'short', year: 'numeric' })
+          monthlyData[month] = (monthlyData[month] || 0) + (s.amount || 0)
+          phoneMonthlyData[month] = (phoneMonthlyData[month] || 0) + (s.amount || 0)
+        }
+      })
+      
+      const monthlyRevenue = Object.entries(monthlyData)
+        .map(([month, revenue]) => ({ month, revenue }))
+        .slice(-6)
+
+      // Données pour le graphique d'évolution des ventes
+      const allMonths = [...new Set([
+        ...Object.keys(repairMonthlyData),
+        ...Object.keys(tradeinMonthlyData),
+        ...Object.keys(phoneMonthlyData)
+      ])].slice(-6)
+
+      const evolutionData = allMonths.map(month => ({
+        month,
+        réparations: repairMonthlyData[month] || 0,
+        échanges: tradeinMonthlyData[month] || 0,
+        téléphones: phoneMonthlyData[month] || 0
+      }))
+
+      setSalesEvolution(evolutionData)
+
+      // Données pour l'évolution des réparations (nombre)
+      const repairsCountByMonth = {}
+      repairs.forEach(r => {
+        if (r.createdAt) {
+          const month = new Date(r.createdAt).toLocaleString('fr-FR', { month: 'short', year: 'numeric' })
+          repairsCountByMonth[month] = (repairsCountByMonth[month] || 0) + 1
+        }
+      })
+      
+      const repairsEvolutionData = Object.entries(repairsCountByMonth)
+        .map(([month, count]) => ({ month, count }))
+        .slice(-6)
+      setRepairsEvolution(repairsEvolutionData)
+
+      // Données pour l'évolution des échanges (nombre)
+      const tradeinsCountByMonth = {}
+      tradeins.forEach(t => {
+        if (t.createdAt) {
+          const month = new Date(t.createdAt).toLocaleString('fr-FR', { month: 'short', year: 'numeric' })
+          tradeinsCountByMonth[month] = (tradeinsCountByMonth[month] || 0) + 1
+        }
+      })
+      
+      const tradeinsEvolutionData = Object.entries(tradeinsCountByMonth)
+        .map(([month, count]) => ({ month, count }))
+        .slice(-6)
+      setTradeinsEvolution(tradeinsEvolutionData)
+
+      // Données pour l'activité hebdomadaire
+      const weekDays = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
+      const weeklyData = weekDays.map(day => ({ day, réparations: 0, échanges: 0, ventes: 0 }))
+      
+      const today = new Date()
+      const weekStart = new Date(today)
+      weekStart.setDate(today.getDate() - today.getDay() + 1)
+      
+      repairs.forEach(r => {
+        if (r.createdAt) {
+          const date = new Date(r.createdAt)
+          if (date >= weekStart) {
+            const dayIndex = (date.getDay() + 6) % 7
+            if (weeklyData[dayIndex]) {
+              weeklyData[dayIndex].réparations++
+            }
+          }
+        }
+      })
+      
+      tradeins.forEach(t => {
+        if (t.createdAt) {
+          const date = new Date(t.createdAt)
+          if (date >= weekStart) {
+            const dayIndex = (date.getDay() + 6) % 7
+            if (weeklyData[dayIndex]) {
+              weeklyData[dayIndex].échanges++
+            }
+          }
+        }
+      })
+      
+      phoneSalesList.forEach(s => {
+        if (s.date) {
+          const date = new Date(s.date)
+          if (date >= weekStart) {
+            const dayIndex = (date.getDay() + 6) % 7
+            if (weeklyData[dayIndex]) {
+              weeklyData[dayIndex].ventes++
+            }
+          }
+        }
+      })
+      
+      setWeeklyActivity(weeklyData)
+
+      setStats({
+        totalRepairs: repairs.length,
+        completedRepairsCount: repairs.filter(r => r.status === 'completed' || r.status === 'paid').length,
+        inProgressRepairs: repairs.filter(r => ['repairing', 'assigned', 'diagnosing'].includes(r.status)).length,
         repairRevenue,
         tradeinRevenue,
+        phoneSalesRevenue,
         totalRevenue,
-        averageRepairPrice,
-        technicians,
-        employees: allEmployees,
-        totalTradeins,
-        pendingTradeins,
+        technicians: employeesList.filter(e => e.role === 'technician').length,
+        cashiers: employeesList.filter(e => e.role === 'cashier').length,
+        employees: employeesList.length,
+        totalTradeins: tradeins.length,
+        pendingTradeins: tradeins.filter(t => t.status === 'pending').length,
+        totalPhoneSales: phoneSalesList.length,
         repairsByStatus,
         tradeinsByStatus,
-        repairsByTechnician: repairsByTechnician.slice(0, 5),
-        monthlyRevenue
+        monthlyRevenue,
+        recentRepairs: repairs.slice(0, 5),
+        recentSales: allTransactions.slice(0, 5),
+        recentTradeins: tradeins.slice(0, 5),
+        recentPhoneSales: phoneSalesList.slice(0, 5)
       })
+
+      setProducts(productsList)
+      setInventory(inventoryList)
+      setEmployees(employeesList)
+      setSales(allTransactions)
+      setHistoryList(allTransactions)
+      setInvoicesData(allTransactions)
+
     } catch (error) {
-      setToast({ type: 'error', message: 'Erreur lors du chargement' })
+      console.error('Erreur détaillée:', error)
+      setToast({ type: 'error', message: 'Erreur lors du chargement: ' + error.message })
     } finally {
       setLoading(false)
     }
   }
 
-  const KPICard = ({ icon: Icon, title, value, subtitle, bgColor }) => (
-    <div className="bg-white rounded-lg shadow p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-gray-600 text-sm font-medium">{title}</p>
-          <p className="text-3xl font-bold text-gray-900 mt-2">{value}</p>
-          {subtitle && <p className="text-gray-500 text-xs mt-1">{subtitle}</p>}
+  const getFilteredInvoices = () => {
+    let filtered = [...invoicesData]
+    if (invoiceFilters.type !== 'all') {
+      filtered = filtered.filter(item => item.type === invoiceFilters.type)
+    }
+    if (invoiceFilters.startDate) {
+      filtered = filtered.filter(item => new Date(item.date) >= new Date(invoiceFilters.startDate))
+    }
+    if (invoiceFilters.endDate) {
+      filtered = filtered.filter(item => new Date(item.date) <= new Date(invoiceFilters.endDate))
+    }
+    return filtered
+  }
+
+  const getStatusBadge = (status, type = 'repair') => {
+    if (type === 'phone') {
+      return 'bg-emerald-50 text-emerald-700 border-emerald-200'
+    }
+    const badges = {
+      pending: 'bg-amber-50 text-amber-700 border-amber-200',
+      accepted: 'bg-blue-50 text-blue-700 border-blue-200',
+      refused: 'bg-red-50 text-red-700 border-red-200',
+      completed: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      paid: 'bg-green-50 text-green-700 border-green-200',
+      assigned: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+      repairing: 'bg-orange-50 text-orange-700 border-orange-200',
+      ready: 'bg-teal-50 text-teal-700 border-teal-200'
+    }
+    return badges[status] || 'bg-gray-50 text-gray-700 border-gray-200'
+  }
+
+  const getStatusText = (status) => {
+    const texts = {
+      pending: 'En attente', accepted: 'Accepté', refused: 'Refusé',
+      completed: 'Terminé', paid: 'Payé', assigned: 'Assignée',
+      repairing: 'En réparation', ready: 'Prête'
+    }
+    return texts[status] || status
+  }
+
+const handleLogout = () => {
+  // Supprimer directement les tokens admin
+  localStorage.removeItem('admin_token')
+  localStorage.removeItem('admin_user')
+  localStorage.removeItem('active_role')
+  
+  // Appeler la fonction logout du contexte
+  logout()
+  
+  // Rediriger vers la page de connexion
+  navigate('/admin/login')
+  
+  // Afficher un toast de confirmation
+  setToast({ type: 'success', message: 'Déconnexion réussie' })
+}
+  const downloadInvoice = async (item) => {
+    try {
+      let endpoint = ''
+      if (item.type === 'phone') {
+        endpoint = `/api/admin/sales/${item._id}/invoice`
+      } else if (item.type === 'repair') {
+        endpoint = `/api/admin/repairs/${item._id}/invoice`
+      } else if (item.type === 'tradein') {
+        endpoint = `/api/admin/tradeins/${item._id}/invoice`
+      }
+      
+      const response = await api.get(endpoint, { responseType: 'blob' })
+      const url = window.URL.createObjectURL(new Blob([response.data]))
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `facture_${item.type}_${item._id}.pdf`)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+      setToast({ type: 'success', message: 'Facture téléchargée' })
+    } catch (error) {
+      console.error('Erreur téléchargement facture:', error)
+      setToast({ type: 'error', message: 'Impossible de générer la facture' })
+    }
+  }
+
+  const Pagination = ({ currentPage, totalPages, onPageChange, totalItems }) => {
+    if (totalPages <= 1) return null
+    return (
+      <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100 bg-gray-50/50">
+        <div className="text-sm text-gray-600">
+          <span className="font-medium">{(currentPage - 1) * itemsPerPage + 1}</span>
+          {' - '}
+          <span className="font-medium">{Math.min(currentPage * itemsPerPage, totalItems)}</span>
+          {' sur '}
+          <span className="font-medium">{totalItems}</span>
         </div>
-        <div className={`p-3 rounded-full`} style={{ backgroundColor: bgColor }}>
-          <Icon className="text-white" size={24} />
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => onPageChange(currentPage - 1)} 
+            disabled={currentPage === 1}
+            className={`p-2 rounded-lg transition-all ${currentPage === 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:bg-white hover:shadow-sm border border-transparent hover:border-gray-200'}`}
+          >
+            <ChevronLeft size={18} />
+          </button>
+          {Array.from({ length: totalPages }, (_, i) => i + 1)
+            .filter(page => page === 1 || page === totalPages || Math.abs(page - currentPage) <= 1)
+            .map((page, index, array) => (
+              <React.Fragment key={page}>
+                {index > 0 && array[index - 1] !== page - 1 && <span className="text-gray-400">...</span>}
+                <button
+                  onClick={() => onPageChange(page)}
+                  className={`w-10 h-10 rounded-lg text-sm font-medium transition-all ${
+                    currentPage === page ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-600 hover:bg-white hover:shadow-sm border border-transparent hover:border-gray-200'
+                  }`}
+                >
+                  {page}
+                </button>
+              </React.Fragment>
+            ))}
+          <button 
+            onClick={() => onPageChange(currentPage + 1)} 
+            disabled={currentPage === totalPages}
+            className={`p-2 rounded-lg transition-all ${currentPage === totalPages ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:bg-white hover:shadow-sm border border-transparent hover:border-gray-200'}`}
+          >
+            <ChevronRight size={18} />
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white p-4 rounded-xl shadow-lg border border-gray-100">
+          <p className="text-sm font-semibold text-gray-900 mb-2">{label}</p>
+          {payload.map((entry, index) => (
+            <p key={index} className="text-sm" style={{ color: entry.color }}>
+              {entry.name}: {typeof entry.value === 'number' ? entry.value.toLocaleString('fr-FR') : entry.value} FCFA
+            </p>
+          ))}
+        </div>
+      )
+    }
+    return null
+  }
+
+  const StatCard = ({ icon: Icon, title, value, subtitle, gradient }) => (
+    <div className="relative overflow-hidden bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-all duration-200 group">
+      <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${gradient}`}></div>
+      <div className="flex items-start justify-between">
+        <div className="space-y-2">
+          <p className="text-sm text-gray-500 font-medium">{title}</p>
+          <p className="text-3xl font-bold text-gray-900">{value}</p>
+          {subtitle && <p className="text-xs text-gray-400">{subtitle}</p>}
+        </div>
+        <div className={`p-3 rounded-xl bg-gradient-to-r ${gradient} group-hover:scale-110 transition-transform duration-200`}>
+          <Icon size={24} className="text-white" />
         </div>
       </div>
     </div>
   )
 
-  if (loading) {
+  const renderTable = (data, columns, pageKey) => {
+    const startIndex = (currentPage[pageKey] - 1) * itemsPerPage
+    const paginatedData = data.slice(startIndex, startIndex + itemsPerPage)
+    
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead className="bg-gray-50/50">
+            <tr>
+              {columns.map((col, idx) => (
+                <th key={idx} className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  {col.header}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-50">
+            {paginatedData.map((item, idx) => (
+              <tr key={item._id || idx} className="hover:bg-gray-50/50 transition-colors duration-150">
+                {columns.map((col, colIdx) => (
+                  <td key={colIdx} className="px-6 py-4 text-sm">
+                    {col.render ? col.render(item) : item[col.key]}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     )
   }
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/30">
+        <div className="flex flex-col items-center gap-4">
+          <div className="relative">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-200"></div>
+            <div className="absolute top-0 left-0 animate-spin rounded-full h-16 w-16 border-4 border-t-blue-600"></div>
+            <BarChart3 className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-blue-600" size={24} />
+          </div>
+          <p className="text-gray-600 animate-pulse font-medium">Chargement du tableau de bord...</p>
+        </div>
+      </div>
+    )
+  }
+
+  const subTabs = {
+    dashboard: [
+      { id: 'overview', label: 'Vue d\'ensemble', icon: Grid, badge: null },
+      { id: 'repairs', label: 'Réparations', icon: Wrench, badge: pendingRepairsCount > 0 ? pendingRepairsCount : null },
+      { id: 'tradeins', label: 'Échanges', icon: RefreshCw, badge: pendingTradeinsCount > 0 ? pendingTradeinsCount : null },
+      { id: 'analytics', label: 'Analyses', icon: TrendingUp, badge: null }
+    ]
+  }
+
+  const productColumns = [
+    { header: 'Produit', render: (p) => <span className="font-medium text-gray-900">{p.name}</span> },
+    { header: 'Marque', render: (p) => p.brand || '-' },
+    { header: 'Prix', render: (p) => <span className="font-semibold text-emerald-600">{p.price?.toLocaleString('fr-FR')} FCFA</span> },
+    { header: 'Stock', render: (p) => p.stock },
+    { header: 'Statut', render: (p) => (
+      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${p.stock > 0 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
+        {p.stock > 0 ? <CheckCircle size={12} /> : <XCircle size={12} />}
+        {p.stock > 0 ? 'En stock' : 'Rupture'}
+      </span>
+    )}
+  ]
+
+  const inventoryColumns = [
+    { header: 'Article', render: (i) => <span className="font-medium text-gray-900">{i.name}</span> },
+    { header: 'Catégorie', render: (i) => i.category || '-' },
+    { header: 'Quantité', render: (i) => i.quantity },
+    { header: 'Prix', render: (i) => <span className="font-semibold text-emerald-600">{i.unitPrice?.toLocaleString('fr-FR')} FCFA</span> },
+    { header: 'Statut', render: (i) => (
+      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${
+        i.quantity > 10 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : i.quantity > 0 ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-red-50 text-red-700 border-red-200'
+      }`}>
+        {i.quantity > 10 ? <CheckCircle size={12} /> : i.quantity > 0 ? <AlertCircle size={12} /> : <XCircle size={12} />}
+        {i.quantity > 10 ? 'Stock ok' : i.quantity > 0 ? 'Stock faible' : 'Rupture'}
+      </span>
+    )}
+  ]
+
+  const employeeColumns = [
+    { header: 'Nom', render: (e) => <span className="font-medium text-gray-900">{e.name}</span> },
+    { header: 'Email', render: (e) => e.email },
+    { header: 'Rôle', render: (e) => (
+      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${
+        e.role === 'admin' ? 'bg-purple-50 text-purple-700 border-purple-200' : e.role === 'technician' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+      }`}>
+        {e.role === 'admin' ? 'Admin' : e.role === 'technician' ? 'Technicien' : 'Caissier'}
+      </span>
+    )},
+    { header: 'Téléphone', render: (e) => e.phone || '-' },
+    { header: 'Statut', render: (e) => (
+      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${e.isActive !== false ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
+        {e.isActive !== false ? <CheckCircle size={12} /> : <XCircle size={12} />}
+        {e.isActive !== false ? 'Actif' : 'Inactif'}
+      </span>
+    )}
+  ]
+
+  const transactionColumns = [
+    { header: 'Type', render: (s) => (
+      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${
+        s.type === 'phone' ? 'bg-cyan-50 text-cyan-700 border-cyan-200' : 
+        s.type === 'repair' ? 'bg-blue-50 text-blue-700 border-blue-200' : 
+        'bg-purple-50 text-purple-700 border-purple-200'
+      }`}>
+        {s.type === 'phone' ? <Smartphone size={12} /> : s.type === 'repair' ? <Wrench size={12} /> : <RefreshCw size={12} />}
+        {s.type === 'phone' ? 'Téléphone' : s.type === 'repair' ? 'Réparation' : 'Échange'}
+      </span>
+    )},
+    { header: 'Client', render: (s) => s.clientName || '-' },
+    { header: 'Produit/Appareil', render: (s) => s.productName || s.deviceModel || '-' },
+    { header: 'Montant', render: (s) => <span className="font-semibold text-emerald-600">{(s.amount || 0).toLocaleString('fr-FR')} FCFA</span> },
+    { header: 'Date', render: (s) => new Date(s.date).toLocaleDateString('fr-FR') }
+  ]
+
+  const invoiceColumns = [
+    { header: 'Type', render: (s) => (
+      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${
+        s.type === 'phone' ? 'bg-cyan-50 text-cyan-700 border-cyan-200' : 
+        s.type === 'repair' ? 'bg-blue-50 text-blue-700 border-blue-200' : 
+        'bg-purple-50 text-purple-700 border-purple-200'
+      }`}>
+        {s.type === 'phone' ? <Smartphone size={12} /> : s.type === 'repair' ? <Wrench size={12} /> : <RefreshCw size={12} />}
+        {s.type === 'phone' ? 'Téléphone' : s.type === 'repair' ? 'Réparation' : 'Échange'}
+      </span>
+    )},
+    { header: 'Client', render: (s) => s.clientName || '-' },
+    { header: 'Produit/Appareil', render: (s) => s.productName || s.deviceModel || '-' },
+    { header: 'Montant', render: (s) => <span className="font-semibold text-emerald-600">{(s.amount || 0).toLocaleString('fr-FR')} FCFA</span> },
+    { header: 'Date', render: (s) => new Date(s.date).toLocaleDateString('fr-FR') },
+    { header: 'Facture', render: (s) => (
+      <button
+        onClick={() => downloadInvoice(s)}
+        className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition flex items-center gap-1"
+      >
+        <FileText size={14} />
+        PDF
+      </button>
+    )}
+  ]
+
   return (
-    <div className="space-y-6">
-      {toast && (
-        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
-      )}
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/30">
+      {toast && <Toast {...toast} onClose={() => setToast(null)} />}
 
-      <div>
-        <h1 className="text-3xl font-bold text-[#1e2a5e]">Tableau de Bord</h1>
-        <p className="text-gray-600 mt-1">Vue d'ensemble de vos activités</p>
-      </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        {/* Onglets principaux avec badges */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <nav className="flex gap-1 px-2 overflow-x-auto scrollbar-hide">
+            {/* Onglet Tableau de bord */}
+            <button
+              onClick={() => {
+                setActiveMainTab('dashboard')
+                setActiveSubTab('overview')
+              }}
+              className={`flex items-center gap-2 px-5 py-4 text-sm font-medium whitespace-nowrap transition-all duration-200 border-b-2 ${
+                activeMainTab === 'dashboard'
+                  ? 'text-blue-600 border-blue-600 bg-blue-50/50'
+                  : 'text-gray-500 border-transparent hover:text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <Home size={18} />
+              Tableau de bord
+            </button>
 
-      {/* KPIs */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <KPICard
-          icon={Wrench}
-          title="Réparations totales"
-          value={data.totalRepairs}
-          subtitle={`${data.completedRepairs} complétées`}
-          bgColor="#1e2a5e" // Bleu Nuit
-        />
-        <KPICard
-          icon={AlertCircle}
-          title="En réparation"
-          value={data.inProgressRepairs}
-          subtitle="À suivre"
-          bgColor="#f39c12" // Or
-        />
-        <KPICard
-          icon={DollarSign}
-          title="Chiffre d'Affaires"
-          value={`${(data.totalRevenue / 1000).toFixed(0)}K FCFA`}
-          subtitle={`Rép: ${data.repairRevenue.toLocaleString()} | Éch: ${data.tradeinRevenue.toLocaleString()}`}
-          bgColor="#22c55e"
-        />
-        <KPICard
-          icon={RefreshCw}
-          title="Échanges"
-          value={data.totalTradeins}
-          subtitle={`${data.pendingTradeins} en attente`}
-          bgColor="#3B82F6"
-        />
-      </div>
+            {/* Onglet Réparations avec badge */}
+            <button
+              onClick={() => {
+                setActiveMainTab('repairs')
+                setActiveSubTab('list')
+              }}
+              className={`flex items-center gap-2 px-5 py-4 text-sm font-medium whitespace-nowrap transition-all duration-200 border-b-2 ${
+                activeMainTab === 'repairs'
+                  ? 'text-blue-600 border-blue-600 bg-blue-50/50'
+                  : 'text-gray-500 border-transparent hover:text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <Wrench size={18} />
+              Réparations
+              {pendingRepairsCount > 0 && (
+                <span className="ml-1.5 px-2 py-0.5 text-xs font-bold rounded-full bg-orange-500 text-white animate-pulse">
+                  {pendingRepairsCount}
+                </span>
+              )}
+            </button>
 
-      {/* Graphiques */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Réparations par statut */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Réparations par Statut</h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={data.repairsByStatus}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ name, value }) => `${name}: ${value}`}
-                outerRadius={80}
-                fill="#8884d8"
-                dataKey="value"
+            {/* Onglet Échanges avec badge */}
+            <button
+              onClick={() => {
+                setActiveMainTab('tradeins')
+                setActiveSubTab('list')
+              }}
+              className={`flex items-center gap-2 px-5 py-4 text-sm font-medium whitespace-nowrap transition-all duration-200 border-b-2 ${
+                activeMainTab === 'tradeins'
+                  ? 'text-blue-600 border-blue-600 bg-blue-50/50'
+                  : 'text-gray-500 border-transparent hover:text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <RefreshCw size={18} />
+              Échanges
+              {pendingTradeinsCount > 0 && (
+                <span className="ml-1.5 px-2 py-0.5 text-xs font-bold rounded-full bg-orange-500 text-white animate-pulse">
+                  {pendingTradeinsCount}
+                </span>
+              )}
+            </button>
+
+            {/* Onglet Produits */}
+            <button
+              onClick={() => {
+                setActiveMainTab('products')
+                setActiveSubTab('list')
+              }}
+              className={`flex items-center gap-2 px-5 py-4 text-sm font-medium whitespace-nowrap transition-all duration-200 border-b-2 ${
+                activeMainTab === 'products'
+                  ? 'text-blue-600 border-blue-600 bg-blue-50/50'
+                  : 'text-gray-500 border-transparent hover:text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <Smartphone size={18} />
+              Produits
+            </button>
+
+            {/* Onglet Inventaire */}
+            <button
+              onClick={() => {
+                setActiveMainTab('inventory')
+                setActiveSubTab('list')
+              }}
+              className={`flex items-center gap-2 px-5 py-4 text-sm font-medium whitespace-nowrap transition-all duration-200 border-b-2 ${
+                activeMainTab === 'inventory'
+                  ? 'text-blue-600 border-blue-600 bg-blue-50/50'
+                  : 'text-gray-500 border-transparent hover:text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <Package size={18} />
+              Inventaire
+            </button>
+
+            {/* Onglet Employés */}
+            <button
+              onClick={() => {
+                setActiveMainTab('employees')
+                setActiveSubTab('list')
+              }}
+              className={`flex items-center gap-2 px-5 py-4 text-sm font-medium whitespace-nowrap transition-all duration-200 border-b-2 ${
+                activeMainTab === 'employees'
+                  ? 'text-blue-600 border-blue-600 bg-blue-50/50'
+                  : 'text-gray-500 border-transparent hover:text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <Users size={18} />
+              Employés
+            </button>
+
+            {/* Onglet Ventes */}
+            <button
+              onClick={() => {
+                setActiveMainTab('sales')
+                setActiveSubTab('list')
+              }}
+              className={`flex items-center gap-2 px-5 py-4 text-sm font-medium whitespace-nowrap transition-all duration-200 border-b-2 ${
+                activeMainTab === 'sales'
+                  ? 'text-blue-600 border-blue-600 bg-blue-50/50'
+                  : 'text-gray-500 border-transparent hover:text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <ShoppingCart size={18} />
+              Ventes
+            </button>
+
+            {/* Onglet Factures */}
+            <button
+              onClick={() => {
+                setActiveMainTab('invoices')
+                setActiveSubTab('list')
+              }}
+              className={`flex items-center gap-2 px-5 py-4 text-sm font-medium whitespace-nowrap transition-all duration-200 border-b-2 ${
+                activeMainTab === 'invoices'
+                  ? 'text-blue-600 border-blue-600 bg-blue-50/50'
+                  : 'text-gray-500 border-transparent hover:text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <FileText size={18} />
+              Factures
+            </button>
+
+            {/* Onglet Historique */}
+            <button
+              onClick={() => {
+                setActiveMainTab('history')
+                setActiveSubTab('list')
+              }}
+              className={`flex items-center gap-2 px-5 py-4 text-sm font-medium whitespace-nowrap transition-all duration-200 border-b-2 ${
+                activeMainTab === 'history'
+                  ? 'text-blue-600 border-blue-600 bg-blue-50/50'
+                  : 'text-gray-500 border-transparent hover:text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <History size={18} />
+              Historique
+            </button>
+
+            {/* Onglet Rapports */}
+            <button
+              onClick={() => {
+                setActiveMainTab('reports')
+                setActiveSubTab('list')
+              }}
+              className={`flex items-center gap-2 px-5 py-4 text-sm font-medium whitespace-nowrap transition-all duration-200 border-b-2 ${
+                activeMainTab === 'reports'
+                  ? 'text-blue-600 border-blue-600 bg-blue-50/50'
+                  : 'text-gray-500 border-transparent hover:text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <FileText size={18} />
+              Rapports
+            </button>
+          </nav>
+        </div>
+
+        {/* Réparations - Onglet principal */}
+        {activeMainTab === 'repairs' && (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden animate-fadeIn">
+            <div className="p-6 border-b border-gray-100">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">Gestion des réparations</h2>
+                  <p className="text-sm text-gray-500 mt-1">Liste complète des demandes de réparation</p>
+                </div>
+                {pendingRepairsCount > 0 && (
+                  <span className="px-3 py-1.5 bg-orange-100 text-orange-700 rounded-full text-sm font-semibold flex items-center gap-1">
+                    <Clock size={14} />
+                    {pendingRepairsCount} en attente
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="p-6 text-center">
+              <button
+                onClick={() => navigate('/admin/repairs')}
+                className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
               >
-                {data.repairsByStatus.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Top techniciens */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Top Techniciens</h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={data.repairsByTechnician}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} fontSize={12} />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="repairs" fill="#3B82F6" name="Réparations" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* Échanges par statut et Revenus mensuels */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Échanges par statut */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Échanges par Statut</h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={data.tradeinsByStatus}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ name, value }) => `${name}: ${value}`}
-                outerRadius={80}
-                fill="#8884d8"
-                dataKey="value"
-              >
-                {data.tradeinsByStatus.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Revenus mensuels */}
-        {data.monthlyRevenue.length > 0 && (
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Revenus Mensuels</h2>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={data.monthlyRevenue}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip formatter={(value) => `${value.toLocaleString('fr-FR')} FCFA`} />
-                <Legend />
-                <Line
-                  type="monotone"
-                  dataKey="revenue"
-                  stroke="#10B981"
-                  name="Revenu"
-                  strokeWidth={2}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+                Voir toutes les réparations
+              </button>
+            </div>
           </div>
         )}
-      </div>
 
-      {/* Réparations récentes */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Réparations en Cours</h2>
-        <div className="space-y-3">
-          <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg border-l-4 border-orange-500">
-            <div>
-              <p className="font-medium text-gray-900">Réparations assignées</p>
-              <p className="text-sm text-gray-600">En attente de travail</p>
+        {/* Échanges - Onglet principal */}
+        {activeMainTab === 'tradeins' && (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden animate-fadeIn">
+            <div className="p-6 border-b border-gray-100">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">Gestion des échanges</h2>
+                  <p className="text-sm text-gray-500 mt-1">Liste complète des demandes d'échange</p>
+                </div>
+                {pendingTradeinsCount > 0 && (
+                  <span className="px-3 py-1.5 bg-orange-100 text-orange-700 rounded-full text-sm font-semibold flex items-center gap-1">
+                    <Clock size={14} />
+                    {pendingTradeinsCount} en attente
+                  </span>
+                )}
+              </div>
             </div>
-            <span className="text-2xl font-bold text-orange-600">
-              {data.repairsByStatus.find(s => s.name === 'Attribuée')?.value || 0}
-            </span>
-          </div>
-          <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border-l-4 border-blue-500">
-            <div>
-              <p className="font-medium text-gray-900">Réparations en cours</p>
-              <p className="text-sm text-gray-600">Actuellement en travail</p>
+            <div className="p-6 text-center">
+              <button
+                onClick={() => navigate('/admin/tradeins')}
+                className="px-6 py-3 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors"
+              >
+                Voir tous les échanges
+              </button>
             </div>
-            <span className="text-2xl font-bold text-blue-600">
-              {data.repairsByStatus.find(s => s.name === 'En réparation')?.value || 0}
-            </span>
           </div>
-          <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border-l-4 border-green-500">
-            <div>
-              <p className="font-medium text-gray-900">Réparations complétées</p>
-              <p className="text-sm text-gray-600">Prêtes à être livrées</p>
+        )}
+
+        {/* Sous-onglets Dashboard */}
+        {activeMainTab === 'dashboard' && (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <nav className="flex gap-1 px-2 overflow-x-auto">
+              {subTabs.dashboard.map((sub) => {
+                const Icon = sub.icon
+                const isActive = activeSubTab === sub.id
+                return (
+                  <button
+                    key={sub.id}
+                    onClick={() => setActiveSubTab(sub.id)}
+                    className={`flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap transition-all duration-200 ${
+                      isActive
+                        ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50'
+                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    <Icon size={16} />
+                    {sub.label}
+                    {sub.badge && sub.badge > 0 && (
+                      <span className="ml-1.5 px-1.5 py-0.5 text-xs font-bold rounded-full bg-orange-500 text-white min-w-[20px] text-center">
+                        {sub.badge}
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
+            </nav>
+          </div>
+        )}
+
+        {/* Contenu Dashboard */}
+        {activeMainTab === 'dashboard' && (
+          <div className="animate-fadeIn">
+            {activeSubTab === 'overview' && (
+              <div className="space-y-6">
+                {/* Cartes statistiques */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <StatCard icon={Wrench} title="Réparations" value={stats.totalRepairs} subtitle={`${stats.completedRepairsCount} terminées`} gradient="from-blue-500 to-cyan-500" />
+                  <StatCard icon={RefreshCw} title="Échanges" value={stats.totalTradeins} subtitle={`${stats.totalTradeins - stats.pendingTradeins} traités`} gradient="from-purple-500 to-violet-500" />
+                  <StatCard icon={Smartphone} title="Ventes téléphones" value={stats.totalPhoneSales} subtitle={`${stats.phoneSalesRevenue.toLocaleString('fr-FR')} FCFA`} gradient="from-cyan-500 to-blue-500" />
+                  <StatCard icon={DollarSign} title="CA total" value={`${(stats.totalRevenue / 1000000).toFixed(1)}M FCFA`} subtitle={`Réparations: ${(stats.repairRevenue/1000).toFixed(0)}k | Échanges: ${(stats.tradeinRevenue/1000).toFixed(0)}k | Tél: ${(stats.phoneSalesRevenue/1000).toFixed(0)}k`} gradient="from-emerald-500 to-green-500" />
+                </div>
+
+                {/* Graphiques d'évolution */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                    <div className="flex items-center justify-between mb-6">
+                      <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                        <TrendingUpIcon size={20} className="text-blue-600" />
+                        Évolution des ventes (FCFA)
+                      </h3>
+                      <div className="flex gap-3 text-xs">
+                        <span className="flex items-center gap-1"><div className="w-3 h-3 rounded-full bg-blue-500"></div> Réparations</span>
+                        <span className="flex items-center gap-1"><div className="w-3 h-3 rounded-full bg-purple-500"></div> Échanges</span>
+                        <span className="flex items-center gap-1"><div className="w-3 h-3 rounded-full bg-green-500"></div> Téléphones</span>
+                      </div>
+                    </div>
+                    <div className="h-[300px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={salesEvolution}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                          <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                          <YAxis tick={{ fontSize: 12 }} />
+                          <Tooltip content={<CustomTooltip />} />
+                          <Legend />
+                          <Line type="monotone" dataKey="réparations" stroke="#3b82f6" strokeWidth={2} dot={{ r: 4 }} />
+                          <Line type="monotone" dataKey="échanges" stroke="#8b5cf6" strokeWidth={2} dot={{ r: 4 }} />
+                          <Line type="monotone" dataKey="téléphones" stroke="#22c55e" strokeWidth={2} dot={{ r: 4 }} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                    <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+                      <BarChart3 size={20} className="text-emerald-600" />
+                      Évolution du nombre de réparations
+                    </h3>
+                    <div className="h-[300px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={repairsEvolution}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                          <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                          <YAxis tick={{ fontSize: 12 }} />
+                          <Tooltip />
+                          <Bar dataKey="count" fill="#3b82f6" radius={[8, 8, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                    <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+                      <RefreshCw size={20} className="text-purple-600" />
+                      Évolution du nombre d'échanges
+                    </h3>
+                    <div className="h-[300px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={tradeinsEvolution}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                          <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                          <YAxis tick={{ fontSize: 12 }} />
+                          <Tooltip />
+                          <Bar dataKey="count" fill="#8b5cf6" radius={[8, 8, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                    <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+                      <Calendar size={20} className="text-orange-600" />
+                      Activité hebdomadaire
+                    </h3>
+                    <div className="h-[300px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={weeklyActivity}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                          <XAxis dataKey="day" tick={{ fontSize: 12 }} />
+                          <YAxis tick={{ fontSize: 12 }} />
+                          <Tooltip />
+                          <Legend />
+                          <Bar dataKey="réparations" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                          <Bar dataKey="échanges" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                          <Bar dataKey="ventes" fill="#22c55e" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Graphiques circulaires existants */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                    <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+                      <PieChartIcon size={20} className="text-blue-600" />
+                      Réparations par statut
+                    </h3>
+                    <div className="h-[280px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie data={stats.repairsByStatus} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={5} dataKey="value">
+                            {stats.repairsByStatus.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Pie>
+                          <Tooltip />
+                          <Legend />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                    <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+                      <TrendingUp size={20} className="text-emerald-600" />
+                      Revenus mensuels
+                    </h3>
+                    <div className="h-[280px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={stats.monthlyRevenue}>
+                          <defs>
+                            <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3} />
+                              <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                          <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                          <YAxis tick={{ fontSize: 12 }} />
+                          <Tooltip content={<CustomTooltip />} />
+                          <Area type="monotone" dataKey="revenue" stroke="#22c55e" strokeWidth={2} fill="url(#colorRevenue)" />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeSubTab === 'repairs' && (
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-lg font-bold text-gray-900">Dernières réparations</h3>
+                  {pendingRepairsCount > 0 && (
+                    <span className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm font-semibold flex items-center gap-1">
+                      <Clock size={14} />
+                      {pendingRepairsCount} en attente
+                    </span>
+                  )}
+                </div>
+                <div className="space-y-3">
+                  {stats.recentRepairs.map((r, i) => (
+                    <div key={i} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-blue-50 transition-colors">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                          <Wrench size={18} className="text-blue-600" />
+                        </div>
+                        <div>
+                          <p className="font-semibold">{r.clientName || 'Client'}</p>
+                          <p className="text-sm text-gray-500">{r.deviceModel}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${getStatusBadge(r.status)}`}>
+                          {getStatusText(r.status)}
+                        </span>
+                        <p className="text-xs text-gray-400 mt-1">{new Date(r.createdAt).toLocaleDateString('fr-FR')}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {activeSubTab === 'tradeins' && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                  <h3 className="text-lg font-bold text-gray-900 mb-6">Échanges par statut</h3>
+                  <div className="h-[280px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie data={stats.tradeinsByStatus} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={5} dataKey="value">
+                          {stats.tradeinsByStatus.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                        <Legend />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-lg font-bold text-gray-900">Derniers échanges</h3>
+                    {pendingTradeinsCount > 0 && (
+                      <span className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm font-semibold flex items-center gap-1">
+                        <Clock size={14} />
+                        {pendingTradeinsCount} en attente
+                      </span>
+                    )}
+                  </div>
+                  <div className="space-y-3">
+                    {stats.recentTradeins.map((t, i) => (
+                      <div key={i} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
+                            <RefreshCw size={18} className="text-purple-600" />
+                          </div>
+                          <div>
+                            <p className="font-semibold">{t.clientName}</p>
+                            <p className="text-sm text-gray-500">{t.deviceModel}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${getStatusBadge(t.status)}`}>
+                            {getStatusText(t.status)}
+                          </span>
+                          <p className="text-xs text-gray-400 mt-1">{new Date(t.createdAt).toLocaleDateString('fr-FR')}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeSubTab === 'analytics' && (
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                  <h3 className="text-lg font-bold text-gray-900 mb-6">Performance mensuelle</h3>
+                  <div className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={stats.monthlyRevenue}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                        <XAxis dataKey="month" />
+                        <YAxis />
+                        <Tooltip />
+                        <Bar dataKey="revenue" fill="#3b82f6" radius={[8, 8, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white">
+                    <CheckCircle size={32} className="mb-4" />
+                    <p className="text-blue-100">Taux de complétion</p>
+                    <p className="text-4xl font-bold mt-2">{stats.totalRepairs > 0 ? Math.round((stats.completedRepairsCount / stats.totalRepairs) * 100) : 0}%</p>
+                  </div>
+                  <div className="bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl p-6 text-white">
+                    <DollarSign size={32} className="mb-4" />
+                    <p className="text-emerald-100">Panier moyen</p>
+                    <p className="text-2xl font-bold mt-2">{(stats.totalRevenue / (stats.totalRepairs + stats.totalTradeins + stats.totalPhoneSales) || 0).toLocaleString('fr-FR')} FCFA</p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Produits */}
+        {activeMainTab === 'products' && (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden animate-fadeIn">
+            <div className="p-6 border-b border-gray-100">
+              <h2 className="text-xl font-bold text-gray-900">Catalogue produits</h2>
+              <p className="text-sm text-gray-500 mt-1">Liste des téléphones disponibles</p>
             </div>
-            <span className="text-2xl font-bold text-green-600">
-              {data.repairsByStatus.find(s => s.name === 'Complétée')?.value || 0}
-            </span>
+            {renderTable(products, productColumns, 'products')}
+            <Pagination 
+              currentPage={currentPage.products} 
+              totalPages={Math.ceil(products.length / itemsPerPage)} 
+              onPageChange={(p) => setCurrentPage(prev => ({ ...prev, products: p }))} 
+              totalItems={products.length} 
+            />
           </div>
-        </div>
-      </div>
-      {/* Echanges récentes */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Echanges en Cours</h2>
-        <div className="space-y-3">
-          <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg border-l-4 border-orange-500">
-            <div>
-              <p className="font-medium text-gray-900">Echanges en attente</p>
-              <p className="text-sm text-gray-600">En attente</p>
+        )}
+
+        {/* Inventaire */}
+        {activeMainTab === 'inventory' && (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden animate-fadeIn">
+            <div className="p-6 border-b border-gray-100">
+              <h2 className="text-xl font-bold text-gray-900">Inventaire pièces</h2>
+              <p className="text-sm text-gray-500 mt-1">Pièces détachées et composants</p>
             </div>
-            <span className="text-2xl font-bold text-orange-600">
-              {data.tradeinsByStatus.find(s => s.name === 'En attente')?.value || 0}
-            </span>
+            {renderTable(inventory, inventoryColumns, 'inventory')}
+            <Pagination 
+              currentPage={currentPage.inventory} 
+              totalPages={Math.ceil(inventory.length / itemsPerPage)} 
+              onPageChange={(p) => setCurrentPage(prev => ({ ...prev, inventory: p }))} 
+              totalItems={inventory.length} 
+            />
           </div>
-          
-          <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border-l-4 border-green-500">
-            <div>
-              <p className="font-medium text-gray-900">Echanges complétés</p>
-              <p className="text-sm text-gray-600">Prêtes à être livrées</p>
+        )}
+
+        {/* Employés */}
+        {activeMainTab === 'employees' && (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden animate-fadeIn">
+            <div className="p-6 border-b border-gray-100">
+              <h2 className="text-xl font-bold text-gray-900">Équipe</h2>
+              <p className="text-sm text-gray-500 mt-1">Liste des employés</p>
             </div>
-            <span className="text-2xl font-bold text-green-600">
-              {data.tradeinsByStatus.find(s => s.name === 'Complétée')?.value || 0}
-            </span>
+            {renderTable(employees, employeeColumns, 'employees')}
+            <Pagination 
+              currentPage={currentPage.employees} 
+              totalPages={Math.ceil(employees.length / itemsPerPage)} 
+              onPageChange={(p) => setCurrentPage(prev => ({ ...prev, employees: p }))} 
+              totalItems={employees.length} 
+            />
           </div>
-        </div>
+        )}
+
+        {/* Ventes */}
+        {activeMainTab === 'sales' && (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden animate-fadeIn">
+            <div className="p-6 border-b border-gray-100">
+              <h2 className="text-xl font-bold text-gray-900">Historique des ventes</h2>
+              <p className="text-sm text-gray-500 mt-1">Téléphones vendus, réparations payées et échanges complétés</p>
+            </div>
+            {renderTable(sales, transactionColumns, 'sales')}
+            <Pagination 
+              currentPage={currentPage.sales} 
+              totalPages={Math.ceil(sales.length / itemsPerPage)} 
+              onPageChange={(p) => setCurrentPage(prev => ({ ...prev, sales: p }))} 
+              totalItems={sales.length} 
+            />
+          </div>
+        )}
+
+        {/* Factures avec filtres */}
+        {activeMainTab === 'invoices' && (
+          <div className="space-y-4">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex flex-wrap gap-4 items-end">
+              <div className="flex-1 min-w-[150px]">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                <select
+                  value={invoiceFilters.type}
+                  onChange={(e) => setInvoiceFilters(prev => ({ ...prev, type: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="all">Tous</option>
+                  <option value="phone">Téléphones</option>
+                  <option value="repair">Réparations</option>
+                  <option value="tradein">Échanges</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Du</label>
+                <input
+                  type="date"
+                  value={invoiceFilters.startDate}
+                  onChange={(e) => setInvoiceFilters(prev => ({ ...prev, startDate: e.target.value }))}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Au</label>
+                <input
+                  type="date"
+                  value={invoiceFilters.endDate}
+                  onChange={(e) => setInvoiceFilters(prev => ({ ...prev, endDate: e.target.value }))}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <button
+                onClick={() => setInvoiceFilters({ type: 'all', startDate: '', endDate: '' })}
+                className="px-4 py-2 text-gray-600 hover:text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Réinitialiser
+              </button>
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              <div className="p-6 border-b border-gray-100">
+                <h2 className="text-xl font-bold text-gray-900">Gestion des factures</h2>
+                <p className="text-sm text-gray-500 mt-1">Téléchargez les factures des ventes, réparations et échanges</p>
+              </div>
+              {renderTable(getFilteredInvoices(), invoiceColumns, 'invoices')}
+              <Pagination
+                currentPage={currentPage.invoices}
+                totalPages={Math.ceil(getFilteredInvoices().length / itemsPerPage)}
+                onPageChange={(p) => setCurrentPage(prev => ({ ...prev, invoices: p }))}
+                totalItems={getFilteredInvoices().length}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Historique */}
+        {activeMainTab === 'history' && (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden animate-fadeIn">
+            <div className="p-6 border-b border-gray-100">
+              <h2 className="text-xl font-bold text-gray-900">Historique complet</h2>
+              <p className="text-sm text-gray-500 mt-1">Toutes les transactions (téléphones, réparations, échanges)</p>
+            </div>
+            {renderTable(historyList, transactionColumns, 'history')}
+            <Pagination 
+              currentPage={currentPage.history} 
+              totalPages={Math.ceil(historyList.length / itemsPerPage)} 
+              onPageChange={(p) => setCurrentPage(prev => ({ ...prev, history: p }))} 
+              totalItems={historyList.length} 
+            />
+          </div>
+        )}
+
+        {/* Rapports */}
+        {activeMainTab === 'reports' && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fadeIn">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+              <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+                <DollarSign size={20} className="text-emerald-600" />
+                Rapport financier
+              </h3>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center p-4 bg-gray-50 rounded-xl">
+                  <span className="font-medium text-gray-700">Chiffre d'affaires total</span>
+                  <span className="font-bold text-xl text-emerald-600">{stats.totalRevenue.toLocaleString('fr-FR')} FCFA</span>
+                </div>
+                <div className="flex justify-between items-center p-4 bg-blue-50 rounded-xl">
+                  <span className="font-medium text-gray-700">Ventes téléphones</span>
+                  <span className="font-bold text-blue-600">{stats.phoneSalesRevenue.toLocaleString('fr-FR')} FCFA</span>
+                </div>
+                <div className="flex justify-between items-center p-4 bg-indigo-50 rounded-xl">
+                  <span className="font-medium text-gray-700">Réparations</span>
+                  <span className="font-bold text-indigo-600">{stats.repairRevenue.toLocaleString('fr-FR')} FCFA</span>
+                </div>
+                <div className="flex justify-between items-center p-4 bg-purple-50 rounded-xl">
+                  <span className="font-medium text-gray-700">Échanges</span>
+                  <span className="font-bold text-purple-600">{stats.tradeinRevenue.toLocaleString('fr-FR')} FCFA</span>
+                </div>
+                <div className="flex justify-between items-center p-4 bg-gray-50 rounded-xl">
+                  <span className="font-medium text-gray-700">Transactions totales</span>
+                  <span className="font-bold text-gray-900">{sales.length}</span>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+              <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+                <Activity size={20} className="text-blue-600" />
+                Rapport d'activité
+              </h3>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center p-4 bg-gray-50 rounded-xl">
+                  <span className="font-medium text-gray-700">Téléphones vendus</span>
+                  <span className="font-bold text-xl text-cyan-600">{stats.totalPhoneSales}</span>
+                </div>
+                <div className="flex justify-between items-center p-4 bg-gray-50 rounded-xl">
+                  <span className="font-medium text-gray-700">Réparations traitées</span>
+                  <span className="font-bold text-xl text-blue-600">{stats.completedRepairsCount}</span>
+                </div>
+                <div className="flex justify-between items-center p-4 bg-gray-50 rounded-xl">
+                  <span className="font-medium text-gray-700">Échanges finalisés</span>
+                  <span className="font-bold text-xl text-purple-600">{stats.tradeinsByStatus.find(s => s.name === 'Terminée')?.value || 0}</span>
+                </div>
+                <div className="flex justify-between items-center p-4 bg-gray-50 rounded-xl">
+                  <span className="font-medium text-gray-700">Taux d'activité réparations</span>
+                  <span className="font-bold text-gray-900">{stats.totalRepairs > 0 ? Math.round((stats.completedRepairsCount / stats.totalRepairs) * 100) : 0}%</span>
+                </div>
+                <div className="flex justify-between items-center p-4 bg-gray-50 rounded-xl">
+                  <span className="font-medium text-gray-700">Employés actifs</span>
+                  <span className="font-bold text-gray-900">{employees.filter(e => e.isActive !== false).length}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

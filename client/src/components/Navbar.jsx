@@ -24,14 +24,14 @@ function Navbar({ phoneNumber }) {
         </Link>
 
         <button
-          className="inline-flex items-center rounded-xl border border-slate-200 bg-white p-2 text-night md:hidden"
+          className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white p-3 text-night shadow-sm md:hidden"
           onClick={() => setOpen((prev) => !prev)}
           aria-label="Ouvrir le menu"
         >
-          <span className="text-lg">☰</span>
+          <span className="text-xl">☰</span>
         </button>
 
-        <nav className={`absolute inset-x-4 top-full mt-2 rounded-3xl bg-white p-6 shadow-lg transition-all duration-300 md:static md:mt-0 md:flex md:items-center md:bg-transparent md:p-0 md:shadow-none ${open ? 'block' : 'hidden'}`}>
+        <nav className={`absolute inset-x-4 top-full z-40 mt-2 rounded-[32px] bg-white/95 p-6 shadow-2xl backdrop-blur-xl transition-all duration-300 md:static md:top-auto md:mt-0 md:flex md:items-center md:bg-transparent md:p-0 md:shadow-none ${open ? 'block' : 'hidden'}`}>
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-5">
             {navItems.map((item) => (
               <NavLink
@@ -39,8 +39,8 @@ function Navbar({ phoneNumber }) {
                 to={item.to}
                 onClick={() => setOpen(false)}
                 className={({ isActive }) =>
-                  `rounded-xl px-3 py-2 text-sm font-medium transition ${
-                    isActive ? 'bg-brand text-white shadow-lg' : 'text-brand hover:bg-brand/10'
+                  `rounded-2xl px-4 py-2 text-sm font-medium transition ${
+                    isActive ? 'bg-brand text-white shadow-lg' : 'text-night hover:bg-slate-100'
                   }`
                 }
               >
@@ -53,7 +53,7 @@ function Navbar({ phoneNumber }) {
             href={whatsappLink}
             target="_blank"
             rel="noreferrer"
-            className="mt-4 inline-flex items-center justify-center gap-2 rounded-full bg-brand px-4 py-3 text-sm font-semibold text-white shadow-lg md:mt-0 md:ml-4 hover:bg-[#2f1c50]"
+            className="mt-4 inline-flex items-center justify-center gap-2 rounded-full bg-brand px-5 py-3 text-sm font-semibold text-white shadow-lg md:mt-0 md:ml-4 hover:bg-[#2f1c50]"
           >
             <span>WhatsApp</span>
             <span>💬</span>

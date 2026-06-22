@@ -1,3 +1,4 @@
+// services/api.js - Version compatible avec TokenManager
 import axios from 'axios'
 import TokenManager from './tokenManager'
 
@@ -5,60 +6,51 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4001
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  timeout: 30000,
 })
 
-/**
- * Intercepteur de requête - Ajoute le token JWT dans les headers
- */
-api.interceptors.request.use(
-  (config) => {
-    // Ne pas ajouter de token pour les routes de login (elles ne le nécessitent pas)
-    const isLoginRoute = config.url?.includes('/login')
-    
-    if (isLoginRoute) {
-      console.log(`[API] Login route detected - skipping token for ${config.url}`)
-      return config
-    }
-
-    // Obtenir le token correct pour cette URL
-    const token = TokenManager.getTokenForUrl(config.url)
-
+// Intercepteur pour ajouter le token selon le rôle de l'URL
+api.interceptors.request.use((config) => {
+  let role = null
+  if (config.url.includes('/admin/')) {
+    role = 'admin'
+  } else if (config.url.includes('/cashier/')) {
+    role = 'cashier'
+  } else if (config.url.includes('/technician/')) {
+    role = 'technician'
+  }
+  
+  if (role) {
+    const token = TokenManager.getTokenByRole(role)
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
-      console.log(`[API] Token added for ${config.url}`)
+      console.log(`[API] Token ${role} ajouté pour ${config.url}`)
     } else {
-      console.warn(`[API] No token found for ${config.url}`)
+      console.warn(`[API] Aucun token trouvé pour le rôle ${role}`)
     }
-
-    return config
-  },
-  (error) => {
-    return Promise.reject(error)
   }
-)
+  return config
+})
 
-/**
- * Intercepteur de réponse - Gère les erreurs 401 et les redirects
- */
+// Intercepteur pour les erreurs
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      console.warn(`[API] 401 Error for ${error.config?.url}`)
-
-      // Déterminer le rôle et rediriger vers la page de connexion appropriée
-      if (error.config?.url?.includes('/technician/')) {
-        TokenManager.clearRole('technician')
-        window.location.href = '/technician/login'
-      } else if (error.config?.url?.includes('/cashier/')) {
-        TokenManager.clearRole('cashier')
-        window.location.href = '/cashier/login'
-      } else {
-        TokenManager.clearRole('admin')
-        window.location.href = '/admin/login'
+      const url = error.config?.url || ''
+      let role = null
+      
+      if (url.includes('/admin/')) role = 'admin'
+      else if (url.includes('/cashier/')) role = 'cashier'
+      else if (url.includes('/technician/')) role = 'technician'
+      
+      if (role) {
+        TokenManager.clearRole(role)
+        
+        const currentPath = window.location.pathname
+        if (currentPath.includes(`/${role}/`) && !currentPath.includes('/login')) {
+          window.location.href = `/${role}/login`
+        }
       }
     }
     return Promise.reject(error)
@@ -66,3 +58,4 @@ api.interceptors.response.use(
 )
 
 export default api
+export { API_BASE_URL }

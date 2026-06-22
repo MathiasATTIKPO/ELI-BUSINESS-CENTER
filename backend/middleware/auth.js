@@ -12,7 +12,7 @@ module.exports = (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
-    console.log(`[AUTH] Token valide pour : ${decoded.email}`);
+    //console.log(`[AUTH] Token valide pour : ${decoded.email}`);
     next();
   } catch (error) {
     console.error(`[AUTH] Erreur de vérification du token :`, error.message);

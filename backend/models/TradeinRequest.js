@@ -9,18 +9,23 @@ const tradeinRequestSchema = new mongoose.Schema({
   targetProduct: { type: String, trim: true },
   proposedValue: { type: Number, default: 0 },
   exchangeProduct: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
+  assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'Employee', default: null },
   status: {
     type: String,
-    enum: ['pending', 'accepted', 'refused', 'completed'],
+    enum: ['pending', 'accepted', 'refused', 'completed','paid'],
     default: 'pending'
   },
   createdAt: { type: Date, default: Date.now },
   saleInfo: {
-    amount: { type: Number, default: 0 }, // Montant rajouté par le client si échange + soulte
-    paymentMethod: { type: String, default: 'cash' },
+    amount: { type: Number, default: 0 },
+    amountPaid: { type: Number, default: 0 },
+    paymentMethod: { type: String, enum: ['cash', 'mobile_money', 'card', 'check', 'transfer'], default: 'cash' },
     paymentDate: { type: Date },
-    notes: { type: String, default: '' }
-  }
+    invoiceUrl: { type: String, default: '' },
+    notes: { type: String, default: '' },
+    validatedBy: { type: String, default: '' }      // Nom du caissier / vendeur
+  },
+  updatedAt: { type: Date, default: Date.now } 
 });
 
 module.exports = mongoose.model('TradeinRequest', tradeinRequestSchema);

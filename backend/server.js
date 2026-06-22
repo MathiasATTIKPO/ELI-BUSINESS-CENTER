@@ -16,7 +16,11 @@ const ALLOWED_ORIGINS = [
   'http://127.0.0.1:3001',
   'http://localhost:3000',
   'http://localhost:5175',
-  'http://127.0.0.1:5175'
+  'http://127.0.0.1:5175',
+  'http://localhost:3000',  // Admin
+  'http://localhost:3001',  // Site client
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:3001'
 ];
 
 if (process.env.NGROK_URL && !ALLOWED_ORIGINS.includes(process.env.NGROK_URL)) {
@@ -98,10 +102,15 @@ const repairRoutes = require('./routes/repair');
 const tradeinRoutes = require('./routes/tradein');
 const uploadRoutes = require('./routes/upload');
 const adminRoutes = require('./routes/admin');
+const cashierRoutes = require('./routes/cashier');
 const invoiceRoutes = require('./routes/invoice');
 const technicianRoutes = require('./routes/technician');
 const Employee = require('./models/Employee');
+const Product = require('./models/Product');
 const bcrypt = require('bcryptjs');
+const adminController = require('./controllers/adminController');
+const clientRoutes = require('./routes/clientRoutes');
+
 
 const app = express();
 
@@ -142,7 +151,11 @@ app.use('/api/tradein', tradeinRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/technician', technicianRoutes);
+app.use('/api/cashier', cashierRoutes);
 app.use('/api/invoice', invoiceRoutes);
+app.post('/api/client/repairs', adminController.createRepairFromClient);
+app.post('/api/client/tradeins', adminController.createTradeinFromClient);
+app.use('/api/client', clientRoutes);
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
@@ -153,7 +166,7 @@ app.get('/api/health', (req, res) => {
 const adminDistPath = path.join(__dirname, '..', 'admin', 'dist');
 if (fs.existsSync(adminDistPath)) {
   app.use(express.static(adminDistPath));
-  app.get('*', (req, res, next) => {
+  app.get('*', (req, res, next) => { 
     if (req.path.startsWith('/api')) {
       return next();
     }
@@ -172,8 +185,8 @@ app.use((err, req, res, next) => {
 
 const mongoUri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/eli_business_center';
 
-// Fonction pour créer un technicien par défaut
-const createDefaultTechnician = async () => {
+// Fonction pour créer un technicien et un caissier par défaut
+const createDefaultEmployees = async () => {
   try {
     const existingTechnician = await Employee.findOne({ role: 'technician' });
     if (!existingTechnician) {
@@ -192,10 +205,53 @@ const createDefaultTechnician = async () => {
       console.log('   Email: tech@elis.com');
       console.log('   Mot de passe: tech123');
     } else {
-      //console.log('ℹ️  Un technicien existe déjà dans la base de données');
+     // console.log('ℹ️ Technicien par défaut déjà présent dans la base de données');
+    }
+
+    const existingCashier = await Employee.findOne({ role: 'cashier' });
+    if (!existingCashier) {
+      const defaultCashier = {
+        name: "Caissier Par Défaut",
+        phone: "+2280506070809",
+        email: "cashier@elis.com",
+        password: bcrypt.hashSync("cashier123", 10),
+        role: "cashier",
+        skills: [],
+        isActive: true
+      };
+
+      await Employee.create(defaultCashier);
+      console.log('✅ Caissier par défaut créé avec succès');
+      console.log('   Email: cashier@elis.com');
+      console.log('   Mot de passe: cashier123');
+    } else {
+      // console.log('ℹ️ Caissier par défaut déjà présent dans la base de données');
     }
   } catch (error) {
-    console.error('❌ Erreur lors de la création du technicien par défaut:', error.message);
+    console.error('❌ Erreur lors de la création des comptes par défaut:', error.message);
+  }
+};
+
+const createDefaultProducts = async () => {
+  try {
+    const defaultProducts = [
+      { name: 'iPhone 14', brand: 'Apple', price: 740000, stock: 12, active: true },
+      { name: 'iPhone 14 Pro', brand: 'Apple', price: 980000, stock: 10, active: true },
+      { name: 'iPhone 15', brand: 'Apple', price: 1120000, stock: 8, active: true },
+      { name: 'Galaxy S23', brand: 'Samsung', price: 650000, stock: 14, active: true },
+      { name: 'Galaxy S23 Ultra', brand: 'Samsung', price: 980000, stock: 9, active: true },
+      { name: 'Galaxy A54', brand: 'Samsung', price: 330000, stock: 16, active: true }
+    ];
+
+    for (const productData of defaultProducts) {
+      const existing = await Product.findOne({ name: productData.name, brand: productData.brand });
+      if (!existing) {
+        await Product.create(productData);
+        console.log(`✅ Produit ajouté : ${productData.brand} ${productData.name}`);
+      }
+    }
+  } catch (error) {
+    console.error('❌ Erreur lors de la création des produits par défaut:', error.message);
   }
 };
 
@@ -204,13 +260,14 @@ mongoose
   .then(async () => {
    // console.log(`Connected to MongoDB at ${mongoUri}`);
 
-    // Créer le technicien par défaut si nécessaire
-    await createDefaultTechnician();
+    // Créer le technicien, le caissier et les produits par défaut si nécessaire
+    await createDefaultEmployees();
+    await createDefaultProducts();
 
     const server = app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
+      //console.log(`Server running on port ${PORT}`);
       console.log(`Swagger docs available at: http://localhost:${PORT}/api-docs`);
-      console.log('To access the platform online, run in another terminal: npm run tunnel');
+     // console.log('To access the platform online, run in another terminal: npm run tunnel');
     });
   })
   .catch((error) => {

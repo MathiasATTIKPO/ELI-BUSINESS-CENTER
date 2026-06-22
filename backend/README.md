@@ -101,6 +101,19 @@ Pour ces alternatives, ajoutez l'URL générée dans le `.env`.
 - `middleware/` : authentification JWT et upload de fichiers
 - `uploads/` : fichiers photo et PDF générés
 
+## Comptes par défaut
+
+Au démarrage, le backend crée automatiquement ces comptes si ils n'existent pas déjà :
+
+- `Technicien Par Défaut`
+  - Email : `tech@elis.com`
+  - Mot de passe : `tech123`
+  - Rôle : `technician`
+- `Caissier Par Défaut`
+  - Email : `cashier@elis.com`
+  - Mot de passe : `cashier123`
+  - Rôle : `cashier`
+
 ## Endpoints principaux
 
 - `GET /api/products`

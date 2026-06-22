@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const invoiceSchema = new mongoose.Schema({
-  requestType: { type: String, enum: ['repair', 'tradein'], required: true },
+  requestType: { type: String, enum: ['repair', 'tradein', 'inventory', 'product'], required: true },
   requestId: { type: mongoose.Schema.Types.ObjectId, required: true, refPath: 'requestType' },
   clientName: { type: String, trim: true },
   clientWhatsapp: { type: String, trim: true },

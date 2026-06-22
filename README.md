@@ -8,6 +8,11 @@ Plateforme complète de gestion pour centre d'affaires - site vitrine, administr
 - **Admin** (`/admin`) : Interface d'administration React/Vite
 - **Backend** (`/backend`) : API Node.js/Express avec MongoDB
 
+## 🧩 Organisation du code
+
+- Le frontend admin est développé avec React, Vite et Tailwind CSS.
+- Les pages de gestion des réparations et des échanges utilisent des composants réutilisables et un helper partagé `formatReference` pour afficher des références lisibles (`REF-xxxxxx`) plutôt que des identifiants MongoDB bruts.
+
 ## 🚀 Démarrage rapide
 
 ### 1. Prérequis
