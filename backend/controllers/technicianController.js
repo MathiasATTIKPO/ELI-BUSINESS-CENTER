@@ -353,3 +353,155 @@ exports.markAllTechnicianNotificationsRead = async (req, res) => {
     res.status(500).json({ success: false, data: null, message: error.message });
   }
 };
+
+// ===== CRÉER UNE RÉPARATION DEPUIS L'INTERFACE TECHNICIEN =====
+exports.createRepair = async (req, res) => {
+  try {
+    const technicianId = req.user.id;
+    const { clientName, clientWhatsapp, deviceModel, issueDescription, estimatedCost, notes } = req.body;
+
+    // Validation
+    if (!clientName || !clientWhatsapp || !deviceModel) {
+      return res.status(400).json({ 
+        success: false, 
+        data: null, 
+        message: 'Le nom du client, WhatsApp et le modèle sont obligatoires.' 
+      });
+    }
+
+    const repair = await RepairRequest.create({
+      clientName,
+      clientWhatsapp,
+      deviceModel,
+      issueDescription: issueDescription || '',
+      estimatedCost: estimatedCost || 0,
+      notes: notes || '',
+      assignedTo: technicianId,
+      status: 'assigned'
+    });
+
+    // Notification aux admins
+    const Notification = require('../models/Notification');
+    const Employee = require('../models/Employee');
+    const admins = await Employee.find({ role: 'admin', isActive: true });
+    
+    for (const admin of admins) {
+      await Notification.create({
+        recipientId: admin._id,
+        recipientRole: 'admin',
+        type: 'repair_created',
+        title: 'Nouvelle réparation créée',
+        message: `${repair.clientName} - ${repair.deviceModel}: ${repair.issueDescription?.substring(0, 100) || 'Aucune description'}`,
+        requestId: repair._id,
+        clientName: repair.clientName,
+        reference: repair._id.toString().slice(-6)
+      });
+    }
+
+    res.status(201).json({
+      success: true,
+      data: { 
+        requestId: repair._id, 
+        reference: repair._id.toString().slice(-6),
+        repair: repair 
+      },
+      message: 'Réparation créée avec succès.'
+    });
+  } catch (error) {
+    console.error('Erreur createRepair technicien:', error);
+    res.status(500).json({ 
+      success: false, 
+      data: null, 
+      message: error.message 
+    });
+  }
+};
+
+// Créer un échange depuis l'interface technicien
+exports.createTradein = async (req, res) => {
+  try {
+    const technicianId = req.user.id;
+    const { 
+      clientName, 
+      clientWhatsapp, 
+      deviceModel, 
+      condition, 
+      targetProduct,
+      targetProductName,
+      targetProductPrice,
+      proposedValue, 
+      notes 
+    } = req.body;
+
+    // Log pour debug
+    console.log('Données reçues:', req.body);
+    console.log('Technicien ID:', technicianId);
+
+    // Validation
+    if (!clientWhatsapp) {
+      return res.status(400).json({ 
+        success: false, 
+        data: null, 
+        message: 'Le numéro WhatsApp est obligatoire.' 
+      });
+    }
+    
+    if (!deviceModel) {
+      return res.status(400).json({ 
+        success: false, 
+        data: null, 
+        message: 'Le modèle de l\'appareil est obligatoire.' 
+      });
+    }
+
+    // Création de l'échange
+    const tradein = await TradeinRequest.create({
+      clientName: clientName || 'Client',
+      clientWhatsapp,
+      deviceModel,
+      condition: condition || 'good',
+      targetProduct: targetProduct || '',
+      proposedValue: parseFloat(proposedValue) || 0,
+      notes: notes || '',
+      assignedTo: technicianId,
+      status: 'pending' // Changé de 'assigned' à 'pending' pour correspondre au frontend
+    });
+
+    // Notification aux admins
+    try {
+      const admins = await Employee.find({ role: 'admin', isActive: true });
+      for (const admin of admins) {
+        await Notification.create({
+          recipientId: admin._id,
+          recipientRole: 'admin',
+          type: 'tradein_pending',
+          title: 'Nouvelle demande d\'échange',
+          message: `Nouvelle demande d'échange pour ${deviceModel} par ${clientName || 'Client'}`,
+          requestId: tradein._id,
+          clientName: clientName || 'Client',
+          reference: tradein._id.toString().slice(-6)
+        });
+      }
+    } catch (notifError) {
+      console.error('Erreur notification:', notifError);
+      // Ne pas bloquer la création si la notification échoue
+    }
+
+    res.status(201).json({
+      success: true,
+      data: { 
+        requestId: tradein._id, 
+        reference: tradein._id.toString().slice(-6),
+        tradein: tradein 
+      },
+      message: 'Échange créé avec succès.'
+    });
+  } catch (error) {
+    console.error('Erreur createTradein:', error);
+    res.status(500).json({ 
+      success: false, 
+      data: null, 
+      message: error.message || 'Erreur lors de la création de l\'échange' 
+    });
+  }
+};

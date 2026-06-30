@@ -260,4 +260,44 @@ router.get('/tradeins/history', technicianController.getTradeinHistory);
  */
 router.get('/tradein/:id', technicianController.getMyTradeinById);
 
+// Dans routes/technician.js - AJOUTEZ cette route
+/**
+ * @openapi
+ * /api/technician/repairs:
+ *   post:
+ *     tags:
+ *       - Technician - Repairs
+ *     summary: Create a new repair
+ *     description: Create a new repair request manually
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - clientName
+ *               - clientWhatsapp
+ *               - deviceModel
+ *             properties:
+ *               clientName:
+ *                 type: string
+ *               clientWhatsapp:
+ *                 type: string
+ *               deviceModel:
+ *                 type: string
+ *               issueDescription:
+ *                 type: string
+ *               estimatedCost:
+ *                 type: number
+ *               notes:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Repair created
+ */
+router.post('/repairs', technicianController.createRepair);
+
 module.exports = router;

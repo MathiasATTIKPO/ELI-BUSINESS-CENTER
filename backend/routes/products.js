@@ -2,6 +2,37 @@ const express = require('express');
 const router = express.Router();
 const productsController = require('../controllers/productsController');
 
+const Product = require('../models/Product'); 
+
+router.get('/phones/available', async (req, res) => {
+  try {
+    // Liste des marques de téléphones connues
+    const phoneBrands = ['Apple', 'Samsung', 'Xiaomi', 'OnePlus', 'Nokia', 'Huawei', 'OPPO', 'vivo', 'Google', 'Sony', 'Apple'];
+    
+    const phones = await Product.find({ 
+      $or: [
+        { name: { $regex: new RegExp(phoneBrands.join('|'), 'i') } },
+        { brand: { $regex: new RegExp(phoneBrands.join('|'), 'i') } }
+      ],
+      stock: { $gt: 0 },
+      active: true 
+    }).select('name brand price stock photos');
+    
+    res.json({ 
+      success: true, 
+      data: phones,
+      message: `${phones.length} téléphones disponibles` 
+    });
+  } catch (error) {
+    console.error('Erreur phones/available:', error);
+    res.status(500).json({ 
+      success: false, 
+      data: [], 
+      message: error.message 
+    });
+  }
+});
+
 /**
  * @openapi
  * /api/products:

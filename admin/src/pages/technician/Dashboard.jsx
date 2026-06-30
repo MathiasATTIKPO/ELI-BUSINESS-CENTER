@@ -26,20 +26,33 @@ export default function TechnicianDashboard() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [isFilterExpanded, setIsFilterExpanded] = useState(false)
 
-  const [productsInStock, setProductsInStock] = useState([]);
-  const [loadingProducts, setLoadingProducts] = useState(false);
+  const [availablePhones, setAvailablePhones] = useState([]);
+  const [loadingPhones, setLoadingPhones] = useState(false);
+  const [selectedPhone, setSelectedPhone] = useState(null);
 
-  const fetchProductsInStock = async () => {
-    setLoadingProducts(true);
+  const fetchAvailablePhones = async () => {
+    setLoadingPhones(true);
     try {
-      // Adapte l'URL selon ton API
-      const response = await api.get('/api/products/');
-      setProductsInStock(response.data.data || []);
+      const response = await api.get('/api/products/phones/available');
+      setAvailablePhones(response.data.data || []);
     } catch (error) {
-      console.error('Erreur lors du chargement des produits:', error);
-      setProductsInStock([]);
+      console.error('Erreur chargement téléphones:', error);
+      // Fallback: essayer avec la route des produits génériques
+      try {
+        const productsRes = await api.get('/api/products');
+        const phones = (productsRes.data.data || []).filter(
+          product => product.category === 'phone' && product.stock > 0
+        );
+        setAvailablePhones(phones);
+      } catch (fallbackError) {
+        console.error('Erreur fallback téléphones:', fallbackError);
+        setToast({
+          type: 'error',
+          message: 'Impossible de charger les téléphones disponibles'
+        });
+      }
     } finally {
-      setLoadingProducts(false);
+      setLoadingPhones(false);
     }
   };
 
@@ -48,18 +61,13 @@ export default function TechnicianDashboard() {
     issueDescription: '', estimatedCost: '', notes: ''
   })
 
-  const [newTradein, setNewTradein] = useState({
-    clientName: '', clientWhatsapp: '', deviceModel: '',
-    targetProduct: '', proposedValue: '', condition: 'good', notes: ''
-  })
-
   const [currentPage, setCurrentPage] = useState({ repairs: 1, tradeins: 1 })
   const itemsPerPage = 6
 
 
   useEffect(() => {
     fetchData();
-    fetchProductsInStock();
+    fetchAvailablePhones();
   }, [])
 
   const fetchData = async () => {
@@ -116,7 +124,7 @@ export default function TechnicianDashboard() {
       })
       setToast({ type: 'success', message: 'Échange créé avec succès' })
       setShowNewTradein(false)
-      setNewTradein({ clientName: '', clientWhatsapp: '', deviceModel: '', targetProduct: '', proposedValue: '', condition: 'good', notes: '' })
+      setNewTradein({ clientName: '', clientWhatsapp: '', deviceModel: '', targetProduct: '', targetProductName: '', targetProductPrice: 0, proposedValue: '', condition: 'good', notes: '' })
       fetchData()
     } catch (error) {
       setToast({ type: 'error', message: 'Erreur lors de la création' })
@@ -159,6 +167,18 @@ export default function TechnicianDashboard() {
     readyTradeins: tradeins.filter(t => t.status === 'paid' || t.status === 'accepted').length,
     totalTradeins: tradeins.length
   }), [repairs, tradeins])
+
+  const [newTradein, setNewTradein] = useState({
+  clientName: '', 
+  clientWhatsapp: '', 
+  deviceModel: '',
+  targetProduct: '',        // ID du téléphone
+  targetProductName: '',    // Nom du téléphone (pour affichage)
+  targetProductPrice: 0,    // Prix du téléphone
+  proposedValue: '', 
+  condition: 'good', 
+  notes: ''
+})
 
   // Filtrage
   const filteredRepairs = useMemo(() => {
@@ -432,7 +452,7 @@ export default function TechnicianDashboard() {
                             Détails
                           </button>
 
-                          {activeTab === 'tradeins' && item.status === 'pending' && (
+                          {activeTab === 'tradeins' && item.status === 'assigned' && (
                             <div className="flex gap-2">
                               <button
                                 onClick={() => handleUpdateTradeinStatus(item._id, 'accepted')}
@@ -585,8 +605,11 @@ export default function TechnicianDashboard() {
 
       {/* Modal Nouvel Échange */}
       {showNewTradein && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowNewTradein(false)}>
-          <div className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          onClick={() => setShowNewTradein(false)}>
+          <div className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl"
+            onClick={e => e.stopPropagation()}>
+
             <div className="sticky top-0 bg-white border-b border-gray-100 p-6">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-xl bg-gradient-to-r from-purple-500 to-violet-500">
@@ -598,55 +621,60 @@ export default function TechnicianDashboard() {
                 </div>
               </div>
             </div>
+
             <form onSubmit={handleCreateTradein} className="p-6 space-y-5">
+              {/* Client Info */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700">Nom du client *</label>
-                  <input type="text" value={newTradein.clientName} onChange={(e) => setNewTradein({ ...newTradein, clientName: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500" required />
+                  <label className="text-sm font-semibold text-gray-700">
+                    Nom du client <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={newTradein.clientName}
+                    onChange={(e) => setNewTradein({ ...newTradein, clientName: e.target.value })}
+                    placeholder="Jean Dupont"
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    required
+                  />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700">WhatsApp *</label>
-                  <input type="text" value={newTradein.clientWhatsapp} onChange={(e) => setNewTradein({ ...newTradein, clientWhatsapp: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500" required />
+                  <label className="text-sm font-semibold text-gray-700">
+                    WhatsApp <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={newTradein.clientWhatsapp}
+                    onChange={(e) => setNewTradein({ ...newTradein, clientWhatsapp: e.target.value })}
+                    placeholder="+225 XX XX XX XX"
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    required
+                  />
                 </div>
               </div>
+
+              {/* Device Info */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700">Modèle *</label>
-                  <input type="text" value={newTradein.deviceModel} onChange={(e) => setNewTradein({ ...newTradein, deviceModel: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500" required />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700">Produit souhaité</label>
-                  {loadingProducts ? (
-                    <div className="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50 text-gray-500 animate-pulse">
-                      Chargement des produits...
-                    </div>
-                  ) : (
-                    <select
-                      value={newTradein.targetProduct}
-                      onChange={(e) => setNewTradein({ ...newTradein, targetProduct: e.target.value })}
-                      className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500"
-                    >
-                      <option value="">Sélectionnez un produit</option>
-                      {productsInStock
-                        .filter(p => p.stock > 0)
-                        .map(product => (
-                          <option key={product._id} value={product.name}>
-                            {product.name} - {product.price?.toLocaleString('fr-FR') || ''} FCFA ({product.stock} en stock)
-                          </option>
-                        ))
-                      }
-                    </select>
-                  )}
-                </div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700">Valeur (FCFA)</label>
-                  <input type="number" value={newTradein.proposedValue} onChange={(e) => setNewTradein({ ...newTradein, proposedValue: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500" />
+                  <label className="text-sm font-semibold text-gray-700">
+                    Modèle à échanger <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={newTradein.deviceModel}
+                    onChange={(e) => setNewTradein({ ...newTradein, deviceModel: e.target.value })}
+                    placeholder="iPhone 12, Samsung S21..."
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    required
+                  />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-gray-700">État</label>
-                  <select value={newTradein.condition} onChange={(e) => setNewTradein({ ...newTradein, condition: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500">
+                  <select
+                    value={newTradein.condition}
+                    onChange={(e) => setNewTradein({ ...newTradein, condition: e.target.value })}
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  >
                     <option value="new">Neuf</option>
                     <option value="like-new">Comme neuf</option>
                     <option value="good">Bon état</option>
@@ -655,9 +683,171 @@ export default function TechnicianDashboard() {
                   </select>
                 </div>
               </div>
+
+              {/* Téléphone souhaité - SECTION AMÉLIORÉE */}
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-gray-700">
+                  Téléphone souhaité <span className="text-red-500">*</span>
+                </label>
+                {loadingPhones ? (
+                  <div className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50">
+                    <div className="flex items-center gap-3">
+                      <RefreshCw size={16} className="animate-spin text-purple-500" />
+                      <span className="text-gray-500">Chargement des téléphones disponibles...</span>
+                    </div>
+                  </div>
+                ) : availablePhones.length === 0 ? (
+                  <div className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-yellow-50">
+                    <div className="flex items-center gap-3">
+                      <AlertCircle size={16} className="text-yellow-600" />
+                      <span className="text-yellow-700">Aucun téléphone disponible en stock</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-2">
+                    {/* Barre de recherche rapide */}
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+                      <input
+                        type="text"
+                        placeholder="Rechercher un téléphone..."
+                        className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
+                        onChange={(e) => {
+                          const searchTerm = e.target.value.toLowerCase();
+                          // Filtrer les téléphones affichés
+                          const filtered = availablePhones.filter(phone =>
+                            phone.name.toLowerCase().includes(searchTerm) ||
+                            phone.brand?.toLowerCase().includes(searchTerm)
+                          );
+                          // Mettre à jour l'affichage
+                          document.querySelectorAll('.phone-option').forEach(el => {
+                            const phoneText = el.textContent.toLowerCase();
+                            el.style.display = phoneText.includes(searchTerm) ? '' : 'none';
+                          });
+                        }}
+                      />
+                    </div>
+
+                    {/* Liste des téléphones */}
+                    <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-xl divide-y divide-gray-100">
+                      {availablePhones.map(phone => (
+                        <label
+                          key={phone._id}
+                          className={`phone-option flex items-center gap-3 p-3 cursor-pointer hover:bg-purple-50 transition-colors ${selectedPhone?._id === phone._id ? 'bg-purple-50 border-l-4 border-purple-500' : ''
+                            }`}
+                        >
+                          <input
+                            type="radio"
+                            name="targetPhone"
+                            className="sr-only"
+                            checked={selectedPhone?._id === phone._id}
+                            onChange={() => {
+                              setSelectedPhone(phone);
+                              setNewTradein({
+                                ...newTradein,
+                                targetProduct: phone._id,
+                                targetProductName: phone.name,
+                                targetProductPrice: phone.price
+                              });
+                            }}
+                          />
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between">
+                              <span className="font-medium text-gray-900">{phone.name}</span>
+                              <span className={`text-xs font-medium px-2 py-1 rounded-full ${phone.stock <= 3 ? 'bg-red-50 text-red-700' :
+                                  phone.stock <= 10 ? 'bg-amber-50 text-amber-700' :
+                                    'bg-green-50 text-green-700'
+                                }`}>
+                                Stock: {phone.stock}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between mt-1">
+                              <span className="text-sm text-gray-500">
+                                {phone.brand || 'Non spécifié'} {phone.model && `- ${phone.model}`}
+                              </span>
+                              <span className="text-sm font-semibold text-purple-600">
+                                {phone.price?.toLocaleString('fr-FR')} FCFA
+                              </span>
+                            </div>
+                          </div>
+                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedPhone?._id === phone._id ? 'border-purple-500' : 'border-gray-300'
+                            }`}>
+                            {selectedPhone?._id === phone._id && (
+                              <div className="w-3 h-3 rounded-full bg-purple-500"></div>
+                            )}
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {selectedPhone && (
+                  <div className="mt-2 px-4 py-2 bg-purple-50 rounded-xl border border-purple-200">
+                    <p className="text-sm font-medium text-purple-700">
+                      📱 {selectedPhone.name} - {selectedPhone.price?.toLocaleString('fr-FR')} FCFA
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Valeur proposée */}
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-gray-700">
+                  Valeur proposée (FCFA)
+                </label>
+                <input
+                  type="number"
+                  value={newTradein.proposedValue}
+                  onChange={(e) => setNewTradein({ ...newTradein, proposedValue: e.target.value })}
+                  placeholder="Ex: 150000"
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                />
+                {selectedPhone && newTradein.proposedValue && (
+                  <div className="flex items-center gap-2 mt-1">
+                    <DollarSign size={16} className="text-gray-400" />
+                    <span className={`text-sm font-medium ${parseFloat(newTradein.proposedValue) > selectedPhone.price ? 'text-green-600' : 'text-amber-600'
+                      }`}>
+                      {parseFloat(newTradein.proposedValue) > selectedPhone.price
+                        ? `+ ${(parseFloat(newTradein.proposedValue) - selectedPhone.price).toLocaleString('fr-FR')} FCFA (reste à payer)`
+                        : selectedPhone.price - parseFloat(newTradein.proposedValue) > 0
+                          ? `- ${(selectedPhone.price - parseFloat(newTradein.proposedValue)).toLocaleString('fr-FR')} FCFA (différence)`
+                          : 'Montant équivalent'}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Notes */}
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-gray-700">Notes complémentaires</label>
+                <textarea
+                  value={newTradein.notes}
+                  onChange={(e) => setNewTradein({ ...newTradein, notes: e.target.value })}
+                  rows="2"
+                  placeholder="Informations supplémentaires..."
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                />
+              </div>
+
+              {/* Buttons */}
               <div className="flex gap-3 justify-end pt-4 border-t border-gray-100">
-                <button type="button" onClick={() => setShowNewTradein(false)} className="px-5 py-2.5 border-2 border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 font-medium">Annuler</button>
-                <button type="submit" className="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-violet-600 text-white rounded-xl hover:from-purple-700 hover:to-violet-700 font-medium shadow-sm">Créer l'échange</button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowNewTradein(false);
+                    setSelectedPhone(null);
+                  }}
+                  className="px-5 py-2.5 border-2 border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 font-medium transition-colors"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  disabled={loadingPhones || availablePhones.length === 0}
+                  className="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-violet-600 text-white rounded-xl hover:from-purple-700 hover:to-violet-700 font-medium shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Créer l'échange
+                </button>
               </div>
             </form>
           </div>
