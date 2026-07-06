@@ -1,5 +1,5 @@
-const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const { signToken } = require('../utils/jwt');
 const Product = require('../models/Product');
 const RepairRequest = require('../models/RepairRequest');
 const TradeinRequest = require('../models/TradeinRequest');
@@ -8,105 +8,61 @@ const Employee = require('../models/Employee');
 const InventoryItem = require('../models/InventoryItem');
 const invoiceController = require('./invoiceController');
 const Notification = require('../models/Notification');
+const notificationService = require('../services/notificationService');
 const path = require('path');
 const fs = require('fs');
 
-const signToken = (payload) => {
-  const jwtSecret = process.env.JWT_SECRET || 'change_this_secret';
-  return jwt.sign(payload, jwtSecret, { expiresIn: '8h' });
-};
-
 // ==================== NOTIFICATIONS ====================
 
-// Créer une notification pour un utilisateur spécifique
 const createNotification = async (recipientId, recipientRole, type, title, message, requestId, clientName, reference) => {
-  try {
-    await Notification.create({ 
-      recipientId, 
-      recipientRole, 
-      type, 
-      title, 
-      message, 
-      requestId, 
-      clientName, 
-      reference 
-    });
-  } catch (error) {
-    console.error('Erreur création notification:', error.message);
-  }
+  return notificationService.createNotification({
+    recipientId,
+    recipientRole,
+    type,
+    title,
+    message,
+    requestId,
+    clientName,
+    reference
+  });
 };
 
-// Notifier tous les utilisateurs d'un rôle spécifique
 const notifyRole = async (role, type, title, message, requestId, clientName, reference) => {
-  try {
-    const users = await Employee.find({ role, isActive: true });
-    if (users.length === 0) {
-      console.log(`Aucun utilisateur trouvé pour le rôle ${role}`);
-      return;
-    }
-    for (const user of users) {
-      await createNotification(user._id, role, type, title, message, requestId, clientName, reference);
-    }
-    console.log(`✅ Notification envoyée à ${users.length} ${role}(s)`);
-  } catch (error) {
-    console.error(`Erreur notification ${role}:`, error.message);
-  }
+  return notificationService.notifyRole({
+    role,
+    type,
+    title,
+    message,
+    requestId,
+    clientName,
+    reference
+  });
 };
 
-// Notifier un technicien spécifique (celui assigné)
 const notifyTechnician = async (repairOrTradein, type, title, message) => {
-  const assignedToId = repairOrTradein.assignedTo?._id || repairOrTradein.assignedTo;
-  if (assignedToId) {
-    await createNotification(
-      assignedToId, 
-      'technician', 
-      type, 
-      title, 
-      message,
-      repairOrTradein._id, 
-      repairOrTradein.clientName, 
-      repairOrTradein._id.toString().slice(-6)
-    );
-    console.log(`✅ Notification envoyée au technicien ${assignedToId}`);
-  } else {
-    console.log(`⚠️ Aucun technicien assigné pour ${repairOrTradein._id}`);
-  }
+  return notificationService.notifyTechnician(repairOrTradein, type, title, message);
 };
 
-// Notifier tous les admins
 const notifyAdmins = async (type, title, message, requestId, clientName, reference) => {
-  try {
-    const admins = await Employee.find({ role: 'admin', isActive: true });
-    if (admins.length === 0) {
-      console.log('Aucun admin trouvé');
-      // Si aucun admin n'est trouvé dans la DB, notifier l'admin système via son ID générique
-      await createNotification('admin_id', 'admin', type, title, message, requestId, clientName, reference);
-      return; 
-    }
-    for (const admin of admins) {
-      await createNotification(admin._id, 'admin', type, title, message, requestId, clientName, reference);
-    }
-    console.log(`✅ Notification envoyée à ${admins.length} admin(s)`);
-  } catch (error) {
-    console.error('Erreur notification admins:', error.message);
-  }
+  return notificationService.notifyAdmins({
+    type,
+    title,
+    message,
+    requestId,
+    clientName,
+    reference
+  });
 };
 
-// Notifier tous les cashiers
 const notifyCashiers = async (type, title, message, requestId, clientName, reference) => {
-  try {
-    const cashiers = await Employee.find({ role: 'cashier', isActive: true });
-    if (cashiers.length === 0) {
-      console.log('Aucun caissier trouvé');
-      return;
-    }
-    for (const cashier of cashiers) {
-      await createNotification(cashier._id, 'cashier', type, title, message, requestId, clientName, reference);
-    }
-    console.log(`✅ Notification envoyée à ${cashiers.length} caissier(s)`);
-  } catch (error) {
-    console.error('Erreur notification cashiers:', error.message);
-  }
+  return notificationService.notifyCashiers({
+    type,
+    title,
+    message,
+    requestId,
+    clientName,
+    reference
+  });
 };
 
 // ==================== NOTIFICATIONS EXPORTS ====================
@@ -178,17 +134,29 @@ const loginEmployee = async (req, res, allowedRoles) => {
 exports.login = async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ success: false, message: 'Identifiants requis.' });
-  
-  const ADMIN_USER = process.env.ADMIN_USER || 'admin';
+
+  const ADMIN_USER = process.env.ADMIN_USER || 'admin@elibusiness.com';
   const ADMIN_PASS = process.env.ADMIN_PASS || 'password123';
-  
-  if (email !== ADMIN_USER || password !== ADMIN_PASS) {
-    return res.status(401).json({ success: false, message: 'Authentification échouée.' });
+
+  const isEnvAdmin = email === ADMIN_USER && password === ADMIN_PASS;
+
+  if (isEnvAdmin) {
+    const token = signToken({ id: 'admin_id', email, role: 'admin', name: 'Administrateur' });
+    return res.json({ success: true, data: { user: { id: 'admin_id', email, role: 'admin', name: 'Administrateur' }, token }, message: 'Connexion réussie.' });
   }
 
-  // Fix: Ajout du rôle admin dans le token pour la gestion des permissions backend/frontend
-  const token = signToken({ id: 'admin_id', email, role: 'admin', name: 'Administrateur' });
-  res.json({ success: true, data: { user: { id: 'admin_id', email, role: 'admin', name: 'Administrateur' }, token }, message: 'Connexion réussie.' });
+  try {
+    const employee = await Employee.findOne({ email, isActive: true, role: 'admin' });
+    if (employee && await bcrypt.compare(password, employee.password)) {
+      const token = signToken({ id: employee._id, email: employee.email, role: employee.role, name: employee.name });
+      const { password: _, ...user } = employee.toObject();
+      return res.json({ success: true, data: { user, token }, message: 'Connexion réussie.' });
+    }
+  } catch (error) {
+    console.error('Erreur login admin:', error.message);
+  }
+
+  return res.status(401).json({ success: false, message: 'Authentification échouée.' });
 };
 
 exports.technicianLogin = (req, res) => loginEmployee(req, res, ['technician']);

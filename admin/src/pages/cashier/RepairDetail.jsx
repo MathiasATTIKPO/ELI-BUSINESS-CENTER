@@ -100,6 +100,8 @@ export default function CashierRepairDetail() {
     const configs = {
       assigned: { color: 'bg-blue-50 text-blue-700 border-blue-200', icon: CheckCircle, label: 'Affecté' },
       completed: { color: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: GoalIcon, label: 'Terminé' },
+      ready: { color: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: GoalIcon, label: 'Terminé' },
+
       paid: { color: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: DollarSign, label: 'Payé' },
       pending: { color: 'bg-yellow-50 text-yellow-700 border-yellow-200', icon: AlertCircle, label: 'En attente' },
       repairing: { color: 'bg-orange-50 text-orange-700 border-orange-200', icon: AlertCircle, label: 'En réparation' }
@@ -110,6 +112,7 @@ export default function CashierRepairDetail() {
   const getConditionConfig = (condition) => {
     const configs = {
       completed: { label: 'Réparé', icon: Star, color: 'text-emerald-600', bgColor: 'bg-emerald-50' },
+      ready: { label: 'Terminé', icon: Star, color: 'text-emerald-600', bgColor: 'bg-emerald-50' },
       paid: { label: 'Payé', icon: ThumbsUp, color: 'text-green-600', bgColor: 'bg-green-50' },
       repairing: { label: 'En réparation', icon: AlertCircle, color: 'text-amber-600', bgColor: 'bg-amber-50' },
       pending: { label: 'En attente', icon: AlertCircle, color: 'text-yellow-600', bgColor: 'bg-yellow-50' }

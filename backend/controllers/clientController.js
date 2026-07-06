@@ -2,51 +2,22 @@ const RepairRequest = require('../models/RepairRequest');
 const TradeinRequest = require('../models/TradeinRequest');
 const Product = require('../models/Product');
 const Employee = require('../models/Employee');
-const Notification = require('../models/Notification');
+const notificationService = require('../services/notificationService');
 
 const formatReference = (id) => {
   if (!id) return 'N/A';
   return `REF-${id.toString().slice(-6).toUpperCase()}`;
 };
 
-// Fonction de création de notification
-const createNotification = async (recipientId, recipientRole, type, title, message, requestId, clientName, reference) => {
-  try {
-    await Notification.create({
-      recipientId,
-      recipientRole,
-      type,
-      title,
-      message,
-      requestId,
-      clientName,
-      reference
-    });
-    console.log(`✅ Notification créée pour ${recipientRole}`);
-  } catch (error) {
-    console.error('Erreur création notification:', error);
-  }
-};
-
 const notifyAdmins = async (type, title, message, requestId, clientName, reference) => {
-  try {
-    const admins = await Employee.find({ role: 'admin', isActive: true });
-    console.log(`📢 Envoi de notification à ${admins.length} administrateur(s)`);
-    for (const admin of admins) {
-      await createNotification(
-        admin._id,
-        'admin',
-        type,
-        title,
-        message,
-        requestId,
-        clientName,
-        reference
-      );
-    }
-  } catch (error) {
-    console.error('Erreur notification admins:', error);
-  }
+  return notificationService.notifyAdmins({
+    type,
+    title,
+    message,
+    requestId,
+    clientName,
+    reference
+  });
 };
 
 // Récupérer les produits pour le client

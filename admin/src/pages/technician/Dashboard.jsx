@@ -58,7 +58,7 @@ export default function TechnicianDashboard() {
 
   const [newRepair, setNewRepair] = useState({
     clientName: '', clientWhatsapp: '', deviceModel: '',
-    issueDescription: '', estimatedCost: '', notes: ''
+    issueDescription: '', estimatedPrice: '', notes: ''
   })
 
   const [currentPage, setCurrentPage] = useState({ repairs: 1, tradeins: 1 })
@@ -95,13 +95,13 @@ export default function TechnicianDashboard() {
     try {
       await api.post('/api/technician/repairs', {
         ...newRepair,
-        estimatedCost: parseFloat(newRepair.estimatedCost) || 0,
+        estimatedPrice: parseFloat(newRepair.estimatedPrice) || 0,
         assignedTo: user?._id,
         status: 'assigned'
       })
       setToast({ type: 'success', message: 'Réparation créée avec succès' })
       setShowNewRepair(false)
-      setNewRepair({ clientName: '', clientWhatsapp: '', deviceModel: '', issueDescription: '', estimatedCost: '', notes: '' })
+      setNewRepair({ clientName: '', clientWhatsapp: '', deviceModel: '', issueDescription: '', estimatedPrice: '', notes: '' })
       fetchData()
     } catch (error) {
       setToast({ type: 'error', message: 'Erreur lors de la création' })
@@ -432,11 +432,11 @@ export default function TechnicianDashboard() {
                             </p>
                           )}
 
-                          {(item.estimatedCost || item.proposedValue) && (
+                          {(item.estimatedPrice || item.proposedValue) && (
                             <p className="text-sm font-semibold text-emerald-600 flex items-center gap-1.5">
                               <DollarSign size={14} />
                               {activeTab === 'repairs'
-                                ? `Devis: ${item.estimatedCost?.toLocaleString('fr-FR')} FCFA`
+                                ? `Devis: ${item.estimatedPrice?.toLocaleString('fr-FR')} FCFA`
                                 : `Valeur: ${item.proposedValue?.toLocaleString('fr-FR')} FCFA`
                               }
                             </p>
@@ -587,7 +587,7 @@ export default function TechnicianDashboard() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-gray-700">Devis (FCFA)</label>
-                  <input type="number" value={newRepair.estimatedCost} onChange={(e) => setNewRepair({ ...newRepair, estimatedCost: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500" />
+                  <input type="number" value={newRepair.estimatedPrice} onChange={(e) => setNewRepair({ ...newRepair, estimatedPrice: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-gray-700">Notes</label>

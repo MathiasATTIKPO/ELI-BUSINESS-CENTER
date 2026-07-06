@@ -323,12 +323,12 @@ export default function TechnicianRepairDetail() {
                       {repair.deviceModel || 'Non spécifié'}
                     </p>
                   </div>
-                  {repair.estimatedCost && (
+                  {repair.estimatedPrice && (
                     <div className="space-y-1">
                       <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Devis estimé</p>
                       <p className="font-bold text-emerald-600 flex items-center gap-2">
                         <DollarSign size={16} />
-                        {repair.estimatedCost.toLocaleString('fr-FR')} FCFA
+                        {repair.estimatedPrice.toLocaleString('fr-FR')} FCFA
                       </p>
                     </div>
                   )}

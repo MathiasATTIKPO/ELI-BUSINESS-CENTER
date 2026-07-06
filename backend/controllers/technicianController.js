@@ -2,24 +2,30 @@ const RepairRequest = require('../models/RepairRequest');
 const TradeinRequest = require('../models/TradeinRequest');
 const Employee = require('../models/Employee');
 const Notification = require('../models/Notification');
+const notificationService = require('../services/notificationService');
 
 const createNotification = async (recipientId, recipientRole, type, title, message, requestId, clientName, reference) => {
-  try {
-    await Notification.create({ recipientId, recipientRole, type, title, message, requestId, clientName, reference });
-  } catch (error) {
-    console.error('Erreur création notification:', error.message);
-  }
+  return notificationService.createNotification({
+    recipientId,
+    recipientRole,
+    type,
+    title,
+    message,
+    requestId,
+    clientName,
+    reference
+  });
 };
 
 const notifyAdmins = async (type, title, message, requestId, clientName, reference) => {
-  try {
-    const admins = await Employee.find({ role: 'admin', isActive: true });
-    for (const admin of admins) {
-      await createNotification(admin._id, 'admin', type, title, message, requestId, clientName, reference);
-    }
-  } catch (error) {
-    console.error('Erreur notification admins:', error.message);
-  }
+  return notificationService.notifyAdmins({
+    type,
+    title,
+    message,
+    requestId,
+    clientName,
+    reference
+  });
 };
 
 // ===== FONCTIONS POUR LES TECHNICIENS =====

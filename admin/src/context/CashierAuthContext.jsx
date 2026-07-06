@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import api from '../services/api'
+import { useAuth } from './AuthContext'
 
 const CashierAuthContext = createContext()
 
@@ -14,6 +15,7 @@ export const useCashierAuth = () => {
 export const CashierAuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
+  const { login: syncAuthLogin, logout: syncAuthLogout } = useAuth()
 
   useEffect(() => {
     // Initialiser l'état à partir du localStorage
@@ -36,12 +38,15 @@ export const CashierAuthProvider = ({ children }) => {
     setLoading(false)
   }, [])
 
-  const login = (userData, authToken) => {
+  const login = (userData, authToken, role = 'cashier') => {
     console.log('[CashierAuth] Connexion:', userData.name)
     
     // Stocker dans localStorage
     localStorage.setItem('cashier_token', authToken)
     localStorage.setItem('cashier_user', JSON.stringify(userData))
+    
+    // Synchroniser avec l'auth globale utilisée par la cloche de notifications
+    syncAuthLogin(userData, authToken, role)
     
     // Mettre à jour l'état
     setUser(userData)
@@ -57,14 +62,11 @@ export const CashierAuthProvider = ({ children }) => {
     localStorage.removeItem('cashier_token')
     localStorage.removeItem('cashier_user')
     
+    // Synchroniser avec l'auth globale
+    syncAuthLogout('cashier')
+    
     // Mettre à jour l'état
     setUser(null)
-    
-    // Ne pas supprimer l'Authorization si un autre rôle est connecté
-    const hasOtherRole = localStorage.getItem('admin_token') || localStorage.getItem('technician_token')
-    if (!hasOtherRole) {
-      delete api.defaults.headers.common['Authorization']
-    }
   }
 
   const value = {

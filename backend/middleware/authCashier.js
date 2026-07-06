@@ -1,4 +1,4 @@
-const jwt = require('jsonwebtoken');
+const { verifyToken } = require('../utils/jwt');
 
 const authCashier = (req, res, next) => {
   try {
@@ -7,7 +7,7 @@ const authCashier = (req, res, next) => {
       return res.status(401).json({ success: false, message: 'Token manquant.' });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = verifyToken(token);
     if (decoded.role !== 'cashier' && decoded.role !== 'admin') {
       return res.status(403).json({ success: false, message: 'Accès réservé aux caissiers.' });
     }

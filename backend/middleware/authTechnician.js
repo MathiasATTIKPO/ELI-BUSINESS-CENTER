@@ -1,4 +1,4 @@
-const jwt = require('jsonwebtoken');
+const { verifyToken } = require('../utils/jwt');
 
 const authTechnician = (req, res, next) => {
   try {
@@ -8,7 +8,7 @@ const authTechnician = (req, res, next) => {
       return res.status(401).json({ success: false, data: null, message: 'Token manquant.' });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = verifyToken(token);
 
     // Vérifier que c'est un technicien
     if (decoded.role !== 'technician') {

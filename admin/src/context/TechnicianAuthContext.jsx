@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState } from 'react'
 import TokenManager from '../services/tokenManager'
+import { useAuth } from './AuthContext'
 
 const TechnicianAuthContext = createContext()
 
@@ -15,11 +16,13 @@ export const TechnicianAuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => TokenManager.getUser('technician'))
   const [token, setToken] = useState(() => TokenManager.getTokenByRole('technician'))
   const [loading, setLoading] = useState(false)
+  const { login: syncAuthLogin, logout: syncAuthLogout } = useAuth()
 
-  const login = (userData, authToken) => {
+  const login = (userData, authToken, role = 'technician') => {
     console.log('[TechnicianAuthContext] Login - Saving technician credentials')
     TokenManager.saveToken('technician', authToken)
     TokenManager.saveUser('technician', userData)
+    syncAuthLogin(userData, authToken, role)
     setUser(userData)
     setToken(authToken)
   }
@@ -27,6 +30,7 @@ export const TechnicianAuthProvider = ({ children }) => {
   const logout = () => {
     console.log('[TechnicianAuthContext] Logout - Clearing technician session')
     TokenManager.clearRole('technician')
+    syncAuthLogout('technician')
     setUser(null)
     setToken(null)
   }
