@@ -194,6 +194,27 @@ app.use('/api/client', clientRoutes);
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
+app.get('/', (req, res) => {
+  res.json({
+    success: true,
+    data: {
+      service: 'eli-business-center-backend',
+      docs: '/api-docs',
+      health: '/api/health',
+      dbStatus: '/api/db-status',
+    },
+    message: 'Backend API is online',
+  });
+});
+
+app.get('/favicon.ico', (req, res) => {
+  res.status(204).end();
+});
+
+app.get('/favicon.png', (req, res) => {
+  res.status(204).end();
+});
+
 app.get('/api/health', (req, res) => {
   const db = getDatabaseStatus();
 

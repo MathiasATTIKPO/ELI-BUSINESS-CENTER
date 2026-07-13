@@ -9,7 +9,11 @@ const getMongoUri = () => {
     return process.env.MONGO_URI;
   }
 
-  throw new Error('MONGO_URI is missing. Configure an Atlas connection string in environment variables');
+  if (process.env.MONGODB_URI) {
+    return process.env.MONGODB_URI;
+  }
+
+  throw new Error('MONGO_URI (or MONGODB_URI) is missing. Configure an Atlas connection string in environment variables');
 };
 
 const state = {
