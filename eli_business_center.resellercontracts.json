@@ -1,0 +1,569 @@
+[{
+  "_id": {
+    "$oid": "6a4fc2f17e5b84c75c860397"
+  },
+  "number": "CTR-2026-429A73",
+  "reseller": {
+    "$oid": "6a4f90c13c677842c13b4ad5"
+  },
+  "product": {
+    "$oid": "6a33cffb2d5174a35e47c694"
+  },
+  "catalogPrice": 650000,
+  "negotiatedPrice": 449996,
+  "expectedSalePrice": 650000,
+  "status": "sold",
+  "history": [
+    {
+      "byRole": "reseller",
+      "byId": "6a4f90c13c677842c13b4ad5",
+      "action": "requested",
+      "data": {
+        "comment": "",
+        "proposedPrice": 449996,
+        "expectedSalePrice": 650000
+      },
+      "createdAt": {
+        "$date": "2026-07-09T15:49:05.325Z"
+      },
+      "_id": {
+        "$oid": "6a4fc2f17e5b84c75c860398"
+      }
+    },
+    {
+      "byRole": "admin",
+      "byId": "admin_id",
+      "action": "status:approved",
+      "_id": {
+        "$oid": "6a4fc4c99d944524ee1b5b58"
+      },
+      "createdAt": {
+        "$date": "2026-07-09T15:56:57.569Z"
+      }
+    },
+    {
+      "byRole": "admin",
+      "byId": "admin_id",
+      "action": "status:active",
+      "data": {
+        "dueAt": {
+          "$date": "2026-07-11T15:57:03.467Z"
+        }
+      },
+      "_id": {
+        "$oid": "6a4fc4cf9d944524ee1b5b68"
+      },
+      "createdAt": {
+        "$date": "2026-07-09T15:57:03.470Z"
+      }
+    },
+    {
+      "byRole": "reseller",
+      "byId": "6a4f90c13c677842c13b4ad5",
+      "action": "decision:sold",
+      "data": {
+        "amount": 450000,
+        "declaredAt": "2026-07-09T16:54:48.277Z",
+        "declaredBy": "reseller",
+        "waitingForCounterparty": true
+      },
+      "createdAt": {
+        "$date": "2026-07-09T16:54:48.341Z"
+      },
+      "_id": {
+        "$oid": "6a4fd258a9fa040ea3ac68a9"
+      }
+    },
+    {
+      "byRole": "reseller",
+      "byId": "6a4f90c13c677842c13b4ad5",
+      "action": "decision:sold",
+      "data": {
+        "amount": 450000,
+        "realSalePrice": 650000,
+        "declaredAt": "2026-07-09T16:55:10.202Z",
+        "declaredBy": "reseller",
+        "waitingForCounterparty": true
+      },
+      "createdAt": {
+        "$date": "2026-07-09T16:55:10.232Z"
+      },
+      "_id": {
+        "$oid": "6a4fd26ea9fa040ea3ac68c2"
+      }
+    },
+    {
+      "byRole": "admin",
+      "byId": "admin_id",
+      "action": "decision:sold",
+      "data": {
+        "amount": 450000,
+        "declaredAt": "2026-07-09T16:55:23.153Z",
+        "declaredBy": "admin",
+        "waitingForCounterparty": true
+      },
+      "createdAt": {
+        "$date": "2026-07-09T16:55:23.172Z"
+      },
+      "_id": {
+        "$oid": "6a4fd27ba9fa040ea3ac68e0"
+      }
+    },
+    {
+      "byRole": "system",
+      "byId": null,
+      "action": "finalized:sold",
+      "data": {
+        "resellerDecision": "sold",
+        "adminDecision": "sold",
+        "paymentStatus": "pending_cashier"
+      },
+      "createdAt": {
+        "$date": "2026-07-09T16:55:23.172Z"
+      },
+      "_id": {
+        "$oid": "6a4fd27ba9fa040ea3ac68e6"
+      }
+    },
+    {
+      "byRole": "cashier",
+      "byId": "6a33cc222d5174a35e47c608",
+      "action": "cash_collected",
+      "data": {
+        "amount": 450000,
+        "paymentMethod": "cash",
+        "note": "Encaissement contrat revendeur"
+      },
+      "createdAt": {
+        "$date": "2026-07-09T16:55:59.808Z"
+      },
+      "_id": {
+        "$oid": "6a4fd29fa9fa040ea3ac6944"
+      }
+    }
+  ],
+  "handedAt": {
+    "$date": "2026-07-09T15:57:03.467Z"
+  },
+  "createdAt": {
+    "$date": "2026-07-09T15:49:05.336Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-09T18:23:53.635Z"
+  },
+  "__v": 6,
+  "dueAt": {
+    "$date": "2026-07-11T15:57:03.467Z"
+  },
+  "confirmation": {
+    "resellerConfirmedAt": {
+      "$date": "2026-07-09T16:55:10.232Z"
+    },
+    "resellerDecision": "sold",
+    "adminConfirmedAt": {
+      "$date": "2026-07-09T16:55:23.172Z"
+    },
+    "adminDecision": "sold",
+    "finalizedAt": {
+      "$date": "2026-07-09T16:55:23.172Z"
+    },
+    "finalizedBy": "mutual"
+  },
+  "payment": {
+    "amountExpected": 450000,
+    "amountPaid": 450000,
+    "note": "Encaissement contrat revendeur",
+    "paymentMethod": "cash",
+    "required": true,
+    "status": "paid",
+    "paidAt": {
+      "$date": "2026-07-09T16:55:59.808Z"
+    },
+    "paidById": "6a33cc222d5174a35e47c608",
+    "paidByRole": "cashier",
+    "invoiceUrl": ""
+  },
+  "saleInfo": {
+    "amount": 450000,
+    "paymentMethod": "cash",
+    "collectedAt": {
+      "$date": "2026-07-09T16:55:59.808Z"
+    },
+    "collectedBy": "Caissier Par Défaut"
+  },
+  "contractPdfUrl": "/uploads/contracts/contrat_CTR-2026-429A73_1783621433472.pdf"
+},
+{
+  "_id": {
+    "$oid": "6a4fe7b0723eb3e7753b8433"
+  },
+  "number": "CTR-2026-9C89E4",
+  "reseller": {
+    "$oid": "6a4f90c13c677842c13b4ad5"
+  },
+  "product": {
+    "$oid": "6a33cc222d5174a35e47c61a"
+  },
+  "imei": "",
+  "catalogPrice": 330000,
+  "negotiatedPrice": 330000,
+  "expectedSalePrice": 300000,
+  "handedAt": {
+    "$date": "2026-07-11T12:05:54.821Z"
+  },
+  "dueAt": {
+    "$date": "2026-07-13T12:05:54.821Z"
+  },
+  "status": "sold",
+  "confirmation": {
+    "resellerDecision": "sold",
+    "resellerConfirmedAt": {
+      "$date": "2026-07-11T12:06:16.163Z"
+    },
+    "adminDecision": "sold",
+    "adminConfirmedAt": {
+      "$date": "2026-07-11T12:05:59.674Z"
+    },
+    "finalizedAt": {
+      "$date": "2026-07-11T12:06:16.163Z"
+    },
+    "finalizedBy": "mutual"
+  },
+  "payment": {
+    "required": true,
+    "status": "paid",
+    "amountExpected": 300000,
+    "amountPaid": 300000,
+    "paidAt": {
+      "$date": "2026-07-12T00:09:31.153Z"
+    },
+    "paidById": "6a33cc222d5174a35e47c608",
+    "paidByRole": "cashier",
+    "paymentMethod": "cash",
+    "note": "",
+    "invoiceUrl": "/uploads/invoices/invoice_1783814971194.pdf",
+    "collectionDueAt": null
+  },
+  "contractPdfUrl": "/uploads/contracts/contrat_CTR-2026-9C89E4_1783621557729.pdf",
+  "history": [
+    {
+      "byRole": "admin",
+      "byId": "admin_id",
+      "action": "created_approved_waiting_pickup",
+      "data": {
+        "comment": "Contrat créé par admin - en attente de retrait du téléphone."
+      },
+      "createdAt": {
+        "$date": "2026-07-09T18:25:52.590Z"
+      },
+      "_id": {
+        "$oid": "6a4fe7b0723eb3e7753b8434"
+      }
+    },
+    {
+      "byRole": "admin",
+      "byId": "admin_id",
+      "action": "status:active",
+      "data": {
+        "dueAt": {
+          "$date": "2026-07-13T12:05:54.821Z"
+        }
+      },
+      "_id": {
+        "$oid": "6a5231a2f4d82acfbb46fa4e"
+      },
+      "createdAt": {
+        "$date": "2026-07-11T12:05:54.823Z"
+      }
+    },
+    {
+      "byRole": "admin",
+      "byId": "admin_id",
+      "action": "decision:sold",
+      "data": {
+        "amount": 300000,
+        "note": "",
+        "declaredAt": "2026-07-11T12:05:59.659Z",
+        "declaredBy": "admin",
+        "waitingForCounterparty": true
+      },
+      "createdAt": {
+        "$date": "2026-07-11T12:05:59.674Z"
+      },
+      "_id": {
+        "$oid": "6a5231a7f4d82acfbb46fa6e"
+      }
+    },
+    {
+      "byRole": "reseller",
+      "byId": "6a4f90c13c677842c13b4ad5",
+      "action": "decision:sold",
+      "data": {
+        "amount": 300000,
+        "note": "",
+        "declaredAt": "2026-07-11T12:06:16.141Z",
+        "declaredBy": "reseller",
+        "waitingForCounterparty": true
+      },
+      "createdAt": {
+        "$date": "2026-07-11T12:06:16.163Z"
+      },
+      "_id": {
+        "$oid": "6a5231b8f4d82acfbb46facf"
+      }
+    },
+    {
+      "byRole": "system",
+      "byId": null,
+      "action": "finalized:sold",
+      "data": {
+        "resellerDecision": "sold",
+        "adminDecision": "sold",
+        "paymentStatus": "pending_cashier"
+      },
+      "createdAt": {
+        "$date": "2026-07-11T12:06:16.163Z"
+      },
+      "_id": {
+        "$oid": "6a5231b8f4d82acfbb46fad5"
+      }
+    },
+    {
+      "byRole": "admin",
+      "byId": "admin_id",
+      "action": "renewed_delay",
+      "data": {
+        "delayHours": 1,
+        "newDueAt": {
+          "$date": "2026-07-12T01:08:27.972Z"
+        },
+        "reason": "Override manager"
+      },
+      "createdAt": {
+        "$date": "2026-07-12T00:08:27.972Z"
+      },
+      "_id": {
+        "$oid": "6a52dafb309b16bdb3530a1e"
+      }
+    },
+    {
+      "byRole": "cashier",
+      "byId": "6a33cc222d5174a35e47c608",
+      "action": "cash_collected",
+      "data": {
+        "amount": 300000,
+        "paymentMethod": "cash",
+        "note": "",
+        "isOverdue": false,
+        "overrideReason": null,
+        "collectionDueAt": {
+          "$date": "2026-07-12T01:08:27.972Z"
+        },
+        "collectedAt": {
+          "$date": "2026-07-12T00:09:31.153Z"
+        }
+      },
+      "createdAt": {
+        "$date": "2026-07-12T00:09:31.153Z"
+      },
+      "_id": {
+        "$oid": "6a52db3b309b16bdb3530abc"
+      }
+    }
+  ],
+  "createdAt": {
+    "$date": "2026-07-09T18:25:52.596Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-12T00:09:31.155Z"
+  },
+  "__v": 5,
+  "saleInfo": {
+    "amount": 300000,
+    "paymentMethod": "cash",
+    "collectedAt": {
+      "$date": "2026-07-12T00:09:31.153Z"
+    },
+    "collectedBy": "Caissier Par Défaut"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a50394c5875244a089be9b6"
+  },
+  "number": "CTR-2026-03CFA8",
+  "reseller": {
+    "$oid": "6a4f90c13c677842c13b4ad5"
+  },
+  "product": {
+    "$oid": "6a33cffb2d5174a35e47c694"
+  },
+  "catalogPrice": 650000,
+  "negotiatedPrice": 420000,
+  "expectedSalePrice": 500000,
+  "handedAt": {
+    "$date": "2026-07-10T00:18:56.466Z"
+  },
+  "status": "sold",
+  "confirmation": {
+    "resellerDecision": "sold",
+    "resellerConfirmedAt": {
+      "$date": "2026-07-10T00:23:02.699Z"
+    },
+    "adminDecision": "sold",
+    "adminConfirmedAt": {
+      "$date": "2026-07-10T00:22:27.848Z"
+    },
+    "finalizedAt": {
+      "$date": "2026-07-10T00:23:02.699Z"
+    },
+    "finalizedBy": "mutual"
+  },
+  "payment": {
+    "required": true,
+    "status": "paid",
+    "amountExpected": 500000,
+    "amountPaid": 500000,
+    "paidAt": {
+      "$date": "2026-07-10T00:23:41.302Z"
+    },
+    "paidById": "6a33cc222d5174a35e47c608",
+    "paidByRole": "cashier",
+    "paymentMethod": "cash",
+    "note": "payer",
+    "invoiceUrl": "/uploads/invoices/invoice_1783643021352.pdf"
+  },
+  "contractPdfUrl": "/uploads/contracts/contrat_CTR-2026-03CFA8_1783642537297.pdf",
+  "history": [
+    {
+      "byRole": "reseller",
+      "byId": "6a4f90c13c677842c13b4ad5",
+      "action": "requested",
+      "data": {
+        "comment": "",
+        "proposedPrice": 420000,
+        "expectedSalePrice": 500000
+      },
+      "createdAt": {
+        "$date": "2026-07-10T00:14:04.546Z"
+      },
+      "_id": {
+        "$oid": "6a50394c5875244a089be9b7"
+      }
+    },
+    {
+      "byRole": "admin",
+      "byId": "admin_id",
+      "action": "status:approved",
+      "_id": {
+        "$oid": "6a50399e5875244a089bea6a"
+      },
+      "createdAt": {
+        "$date": "2026-07-10T00:15:26.561Z"
+      }
+    },
+    {
+      "byRole": "admin",
+      "byId": "admin_id",
+      "action": "status:active",
+      "data": {
+        "dueAt": {
+          "$date": "2026-07-12T00:18:56.466Z"
+        }
+      },
+      "_id": {
+        "$oid": "6a503a705875244a089bea9d"
+      },
+      "createdAt": {
+        "$date": "2026-07-10T00:18:56.467Z"
+      }
+    },
+    {
+      "byRole": "admin",
+      "byId": "admin_id",
+      "action": "decision:sold",
+      "data": {
+        "amount": 500000,
+        "note": "",
+        "declaredAt": "2026-07-10T00:22:27.831Z",
+        "declaredBy": "admin",
+        "waitingForCounterparty": true
+      },
+      "createdAt": {
+        "$date": "2026-07-10T00:22:27.848Z"
+      },
+      "_id": {
+        "$oid": "6a503b435875244a089bead2"
+      }
+    },
+    {
+      "byRole": "reseller",
+      "byId": "6a4f90c13c677842c13b4ad5",
+      "action": "decision:sold",
+      "data": {
+        "amount": 500000,
+        "realSalePrice": 5000000,
+        "note": "",
+        "declaredAt": "2026-07-10T00:23:02.681Z",
+        "declaredBy": "reseller",
+        "waitingForCounterparty": true
+      },
+      "createdAt": {
+        "$date": "2026-07-10T00:23:02.699Z"
+      },
+      "_id": {
+        "$oid": "6a503b665875244a089beb24"
+      }
+    },
+    {
+      "byRole": "system",
+      "byId": null,
+      "action": "finalized:sold",
+      "data": {
+        "resellerDecision": "sold",
+        "adminDecision": "sold",
+        "paymentStatus": "pending_cashier"
+      },
+      "createdAt": {
+        "$date": "2026-07-10T00:23:02.699Z"
+      },
+      "_id": {
+        "$oid": "6a503b665875244a089beb2a"
+      }
+    },
+    {
+      "byRole": "cashier",
+      "byId": "6a33cc222d5174a35e47c608",
+      "action": "cash_collected",
+      "data": {
+        "amount": 500000,
+        "paymentMethod": "cash",
+        "note": "payer"
+      },
+      "createdAt": {
+        "$date": "2026-07-10T00:23:41.302Z"
+      },
+      "_id": {
+        "$oid": "6a503b8d5875244a089bebb1"
+      }
+    }
+  ],
+  "createdAt": {
+    "$date": "2026-07-10T00:14:04.548Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-10T00:23:41.303Z"
+  },
+  "__v": 5,
+  "dueAt": {
+    "$date": "2026-07-12T00:18:56.466Z"
+  },
+  "saleInfo": {
+    "amount": 500000,
+    "paymentMethod": "cash",
+    "collectedAt": {
+      "$date": "2026-07-10T00:23:41.302Z"
+    },
+    "collectedBy": "Caissier Par Défaut"
+  }
+}]

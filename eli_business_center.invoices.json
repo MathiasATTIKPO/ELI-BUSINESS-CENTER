@@ -1,0 +1,272 @@
+[{
+  "_id": {
+    "$oid": "6a33d25d2d5174a35e47c734"
+  },
+  "requestType": "repair",
+  "requestId": {
+    "$oid": "6a33d18e2d5174a35e47c6d3"
+  },
+  "clientName": "Koffi Mathias-Stan ATTIKPO",
+  "clientWhatsapp": "+22892076583",
+  "amount": 15000,
+  "pdfUrl": "/uploads/invoices/invoice_1781781085652.pdf",
+  "sentAt": {
+    "$date": "2026-06-18T11:11:25.837Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a33d3532d5174a35e47c7ae"
+  },
+  "requestType": "tradein",
+  "requestId": {
+    "$oid": "6a33d2b02d5174a35e47c754"
+  },
+  "clientName": "Koffi  ATTIKPO",
+  "clientWhatsapp": "+22892076583",
+  "amount": 450000,
+  "pdfUrl": "/uploads/invoices/invoice_1781781331004.pdf",
+  "sentAt": {
+    "$date": "2026-06-18T11:15:31.044Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a33f4392d5174a35e47c8e7"
+  },
+  "requestType": "product",
+  "requestId": {
+    "$oid": "6a33cc222d5174a35e47c60b"
+  },
+  "clientName": "DONALD",
+  "clientWhatsapp": "91000353",
+  "amount": 740000,
+  "pdfUrl": "/uploads/invoices/invoice_1781789753006.pdf",
+  "sentAt": {
+    "$date": "2026-06-18T13:35:53.032Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a3424b82d5174a35e47ca45"
+  },
+  "requestType": "product",
+  "requestId": {
+    "$oid": "6a33cc222d5174a35e47c611"
+  },
+  "clientName": "AZERTY",
+  "clientWhatsapp": "+22898784565",
+  "amount": 1120000,
+  "pdfUrl": "/uploads/invoices/invoice_1781802168246.pdf",
+  "sentAt": {
+    "$date": "2026-06-18T17:02:48.372Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a48032b3be727d69643dfb1"
+  },
+  "requestType": "repair",
+  "requestId": {
+    "$oid": "6a4802ef3be727d69643df85"
+  },
+  "clientName": "ELITEST",
+  "clientWhatsapp": "+22890178475",
+  "amount": 15000,
+  "pdfUrl": "/uploads/invoices/invoice_1783104299161.pdf",
+  "sentAt": {
+    "$date": "2026-07-03T18:44:59.464Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a4bbed53be727d69643e149"
+  },
+  "requestType": "repair",
+  "requestId": {
+    "$oid": "6a38f8f62a001dbdae522c28"
+  },
+  "clientName": "ESTHER",
+  "clientWhatsapp": "+2289754628",
+  "amount": 15000,
+  "pdfUrl": "/uploads/invoices/invoice_1783348949154.pdf",
+  "sentAt": {
+    "$date": "2026-07-06T14:42:29.183Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a4bbee83be727d69643e167"
+  },
+  "requestType": "tradein",
+  "requestId": {
+    "$oid": "6a3907492296e606c01d40a0"
+  },
+  "clientName": "Ruth M",
+  "clientWhatsapp": "+2289784568",
+  "amount": 200000,
+  "pdfUrl": "/uploads/invoices/invoice_1783348968288.pdf",
+  "sentAt": {
+    "$date": "2026-07-06T14:42:48.298Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a4bc8bb9c755ca01b693ea6"
+  },
+  "requestType": "repair",
+  "requestId": {
+    "$oid": "6a4bc5bc48aa10afe0e6fa92"
+  },
+  "clientName": "TEST-1",
+  "clientWhatsapp": "+2289898989",
+  "amount": 25000,
+  "pdfUrl": "/uploads/invoices/invoice_1783351483232.pdf",
+  "sentAt": {
+    "$date": "2026-07-06T15:24:43.270Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a4e416958aaf7ab6b484bea"
+  },
+  "requestType": "tradein",
+  "requestId": {
+    "$oid": "6a4bc8fa9c755ca01b693ed6"
+  },
+  "clientName": "Koffi Mathias-Stan ATTIKPO",
+  "clientWhatsapp": "+22892076583",
+  "amount": 450000,
+  "pdfUrl": "/uploads/invoices/invoice_1783513449599.pdf",
+  "sentAt": {
+    "$date": "2026-07-08T12:24:09.795Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a4e41f358aaf7ab6b484c32"
+  },
+  "requestType": "product",
+  "requestId": {
+    "$oid": "6a33cffb2d5174a35e47c694"
+  },
+  "clientName": "azerty",
+  "clientWhatsapp": "+2289898989",
+  "amount": 650000,
+  "pdfUrl": "/uploads/invoices/invoice_1783513587703.pdf",
+  "sentAt": {
+    "$date": "2026-07-08T12:26:27.744Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a4fe97c723eb3e7753b8482"
+  },
+  "requestType": "product",
+  "requestId": {
+    "$oid": "6a33cc222d5174a35e47c617"
+  },
+  "clientName": "JELLL",
+  "clientWhatsapp": "+22898076583",
+  "amount": 980000,
+  "pdfUrl": "/uploads/invoices/invoice_1783622012501.pdf",
+  "sentAt": {
+    "$date": "2026-07-09T18:33:32.540Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a4fec0f1c13097f4fb34c76"
+  },
+  "requestType": "product",
+  "requestId": {
+    "$oid": "6a33cc222d5174a35e47c61a"
+  },
+  "clientName": "Noellie",
+  "clientWhatsapp": "+22897076583",
+  "amount": 330000,
+  "pdfUrl": "/uploads/invoices/invoice_1783622671282.pdf",
+  "sentAt": {
+    "$date": "2026-07-09T18:44:31.400Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a4feef10d84238c2a0e9918"
+  },
+  "requestType": "product",
+  "requestId": {
+    "$oid": "6a33cfc92d5174a35e47c68e"
+  },
+  "clientName": "Johnson",
+  "clientWhatsapp": "+22897789898",
+  "amount": 550000,
+  "pdfUrl": "/uploads/invoices/invoice_1783623409202.pdf",
+  "sentAt": {
+    "$date": "2026-07-09T18:56:49.327Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a4ff6085875244a089be704"
+  },
+  "requestType": "product",
+  "requestId": {
+    "$oid": "6a33cc222d5174a35e47c61a"
+  },
+  "clientName": "OBED",
+  "clientWhatsapp": "+22898955642",
+  "amount": 330000,
+  "pdfUrl": "/uploads/invoices/invoice_1783625224043.pdf",
+  "sentAt": {
+    "$date": "2026-07-09T19:27:04.173Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a503b8d5875244a089bebc2"
+  },
+  "requestType": "reseller_contract",
+  "requestId": {
+    "$oid": "6a50394c5875244a089be9b6"
+  },
+  "clientName": "Koffi Mathias-Stan ATTIKPO",
+  "clientWhatsapp": "+22892076583",
+  "amount": 500000,
+  "pdfUrl": "/uploads/invoices/invoice_1783643021352.pdf",
+  "sentAt": {
+    "$date": "2026-07-10T00:23:41.477Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a52db3b309b16bdb3530acd"
+  },
+  "requestType": "reseller_contract",
+  "requestId": {
+    "$oid": "6a4fe7b0723eb3e7753b8433"
+  },
+  "clientName": "Koffi Mathias-Stan ATTIKPO",
+  "clientWhatsapp": "+22892076583",
+  "amount": 300000,
+  "pdfUrl": "/uploads/invoices/invoice_1783814971194.pdf",
+  "sentAt": {
+    "$date": "2026-07-12T00:09:31.230Z"
+  },
+  "__v": 0
+}]

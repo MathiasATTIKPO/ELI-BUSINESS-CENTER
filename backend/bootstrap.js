@@ -3,7 +3,17 @@ const bcrypt = require('bcryptjs');
 const Product = require('./models/Product');
 const Employee = require('./models/Employee');
 
-const mongoUri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/eli_business_center';
+const getMongoUri = () => {
+  if (process.env.MONGO_URI) {
+    return process.env.MONGO_URI;
+  }
+
+  if (process.env.VERCEL) {
+    throw new Error('MONGO_URI is missing in Vercel environment variables');
+  }
+
+  return 'mongodb://127.0.0.1:27017/eli_business_center';
+};
 
 const state = {
   dbConnected: false,
@@ -18,11 +28,19 @@ const connectDatabase = async () => {
     return mongoose.connection;
   }
 
+  const mongoUri = getMongoUri();
+
   if (!connectPromise) {
     connectPromise = mongoose
-      .connect(mongoUri)
+      .connect(mongoUri, {
+        serverSelectionTimeoutMS: 15000,
+        connectTimeoutMS: 15000,
+      })
       .then(() => {
         state.dbConnected = true;
+        const host = mongoose.connection?.host || 'unknown-host';
+        const dbName = mongoose.connection?.name || 'unknown-db';
+        console.log(`MongoDB connected: ${host}/${dbName}`);
         return mongoose.connection;
       })
       .catch((error) => {

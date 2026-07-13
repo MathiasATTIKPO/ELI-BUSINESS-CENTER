@@ -1,0 +1,38 @@
+[{
+  "_id": {
+    "$oid": "6a33cc222d5174a35e47c603"
+  },
+  "name": "Technicien Par Défaut",
+  "phone": "+2280102030405",
+  "email": "tech@elis.com",
+  "password": "$2b$10$ZS2ok2DpeZopq8dknrRoQecw8pyLBVPeWMVpyQY1L7/8x.tdbgYu.",
+  "role": "technician",
+  "skills": [
+    "écran",
+    "batterie",
+    "carte mère"
+  ],
+  "isActive": true,
+  "workingHours": [],
+  "createdAt": {
+    "$date": "2026-06-18T10:44:50.405Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a33cc222d5174a35e47c608"
+  },
+  "name": "Caissier Par Défaut",
+  "phone": "+2280506070809",
+  "email": "cashier@elis.com",
+  "password": "$2b$10$59wUUjWKks4TI7CNRW5AReufU2ULnAPesBPLLLzNXVI4uN2q.PRUK",
+  "role": "cashier",
+  "skills": [],
+  "isActive": true,
+  "workingHours": [],
+  "createdAt": {
+    "$date": "2026-06-18T10:44:50.718Z"
+  },
+  "__v": 0
+}]

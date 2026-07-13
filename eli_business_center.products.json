@@ -1,0 +1,137 @@
+[{
+  "_id": {
+    "$oid": "6a33cc222d5174a35e47c60b"
+  },
+  "name": "iPhone 14",
+  "brand": "Apple",
+  "price": 740000,
+  "stock": 11,
+  "photos": [
+    "/uploads/1781780245690-iphone-14.jpg"
+  ],
+  "active": true,
+  "createdAt": {
+    "$date": "2026-06-18T10:44:50.737Z"
+  },
+  "__v": 1
+},
+{
+  "_id": {
+    "$oid": "6a33cc222d5174a35e47c60e"
+  },
+  "name": "iPhone 14 Pro",
+  "brand": "Apple",
+  "price": 980000,
+  "stock": 9,
+  "photos": [
+    "/uploads/1781780258812-iphone-14-pro.jpg"
+  ],
+  "active": true,
+  "createdAt": {
+    "$date": "2026-06-18T10:44:50.748Z"
+  },
+  "__v": 1
+},
+{
+  "_id": {
+    "$oid": "6a33cc222d5174a35e47c611"
+  },
+  "name": "iPhone 15",
+  "brand": "Apple",
+  "price": 1120000,
+  "stock": 7,
+  "photos": [
+    "/uploads/1781780206709-iphone-15.jpg"
+  ],
+  "active": true,
+  "createdAt": {
+    "$date": "2026-06-18T10:44:50.764Z"
+  },
+  "__v": 1
+},
+{
+  "_id": {
+    "$oid": "6a33cc222d5174a35e47c614"
+  },
+  "name": "Galaxy S23",
+  "brand": "Samsung",
+  "price": 650000,
+  "stock": 14,
+  "photos": [
+    "/uploads/1781780150891-galaxy-s23.jpg"
+  ],
+  "active": true,
+  "createdAt": {
+    "$date": "2026-06-18T10:44:50.776Z"
+  },
+  "__v": 1
+},
+{
+  "_id": {
+    "$oid": "6a33cc222d5174a35e47c617"
+  },
+  "name": "Galaxy S23 Ultra",
+  "brand": "Samsung",
+  "price": 980000,
+  "stock": 8,
+  "photos": [
+    "/uploads/1781780176158-galaxy-s23-ultra.jpg"
+  ],
+  "active": true,
+  "createdAt": {
+    "$date": "2026-06-18T10:44:50.787Z"
+  },
+  "__v": 1
+},
+{
+  "_id": {
+    "$oid": "6a33cc222d5174a35e47c61a"
+  },
+  "name": "Galaxy A54",
+  "brand": "Samsung",
+  "price": 330000,
+  "stock": 11,
+  "photos": [
+    "/uploads/1781780025420-galaxy-a54-2.jpg",
+    "/uploads/1781780050833-galaxy-a54.jpg"
+  ],
+  "active": true,
+  "createdAt": {
+    "$date": "2026-06-18T10:44:50.798Z"
+  },
+  "__v": 2
+},
+{
+  "_id": {
+    "$oid": "6a33cfc92d5174a35e47c68e"
+  },
+  "name": "iPhone 16 e",
+  "brand": "Apple",
+  "price": 550000,
+  "stock": 6,
+  "photos": [
+    "/uploads/1781780425133-iphone-16-e.jpg"
+  ],
+  "active": true,
+  "createdAt": {
+    "$date": "2026-06-18T11:00:25.137Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a33cffb2d5174a35e47c694"
+  },
+  "name": "iPhone 16 Pro",
+  "brand": "Apple",
+  "price": 650000,
+  "stock": 3,
+  "photos": [
+    "/uploads/1781780475903-iphone-16-pro-max.jpg"
+  ],
+  "active": true,
+  "createdAt": {
+    "$date": "2026-06-18T11:01:15.906Z"
+  },
+  "__v": 0
+}]

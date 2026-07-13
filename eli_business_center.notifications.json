@@ -1,0 +1,902 @@
+[{
+  "_id": {
+    "$oid": "6a33d1bc2d5174a35e47c6ef"
+  },
+  "recipientId": {
+    "$oid": "6a33cc222d5174a35e47c603"
+  },
+  "recipientRole": "technician",
+  "type": "repair_assigned",
+  "title": "Nouvelle réparation assignée",
+  "message": "Réparation pour iphone 12 (Koffi Mathias-Stan ATTIKPO) vous a été assignée",
+  "reference": "47c6d3",
+  "requestId": {
+    "$oid": "6a33d18e2d5174a35e47c6d3"
+  },
+  "clientName": "Koffi Mathias-Stan ATTIKPO",
+  "read": false,
+  "createdAt": {
+    "$date": "2026-06-18T11:08:44.542Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a33d25d2d5174a35e47c739"
+  },
+  "recipientId": {
+    "$oid": "6a33cc222d5174a35e47c603"
+  },
+  "recipientRole": "technician",
+  "type": "payment_approved",
+  "title": "Paiement réparation validé",
+  "message": "La réparation de Koffi Mathias-Stan ATTIKPO a été payée (15 000 FCFA)",
+  "reference": "47C6D3",
+  "requestId": {
+    "$oid": "6a33d18e2d5174a35e47c6d3"
+  },
+  "clientName": "Koffi Mathias-Stan ATTIKPO",
+  "read": false,
+  "createdAt": {
+    "$date": "2026-06-18T11:11:25.867Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a33d2f02d5174a35e47c778"
+  },
+  "recipientId": {
+    "$oid": "6a33cc222d5174a35e47c603"
+  },
+  "recipientRole": "technician",
+  "type": "tradein_assigned",
+  "title": "Nouvel échange assigné",
+  "message": "Échange pour iphone 12 (Koffi  ATTIKPO) vous a été assigné",
+  "reference": "47c754",
+  "requestId": {
+    "$oid": "6a33d2b02d5174a35e47c754"
+  },
+  "clientName": "Koffi  ATTIKPO",
+  "read": false,
+  "createdAt": {
+    "$date": "2026-06-18T11:13:52.841Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a33d3532d5174a35e47c7b2"
+  },
+  "recipientId": {
+    "$oid": "6a33cc222d5174a35e47c608"
+  },
+  "recipientRole": "cashier",
+  "type": "tradein_completed",
+  "title": "Échange payé",
+  "message": "Échange #47c754 payé pour Koffi  ATTIKPO",
+  "reference": "47c754",
+  "requestId": {
+    "$oid": "6a33d2b02d5174a35e47c754"
+  },
+  "clientName": "Koffi  ATTIKPO",
+  "read": true,
+  "createdAt": {
+    "$date": "2026-06-18T11:15:31.057Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a33d3532d5174a35e47c7b6"
+  },
+  "recipientId": {
+    "$oid": "6a33cc222d5174a35e47c603"
+  },
+  "recipientRole": "technician",
+  "type": "payment_approved",
+  "title": "Paiement échange validé",
+  "message": "L'échange de Koffi  ATTIKPO a été payé (450 000 FCFA)",
+  "reference": "47C754",
+  "requestId": {
+    "$oid": "6a33d2b02d5174a35e47c754"
+  },
+  "clientName": "Koffi  ATTIKPO",
+  "read": false,
+  "createdAt": {
+    "$date": "2026-06-18T11:15:31.068Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a48032b3be727d69643dfb6"
+  },
+  "recipientId": {
+    "$oid": "6a33cc222d5174a35e47c603"
+  },
+  "recipientRole": "technician",
+  "type": "payment_approved",
+  "title": "Paiement réparation validé",
+  "message": "La réparation de ELITEST a été payée (15 000 FCFA)",
+  "reference": "43DF85",
+  "requestId": {
+    "$oid": "6a4802ef3be727d69643df85"
+  },
+  "clientName": "ELITEST",
+  "read": false,
+  "createdAt": {
+    "$date": "2026-07-03T18:44:59.562Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a4bbed53be727d69643e14e"
+  },
+  "recipientId": {
+    "$oid": "6a33cc222d5174a35e47c603"
+  },
+  "recipientRole": "technician",
+  "type": "payment_approved",
+  "title": "Paiement réparation validé",
+  "message": "La réparation de ESTHER a été payée (15 000 FCFA)",
+  "reference": "522C28",
+  "requestId": {
+    "$oid": "6a38f8f62a001dbdae522c28"
+  },
+  "clientName": "ESTHER",
+  "read": false,
+  "createdAt": {
+    "$date": "2026-07-06T14:42:29.188Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a4bbee83be727d69643e16b"
+  },
+  "recipientId": {
+    "$oid": "6a33cc222d5174a35e47c608"
+  },
+  "recipientRole": "cashier",
+  "type": "tradein_completed",
+  "title": "Échange payé",
+  "message": "Échange #1d40a0 payé pour Ruth M",
+  "reference": "1d40a0",
+  "requestId": {
+    "$oid": "6a3907492296e606c01d40a0"
+  },
+  "clientName": "Ruth M",
+  "read": false,
+  "createdAt": {
+    "$date": "2026-07-06T14:42:48.306Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a4bbee83be727d69643e16f"
+  },
+  "recipientId": {
+    "$oid": "6a33cc222d5174a35e47c603"
+  },
+  "recipientRole": "technician",
+  "type": "payment_approved",
+  "title": "Paiement échange validé",
+  "message": "L'échange de Ruth M a été payé (200 000 FCFA)",
+  "reference": "1D40A0",
+  "requestId": {
+    "$oid": "6a3907492296e606c01d40a0"
+  },
+  "clientName": "Ruth M",
+  "read": false,
+  "createdAt": {
+    "$date": "2026-07-06T14:42:48.311Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a4bc8bb9c755ca01b693eab"
+  },
+  "recipientId": {
+    "$oid": "6a33cc222d5174a35e47c603"
+  },
+  "recipientRole": "technician",
+  "type": "payment_approved",
+  "title": "Paiement réparation validé",
+  "message": "La réparation de TEST-1 a été payée (25 000 FCFA)",
+  "reference": "E6FA92",
+  "requestId": {
+    "$oid": "6a4bc5bc48aa10afe0e6fa92"
+  },
+  "clientName": "TEST-1",
+  "priority": "medium",
+  "channel": "in_app",
+  "status": "unread",
+  "read": false,
+  "eventKey": "6a33cc222d5174a35e47c603:technician:payment_approved:6a4bc5bc48aa10afe0e6fa92:E6FA92",
+  "createdAt": {
+    "$date": "2026-07-06T15:24:43.279Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a4bc9219c755ca01b693f00"
+  },
+  "recipientId": {
+    "$oid": "6a33cc222d5174a35e47c603"
+  },
+  "recipientRole": "technician",
+  "type": "tradein_assigned",
+  "title": "Nouvel échange assigné",
+  "message": "Échange pour iphone 12 (Koffi Mathias-Stan ATTIKPO) vous a été assigné",
+  "reference": "693ed6",
+  "requestId": {
+    "$oid": "6a4bc8fa9c755ca01b693ed6"
+  },
+  "clientName": "Koffi Mathias-Stan ATTIKPO",
+  "priority": "medium",
+  "channel": "in_app",
+  "status": "unread",
+  "read": false,
+  "eventKey": "6a33cc222d5174a35e47c603:technician:tradein_assigned:6a4bc8fa9c755ca01b693ed6:693ed6",
+  "createdAt": {
+    "$date": "2026-07-06T15:26:25.517Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a4e416958aaf7ab6b484bef"
+  },
+  "recipientId": {
+    "$oid": "6a33cc222d5174a35e47c608"
+  },
+  "recipientRole": "cashier",
+  "type": "tradein_completed",
+  "title": "Échange payé",
+  "message": "Échange #693ed6 payé pour Koffi Mathias-Stan ATTIKPO",
+  "reference": "693ed6",
+  "requestId": {
+    "$oid": "6a4bc8fa9c755ca01b693ed6"
+  },
+  "clientName": "Koffi Mathias-Stan ATTIKPO",
+  "priority": "medium",
+  "channel": "in_app",
+  "status": "unread",
+  "read": false,
+  "eventKey": "6a33cc222d5174a35e47c608:cashier:tradein_completed:6a4bc8fa9c755ca01b693ed6:693ed6",
+  "createdAt": {
+    "$date": "2026-07-08T12:24:09.820Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a4e416958aaf7ab6b484bf3"
+  },
+  "recipientId": {
+    "$oid": "6a33cc222d5174a35e47c603"
+  },
+  "recipientRole": "technician",
+  "type": "payment_approved",
+  "title": "Paiement échange validé",
+  "message": "L'échange de Koffi Mathias-Stan ATTIKPO a été payé (450 000 FCFA)",
+  "reference": "693ED6",
+  "requestId": {
+    "$oid": "6a4bc8fa9c755ca01b693ed6"
+  },
+  "clientName": "Koffi Mathias-Stan ATTIKPO",
+  "priority": "medium",
+  "channel": "in_app",
+  "status": "unread",
+  "read": false,
+  "eventKey": "6a33cc222d5174a35e47c603:technician:payment_approved:6a4bc8fa9c755ca01b693ed6:693ED6",
+  "createdAt": {
+    "$date": "2026-07-08T12:24:09.836Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a4fa684955ff6a7ac168cf0"
+  },
+  "recipientId": {
+    "$oid": "6a4fa684955ff6a7ac168ced"
+  },
+  "recipientRole": "vip",
+  "type": "account_created",
+  "title": "Compte VIP",
+  "message": "Votre compte a été créé. Mot de passe temporaire: 52b1f06c",
+  "priority": "medium",
+  "channel": "in_app",
+  "status": "unread",
+  "read": false,
+  "eventKey": "6a4fa684955ff6a7ac168ced:vip:account_created::",
+  "createdAt": {
+    "$date": "2026-07-09T13:47:48.910Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a4faabd36828f7b6fa38170"
+  },
+  "recipientId": {
+    "$oid": "6a4f90c13c677842c13b4ad5"
+  },
+  "recipientRole": "reseller",
+  "type": "password_reset",
+  "title": "Reinitialisation mot de passe",
+  "message": "Utilisez ce code pour reinitialiser votre mot de passe: 7e6ca770c652615e67cb287098573cf39aa37ea3",
+  "reference": "password_reset",
+  "priority": "medium",
+  "channel": "in_app",
+  "status": "unread",
+  "read": false,
+  "eventKey": "6a4f90c13c677842c13b4ad5:reseller:password_reset::password_reset",
+  "createdAt": {
+    "$date": "2026-07-09T14:05:49.574Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a4fc4c99d944524ee1b5b5b"
+  },
+  "recipientId": {
+    "$oid": "6a4f90c13c677842c13b4ad5"
+  },
+  "recipientRole": "reseller",
+  "type": "contract_updated",
+  "title": "Contrat mis a jour",
+  "message": "Contrat CTR-2026-429A73 mis a jour",
+  "reference": "CTR-2026-429A73",
+  "requestId": {
+    "$oid": "6a4fc2f17e5b84c75c860397"
+  },
+  "priority": "medium",
+  "channel": "in_app",
+  "status": "unread",
+  "read": false,
+  "eventKey": "6a4f90c13c677842c13b4ad5:reseller:contract_updated:6a4fc2f17e5b84c75c860397:CTR-2026-429A73",
+  "createdAt": {
+    "$date": "2026-07-09T15:56:57.595Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a4fd258a9fa040ea3ac68ac"
+  },
+  "recipientId": {
+    "$oid": "6a4f90c13c677842c13b4ad5"
+  },
+  "recipientRole": "reseller",
+  "type": "contract_outcome_waiting_confirmation",
+  "title": "Validation en attente",
+  "message": "Contrat CTR-2026-429A73: reseller a d�clar� \"sold\". En attente de la seconde validation.",
+  "reference": "CTR-2026-429A73",
+  "requestId": {
+    "$oid": "6a4fc2f17e5b84c75c860397"
+  },
+  "priority": "medium",
+  "channel": "in_app",
+  "status": "unread",
+  "read": false,
+  "eventKey": "6a4f90c13c677842c13b4ad5:reseller:contract_outcome_waiting_confirmation:6a4fc2f17e5b84c75c860397:CTR-2026-429A73",
+  "createdAt": {
+    "$date": "2026-07-09T16:54:48.395Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a4fd27ba9fa040ea3ac68e4"
+  },
+  "recipientId": {
+    "$oid": "6a33cc222d5174a35e47c608"
+  },
+  "recipientRole": "cashier",
+  "type": "reseller_contract_cash_collection_required",
+  "title": "Encaissement revendeur requis",
+  "message": "Contrat CTR-2026-429A73 vendu. Encaissement de 450 000 FCFA � effectuer.",
+  "reference": "CTR-2026-429A73",
+  "requestId": {
+    "$oid": "6a4fc2f17e5b84c75c860397"
+  },
+  "priority": "medium",
+  "channel": "in_app",
+  "status": "unread",
+  "read": false,
+  "eventKey": "6a33cc222d5174a35e47c608:cashier:reseller_contract_cash_collection_required:6a4fc2f17e5b84c75c860397:CTR-2026-429A73",
+  "createdAt": {
+    "$date": "2026-07-09T16:55:23.222Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a4fd29fa9fa040ea3ac6948"
+  },
+  "recipientId": {
+    "$oid": "6a4f90c13c677842c13b4ad5"
+  },
+  "recipientRole": "reseller",
+  "type": "contract_cash_collected",
+  "title": "Encaissement confirm�",
+  "message": "Contrat CTR-2026-429A73: encaissement confirm� (450 000 FCFA).",
+  "reference": "CTR-2026-429A73",
+  "requestId": {
+    "$oid": "6a4fc2f17e5b84c75c860397"
+  },
+  "priority": "medium",
+  "channel": "in_app",
+  "status": "unread",
+  "read": false,
+  "eventKey": "6a4f90c13c677842c13b4ad5:reseller:contract_cash_collected:6a4fc2f17e5b84c75c860397:CTR-2026-429A73",
+  "createdAt": {
+    "$date": "2026-07-09T16:55:59.821Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a4fe7b0723eb3e7753b8437"
+  },
+  "recipientId": "6a4f90c13c677842c13b4ad5",
+  "recipientRole": "reseller",
+  "type": "contract_created",
+  "title": "Contrat cree",
+  "message": "Un contrat CTR-2026-9C89E4 a ete cree et attend le retrait du telephone.",
+  "reference": "CTR-2026-9C89E4",
+  "requestId": {
+    "$oid": "6a4fe7b0723eb3e7753b8433"
+  },
+  "clientName": "",
+  "priority": "medium",
+  "channel": "in_app",
+  "status": "unread",
+  "read": false,
+  "eventKey": "6a4f90c13c677842c13b4ad5:reseller:contract_created:6a4fe7b0723eb3e7753b8433:CTR-2026-9C89E4",
+  "createdAt": {
+    "$date": "2026-07-09T18:25:52.609Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a4ff6965875244a089be792"
+  },
+  "recipientId": {
+    "$oid": "6a33cc222d5174a35e47c603"
+  },
+  "recipientRole": "technician",
+  "type": "repair_assigned",
+  "title": "Nouvelle réparation assignée",
+  "message": "Réparation pour iphone 12 (Koffi Mathias-Stan ATTIKPO) vous a été assignée",
+  "reference": "9be743",
+  "requestId": {
+    "$oid": "6a4ff65f5875244a089be743"
+  },
+  "clientName": "Koffi Mathias-Stan ATTIKPO",
+  "priority": "medium",
+  "channel": "in_app",
+  "status": "unread",
+  "read": false,
+  "eventKey": "6a33cc222d5174a35e47c603:technician:repair_assigned:6a4ff65f5875244a089be743:9be743",
+  "createdAt": {
+    "$date": "2026-07-09T19:29:26.447Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a503a705875244a089beaa1"
+  },
+  "recipientId": {
+    "$oid": "6a4f90c13c677842c13b4ad5"
+  },
+  "recipientRole": "reseller",
+  "type": "contract_updated",
+  "title": "Contrat mis a jour",
+  "message": "Contrat CTR-2026-03CFA8 : retrait confirm�, compte a rebours 48h d�marre.",
+  "reference": "CTR-2026-03CFA8",
+  "requestId": {
+    "$oid": "6a50394c5875244a089be9b6"
+  },
+  "priority": "medium",
+  "channel": "in_app",
+  "status": "unread",
+  "read": false,
+  "eventKey": "6a4f90c13c677842c13b4ad5:reseller:contract_updated:6a50394c5875244a089be9b6:CTR-2026-03CFA8",
+  "createdAt": {
+    "$date": "2026-07-10T00:18:56.479Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a503b435875244a089bead5"
+  },
+  "recipientId": {
+    "$oid": "6a4f90c13c677842c13b4ad5"
+  },
+  "recipientRole": "reseller",
+  "type": "contract_outcome_waiting_confirmation",
+  "title": "Validation en attente",
+  "message": "Contrat CTR-2026-03CFA8: admin a d�clar� \"sold\". En attente de la seconde validation.",
+  "reference": "CTR-2026-03CFA8",
+  "requestId": {
+    "$oid": "6a50394c5875244a089be9b6"
+  },
+  "priority": "medium",
+  "channel": "in_app",
+  "status": "unread",
+  "read": false,
+  "eventKey": "6a4f90c13c677842c13b4ad5:reseller:contract_outcome_waiting_confirmation:6a50394c5875244a089be9b6:CTR-2026-03CFA8",
+  "createdAt": {
+    "$date": "2026-07-10T00:22:27.861Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a503b665875244a089beb28"
+  },
+  "recipientId": {
+    "$oid": "6a33cc222d5174a35e47c608"
+  },
+  "recipientRole": "cashier",
+  "type": "reseller_contract_cash_collection_required",
+  "title": "Encaissement revendeur requis",
+  "message": "Contrat CTR-2026-03CFA8 vendu. Encaissement de 500 000 FCFA � effectuer.",
+  "reference": "CTR-2026-03CFA8",
+  "requestId": {
+    "$oid": "6a50394c5875244a089be9b6"
+  },
+  "priority": "medium",
+  "channel": "in_app",
+  "status": "unread",
+  "read": false,
+  "eventKey": "6a33cc222d5174a35e47c608:cashier:reseller_contract_cash_collection_required:6a50394c5875244a089be9b6:CTR-2026-03CFA8",
+  "createdAt": {
+    "$date": "2026-07-10T00:23:02.708Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a503b8d5875244a089bebb5"
+  },
+  "recipientId": {
+    "$oid": "6a4f90c13c677842c13b4ad5"
+  },
+  "recipientRole": "reseller",
+  "type": "contract_cash_collected",
+  "title": "Encaissement confirm�",
+  "message": "Contrat CTR-2026-03CFA8: encaissement confirm� (500 000 FCFA).",
+  "reference": "CTR-2026-03CFA8",
+  "requestId": {
+    "$oid": "6a50394c5875244a089be9b6"
+  },
+  "priority": "medium",
+  "channel": "in_app",
+  "status": "unread",
+  "read": false,
+  "eventKey": "6a4f90c13c677842c13b4ad5:reseller:contract_cash_collected:6a50394c5875244a089be9b6:CTR-2026-03CFA8",
+  "createdAt": {
+    "$date": "2026-07-10T00:23:41.311Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a503d925875244a089bec72"
+  },
+  "recipientId": {
+    "$oid": "6a33cc222d5174a35e47c603"
+  },
+  "recipientRole": "technician",
+  "type": "repair_assigned",
+  "title": "Nouvelle réparation assignée",
+  "message": "Réparation pour iphone 12 (Koffi Mathias-Stan ATTIKPO) vous a été assignée",
+  "reference": "9bec4c",
+  "requestId": {
+    "$oid": "6a503d375875244a089bec4c"
+  },
+  "clientName": "Koffi Mathias-Stan ATTIKPO",
+  "priority": "medium",
+  "channel": "in_app",
+  "status": "unread",
+  "read": false,
+  "eventKey": "6a33cc222d5174a35e47c603:technician:repair_assigned:6a503d375875244a089bec4c:9bec4c",
+  "createdAt": {
+    "$date": "2026-07-10T00:32:18.958Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a5231a2f4d82acfbb46fa52"
+  },
+  "recipientId": {
+    "$oid": "6a4f90c13c677842c13b4ad5"
+  },
+  "recipientRole": "reseller",
+  "type": "contract_updated",
+  "title": "Contrat mis a jour",
+  "message": "Contrat CTR-2026-9C89E4 : retrait confirm�, compte a rebours 48h d�marre.",
+  "reference": "CTR-2026-9C89E4",
+  "requestId": {
+    "$oid": "6a4fe7b0723eb3e7753b8433"
+  },
+  "priority": "medium",
+  "channel": "in_app",
+  "status": "unread",
+  "read": false,
+  "eventKey": "6a4f90c13c677842c13b4ad5:reseller:contract_updated:6a4fe7b0723eb3e7753b8433:CTR-2026-9C89E4",
+  "createdAt": {
+    "$date": "2026-07-11T12:05:54.848Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a5231a7f4d82acfbb46fa71"
+  },
+  "recipientId": {
+    "$oid": "6a4f90c13c677842c13b4ad5"
+  },
+  "recipientRole": "reseller",
+  "type": "contract_outcome_waiting_confirmation",
+  "title": "Validation en attente",
+  "message": "Contrat CTR-2026-9C89E4: admin a d�clar� \"sold\". En attente de la seconde validation.",
+  "reference": "CTR-2026-9C89E4",
+  "requestId": {
+    "$oid": "6a4fe7b0723eb3e7753b8433"
+  },
+  "priority": "medium",
+  "channel": "in_app",
+  "status": "unread",
+  "read": false,
+  "eventKey": "6a4f90c13c677842c13b4ad5:reseller:contract_outcome_waiting_confirmation:6a4fe7b0723eb3e7753b8433:CTR-2026-9C89E4",
+  "createdAt": {
+    "$date": "2026-07-11T12:05:59.686Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a5231b8f4d82acfbb46fad3"
+  },
+  "recipientId": {
+    "$oid": "6a33cc222d5174a35e47c608"
+  },
+  "recipientRole": "cashier",
+  "type": "reseller_contract_cash_collection_required",
+  "title": "Encaissement revendeur requis",
+  "message": "Contrat CTR-2026-9C89E4 vendu. Encaissement de 300 000 FCFA � effectuer.",
+  "reference": "CTR-2026-9C89E4",
+  "requestId": {
+    "$oid": "6a4fe7b0723eb3e7753b8433"
+  },
+  "priority": "medium",
+  "channel": "in_app",
+  "status": "unread",
+  "read": false,
+  "eventKey": "6a33cc222d5174a35e47c608:cashier:reseller_contract_cash_collection_required:6a4fe7b0723eb3e7753b8433:CTR-2026-9C89E4",
+  "createdAt": {
+    "$date": "2026-07-11T12:06:16.224Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a5243076435a21bd5b9b000"
+  },
+  "recipientId": {
+    "$oid": "6a33cc222d5174a35e47c603"
+  },
+  "recipientRole": "technician",
+  "type": "repair_assigned",
+  "title": "Nouvelle réparation assignée",
+  "message": "Réparation pour iphone 13 (Koffi Mathias-Stan ATTIKPO) vous a été assignée",
+  "reference": "b9afdf",
+  "requestId": {
+    "$oid": "6a5242d96435a21bd5b9afdf"
+  },
+  "clientName": "Koffi Mathias-Stan ATTIKPO",
+  "priority": "medium",
+  "channel": "in_app",
+  "status": "unread",
+  "read": false,
+  "eventKey": "6a33cc222d5174a35e47c603:technician:repair_assigned:6a5242d96435a21bd5b9afdf:b9afdf",
+  "createdAt": {
+    "$date": "2026-07-11T13:20:07.045Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a5243b46435a21bd5b9b0d2"
+  },
+  "recipientId": {
+    "$oid": "6a33cc222d5174a35e47c603"
+  },
+  "recipientRole": "technician",
+  "type": "repair_assigned",
+  "title": "Nouvelle réparation assignée",
+  "message": "Réparation pour iphone 14 (Koffi Mathias-Stan ATTIKPO) vous a été assignée",
+  "reference": "b9b0a0",
+  "requestId": {
+    "$oid": "6a5243596435a21bd5b9b0a0"
+  },
+  "clientName": "Koffi Mathias-Stan ATTIKPO",
+  "priority": "medium",
+  "channel": "in_app",
+  "status": "unread",
+  "read": false,
+  "eventKey": "6a33cc222d5174a35e47c603:technician:repair_assigned:6a5243596435a21bd5b9b0a0:b9b0a0",
+  "createdAt": {
+    "$date": "2026-07-11T13:23:00.661Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a5243c56435a21bd5b9b0e6"
+  },
+  "recipientId": {
+    "$oid": "6a33cc222d5174a35e47c603"
+  },
+  "recipientRole": "technician",
+  "type": "repair_assigned",
+  "title": "Nouvelle réparation assignée",
+  "message": "Réparation pour iphone 11 (Koffi Mathias-Stan ATTIKPO) vous a été assignée",
+  "reference": "b9b0b3",
+  "requestId": {
+    "$oid": "6a52438f6435a21bd5b9b0b3"
+  },
+  "clientName": "Koffi Mathias-Stan ATTIKPO",
+  "priority": "medium",
+  "channel": "in_app",
+  "status": "unread",
+  "read": false,
+  "eventKey": "6a33cc222d5174a35e47c603:technician:repair_assigned:6a52438f6435a21bd5b9b0b3:b9b0b3",
+  "createdAt": {
+    "$date": "2026-07-11T13:23:17.741Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a52d8ef309b16bdb35307be"
+  },
+  "recipientId": {
+    "$oid": "6a33cc222d5174a35e47c603"
+  },
+  "recipientRole": "technician",
+  "type": "repair_assigned",
+  "title": "Nouvelle réparation assignée",
+  "message": "Réparation pour iphone 12 (Koffi Mathias-Stan ATTIKPO) vous a été assignée",
+  "reference": "ae68e5",
+  "requestId": {
+    "$oid": "6a52d4439556549541ae68e5"
+  },
+  "clientName": "Koffi Mathias-Stan ATTIKPO",
+  "priority": "medium",
+  "channel": "in_app",
+  "status": "unread",
+  "read": false,
+  "eventKey": "6a33cc222d5174a35e47c603:technician:repair_assigned:6a52d4439556549541ae68e5:ae68e5",
+  "createdAt": {
+    "$date": "2026-07-11T23:59:43.141Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a52d902309b16bdb35307d5"
+  },
+  "recipientId": {
+    "$oid": "6a33cc222d5174a35e47c603"
+  },
+  "recipientRole": "technician",
+  "type": "repair_assigned",
+  "title": "Nouvelle réparation assignée",
+  "message": "Réparation pour iphone 17 (Koffi Mathias-Stan ATTIKPO) vous a été assignée",
+  "reference": "ae68ce",
+  "requestId": {
+    "$oid": "6a52d42c9556549541ae68ce"
+  },
+  "clientName": "Koffi Mathias-Stan ATTIKPO",
+  "priority": "medium",
+  "channel": "in_app",
+  "status": "unread",
+  "read": false,
+  "eventKey": "6a33cc222d5174a35e47c603:technician:repair_assigned:6a52d42c9556549541ae68ce:ae68ce",
+  "createdAt": {
+    "$date": "2026-07-12T00:00:02.833Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a52d922309b16bdb35307ee"
+  },
+  "recipientId": {
+    "$oid": "6a33cc222d5174a35e47c603"
+  },
+  "recipientRole": "technician",
+  "type": "repair_assigned",
+  "title": "Nouvelle réparation assignée",
+  "message": "Réparation pour iphone 16 e (Koffi Mathias-Stan ATTIKPO) vous a été assignée",
+  "reference": "ae68b3",
+  "requestId": {
+    "$oid": "6a52d40f9556549541ae68b3"
+  },
+  "clientName": "Koffi Mathias-Stan ATTIKPO",
+  "priority": "medium",
+  "channel": "in_app",
+  "status": "unread",
+  "read": false,
+  "eventKey": "6a33cc222d5174a35e47c603:technician:repair_assigned:6a52d40f9556549541ae68b3:ae68b3",
+  "createdAt": {
+    "$date": "2026-07-12T00:00:34.928Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a52dafb309b16bdb3530a21"
+  },
+  "recipientId": {
+    "$oid": "6a4f90c13c677842c13b4ad5"
+  },
+  "recipientRole": "reseller",
+  "type": "contract_renewed_delay",
+  "title": "Délai d'encaissement relancé",
+  "message": "Le délai d'encaissement pour le contrat CTR-2026-9C89E4 a été relancé de 1h.",
+  "reference": "CTR-2026-9C89E4",
+  "requestId": {
+    "$oid": "6a4fe7b0723eb3e7753b8433"
+  },
+  "priority": "medium",
+  "channel": "in_app",
+  "status": "unread",
+  "read": false,
+  "eventKey": "6a4f90c13c677842c13b4ad5:reseller:contract_renewed_delay:6a4fe7b0723eb3e7753b8433:CTR-2026-9C89E4",
+  "createdAt": {
+    "$date": "2026-07-12T00:08:27.984Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a52db3b309b16bdb3530ac0"
+  },
+  "recipientId": {
+    "$oid": "6a4f90c13c677842c13b4ad5"
+  },
+  "recipientRole": "reseller",
+  "type": "contract_cash_collected",
+  "title": "Encaissement confirmé",
+  "message": "Contrat CTR-2026-9C89E4: encaissement confirmé (300 000 FCFA).",
+  "reference": "CTR-2026-9C89E4",
+  "requestId": {
+    "$oid": "6a4fe7b0723eb3e7753b8433"
+  },
+  "priority": "medium",
+  "channel": "in_app",
+  "status": "unread",
+  "read": false,
+  "eventKey": "6a4f90c13c677842c13b4ad5:reseller:contract_cash_collected:6a4fe7b0723eb3e7753b8433:CTR-2026-9C89E4",
+  "createdAt": {
+    "$date": "2026-07-12T00:09:31.165Z"
+  },
+  "__v": 0
+}]
