@@ -94,9 +94,11 @@ const connectDatabase = async () => {
 
     connectPromise = mongoose
       .connect(mongoUri, {
-        serverSelectionTimeoutMS: 15000,
-        connectTimeoutMS: 15000,
+        serverSelectionTimeoutMS: 8000,
+        connectTimeoutMS: 8000,
+        socketTimeoutMS: 8000,
         family: 4,
+        tls: true,
       })
       .then(() => {
         state.dbConnected = true;
