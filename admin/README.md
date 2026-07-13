@@ -15,7 +15,7 @@ cp .env.example .env.local
 
 # 3. Configurer l'API
 # Dans .env.local, ajouter :
-VITE_API_BASE_URL=http://localhost:4000
+VITE_API_BASE_URL=http://localhost:4001
 ```
 
 ### Lancer l'application

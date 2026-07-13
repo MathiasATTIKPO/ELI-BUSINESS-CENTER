@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { formatReference } from '../utils/formatReference';
 import { Clock, User, Search, Wrench, Package, CheckCircle, AlertCircle } from 'lucide-react';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000').replace(/\/+$/, '');
 
 // ============================================
 // CONFIGURATION DES STATUTS
