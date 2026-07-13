@@ -3,10 +3,11 @@
   "private": true,
   "version": "1.0.0",
   "description": "Site vitrine React Vite pour ELI'S BUSINESS CENTER",
-  "type": "module", 
+  "type": "module",
+  "workspaces": ["admin", "client", "backend"],
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "npm run build -w admin && npm run build -w client",
     "preview": "vite preview"
   },
   "dependencies": {
