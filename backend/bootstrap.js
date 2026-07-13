@@ -48,8 +48,39 @@ const getDatabaseStatus = () => {
 };
 
 let connectPromise = null;
+let connectionEventsAttached = false;
+
+const attachConnectionDiagnostics = () => {
+  if (connectionEventsAttached) {
+    return;
+  }
+
+  connectionEventsAttached = true;
+
+  mongoose.connection.on('connected', () => {
+    state.dbConnected = true;
+    state.lastConnectedAt = new Date().toISOString();
+    state.lastError = null;
+    logger.info('db', 'Mongoose connection event: connected', {
+      host: mongoose.connection?.host || null,
+      name: mongoose.connection?.name || null,
+    });
+  });
+
+  mongoose.connection.on('disconnected', () => {
+    state.dbConnected = false;
+    logger.warn('db', 'Mongoose connection event: disconnected');
+  });
+
+  mongoose.connection.on('error', (error) => {
+    state.lastError = error.message;
+    logger.error('db', 'Mongoose connection event: error', { message: error.message });
+  });
+};
 
 const connectDatabase = async () => {
+  attachConnectionDiagnostics();
+
   if (state.dbConnected || mongoose.connection.readyState === 1) {
     state.dbConnected = true;
     return mongoose.connection;
@@ -65,6 +96,7 @@ const connectDatabase = async () => {
       .connect(mongoUri, {
         serverSelectionTimeoutMS: 15000,
         connectTimeoutMS: 15000,
+        family: 4,
       })
       .then(() => {
         state.dbConnected = true;
