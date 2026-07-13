@@ -67,3 +67,21 @@ Exemple:
 
 - Les cron jobs backend ne tournent pas en mode Vercel serverless (normal).
 - Le stockage local `backend/uploads` n'est pas persistant sur Vercel. Pour la production, il faut deplacer les fichiers vers un stockage externe (Cloudinary, S3, GCS, etc.).
+
+## MongoDB Atlas: diagnostic rapide
+
+Si l'API ne se connecte pas a Atlas, verifie dans cet ordre:
+
+1. `MONGO_URI` doit utiliser `mongodb+srv://...` ou une URI Atlas valide, pas `mongodb://localhost...`.
+2. Dans Atlas, `Network Access` doit autoriser l'environnement qui appelle la base.
+	- Pour Vercel, la solution la plus simple est `0.0.0.0/0` pendant les tests.
+	- Si tu utilises une restriction IP plus stricte, Vercel peut etre bloque car ses IP sortantes sont dynamiques.
+3. Le user MongoDB Atlas doit exister et avoir au moins les droits `readWrite` sur la base cible.
+4. Si le mot de passe contient des caracteres speciaux (`@`, `:`, `/`, `#`, `?`), il doit etre encode dans l'URI.
+5. Teste ensuite `GET /api/db-status`:
+	- `200` = connexion MongoDB OK
+	- `503` = backend lance mais pas de connexion Atlas
+
+Exemple d'URI Atlas:
+
+`mongodb+srv://USERNAME:PASSWORD@cluster0.xxxxx.mongodb.net/eli_business_center?retryWrites=true&w=majority&appName=Cluster0`
