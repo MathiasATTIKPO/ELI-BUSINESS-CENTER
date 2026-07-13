@@ -3,9 +3,14 @@
   "version": "1.0.0",
   "description": "Plateforme complète de gestion pour centre d'affaires",
   "scripts": {
-    "install:all": "npm install && cd admin && npm install && cd ../client && npm install && cd ../backend && npm install",
+    "install:all": "npm install && npm run install:admin && npm run install:client && npm run install:backend",
+    "install:admin": "npm --prefix admin install",
+    "install:client": "npm --prefix client install",
+    "install:backend": "npm --prefix backend install",
     "dev": "echo 'Démarrez chaque service dans des terminaux séparés:' && echo '  Terminal 1: cd backend && npm run dev' && echo '  Terminal 2: cd admin && npm run dev' && echo '  Terminal 3: cd client && npm run dev'",
-    "build": "cd admin && npm run build && cd ../client && npm run build",
+    "build": "npm run build:admin && npm run build:client",
+    "build:admin": "npm --prefix admin install && npm --prefix admin run build",
+    "build:client": "npm --prefix client install && npm --prefix client run build",
     "start": "cd backend && npm start"
   },
   "keywords": [
