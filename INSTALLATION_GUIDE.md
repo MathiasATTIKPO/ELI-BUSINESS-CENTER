@@ -63,7 +63,7 @@ Vérifiez votre fichier `.env` à la racine ou dans `backend/` :
 
 ```bash
 # MongoDB
-MONGODB_URI=mongodb://localhost:27017/eli-business-center
+MONGO_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/eli_business_center?retryWrites=true&w=majority
 
 # JWT
 JWT_SECRET=your_secret_key_here
@@ -86,10 +86,7 @@ MAX_FILE_SIZE=10485760
 #### Option A : Avec npm (Recommandé)
 
 ```bash
-# Terminal 1 - MongoDB (si local)
-mongod
-
-# Terminal 2 - Backend (port 4001)
+# Terminal 1 - Backend (port 4001)
 cd backend
 npm start
 # Ou en développement : npm run dev

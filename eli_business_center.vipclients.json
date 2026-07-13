@@ -1,0 +1,19 @@
+[{
+  "_id": {
+    "$oid": "6a4fa684955ff6a7ac168ced"
+  },
+  "name": "Koffi Mathias-Stan ATTIKPO",
+  "phone": "+22892076583",
+  "password": "$2b$12$PMNHPOk93dEZeZwzrs.xyuppmYkqPrlVDi8I74MMRi976ed1JhW/2",
+  "whatsapp": "",
+  "email": "vip1@elis.com",
+  "isActive": true,
+  "monthlyLimit": 2500000,
+  "billingCycleDay": 1,
+  "notes": "",
+  "forcePasswordChange": false,
+  "createdAt": {
+    "$date": "2026-07-09T13:47:48.826Z"
+  },
+  "__v": 0
+}]

@@ -44,7 +44,7 @@ cp .env.example .env
 #### Variables d'environnement principales
 ```env
 # Backend
-MONGO_URI=mongodb://localhost:27017/eli_business_center
+MONGO_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/eli_business_center?retryWrites=true&w=majority
 JWT_SECRET=votre_secret_jwt
 ADMIN_USER=admin@elibusiness.com
 ADMIN_PASS=password123

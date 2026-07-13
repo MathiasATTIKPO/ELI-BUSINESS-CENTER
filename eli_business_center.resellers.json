@@ -1,0 +1,30 @@
+[{
+  "_id": {
+    "$oid": "6a4f90c13c677842c13b4ad5"
+  },
+  "name": "Koffi Mathias-Stan ATTIKPO",
+  "phone": "+22892076583",
+  "whatsapp": "",
+  "email": "mathiasattikpo@gmail.com",
+  "forcePasswordChange": false,
+  "address": "41 rue des impôts",
+  "isActive": true,
+  "notes": "",
+  "stats": {
+    "withdrawnCount": 3,
+    "soldCount": 3,
+    "returnedCount": 0,
+    "totalGenerated": 1250000,
+    "totalToReturn": 1250000
+  },
+  "createdAt": {
+    "$date": "2026-07-09T12:14:57.154Z"
+  },
+  "__v": 0,
+  "password": "$2b$12$g1urP2enMRHQG7GCZeDb2Oif8AKRbK7j4uIJfZUoNxCHnFNLxyJba",
+  "metadata": {},
+  "resetPasswordExpires": {
+    "$date": "2026-07-09T15:07:58.464Z"
+  },
+  "resetPasswordToken": "9c48f90edcbccb1626f0c857ec96ac3e7dbb7a0b"
+}]

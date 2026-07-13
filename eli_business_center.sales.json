@@ -1,0 +1,334 @@
+[{
+  "_id": {
+    "$oid": "6a33e18f2d5174a35e47c833"
+  },
+  "type": "product",
+  "productId": {
+    "$oid": "6a33cc222d5174a35e47c61a"
+  },
+  "productName": "Galaxy A54",
+  "quantity": 1,
+  "unitPrice": 330000,
+  "totalAmount": 330000,
+  "clientName": "ABALO DONALD",
+  "clientWhatsapp": "+22891000353",
+  "status": "paid",
+  "saleInfo": {
+    "amount": 0,
+    "amountPaid": 0,
+    "paymentMethod": "cash",
+    "invoiceUrl": "/uploads/invoices/invoice_1781789753006.pdf",
+    "notes": ""
+  },
+  "createdAt": {
+    "$date": "2026-06-18T12:16:15.360Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-18T12:16:15.361Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a33f4382d5174a35e47c8e3"
+  },
+  "type": "product",
+  "productId": {
+    "$oid": "6a33cc222d5174a35e47c60b"
+  },
+  "productName": "iPhone 14",
+  "quantity": 1,
+  "unitPrice": 740000,
+  "totalAmount": 740000,
+  "clientName": "DONALD",
+  "clientWhatsapp": "91000353",
+  "status": "paid",
+  "saleInfo": {
+    "amount": 0,
+    "amountPaid": 0,
+    "paymentMethod": "cash",
+    "invoiceUrl": "/uploads/invoices/invoice_1781789753006.pdf",
+    "notes": ""
+  },
+  "createdAt": {
+    "$date": "2026-06-18T13:35:52.991Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-18T13:35:52.992Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a3424b82d5174a35e47ca41"
+  },
+  "type": "product",
+  "productId": {
+    "$oid": "6a33cc222d5174a35e47c611"
+  },
+  "productName": "iPhone 15",
+  "quantity": 1,
+  "unitPrice": 1120000,
+  "totalAmount": 1120000,
+  "clientName": "AZERTY",
+  "clientWhatsapp": "+22898784565",
+  "status": "completed",
+  "saleInfo": {
+    "amount": 0,
+    "amountPaid": 0,
+    "paymentMethod": "cash",
+    "invoiceUrl": "",
+    "notes": ""
+  },
+  "createdAt": {
+    "$date": "2026-06-18T17:02:48.234Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-18T17:02:48.234Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a38fa5e2a001dbdae522c55"
+  },
+  "type": "product",
+  "productId": {
+    "$oid": "6a33cc222d5174a35e47c60e"
+  },
+  "productName": "iPhone 14 Pro",
+  "quantity": 1,
+  "unitPrice": 980000,
+  "totalAmount": 980000,
+  "clientName": "AZTY TEST",
+  "clientWhatsapp": "+2289787985",
+  "status": "completed",
+  "saleInfo": {
+    "amount": 0,
+    "amountPaid": 0,
+    "paymentMethod": "cash",
+    "invoiceUrl": "",
+    "notes": ""
+  },
+  "createdAt": {
+    "$date": "2026-06-22T09:03:26.013Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-22T09:03:26.014Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a4e41f358aaf7ab6b484c2e"
+  },
+  "type": "product",
+  "productId": {
+    "$oid": "6a33cffb2d5174a35e47c694"
+  },
+  "productName": "iPhone 16 Pro",
+  "quantity": 1,
+  "unitPrice": 650000,
+  "totalAmount": 650000,
+  "clientName": "azerty",
+  "clientWhatsapp": "+2289898989",
+  "status": "completed",
+  "saleInfo": {
+    "amount": 0,
+    "amountPaid": 0,
+    "paymentMethod": "cash",
+    "invoiceUrl": "",
+    "notes": ""
+  },
+  "createdAt": {
+    "$date": "2026-07-08T12:26:27.688Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-08T12:26:27.689Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a4fe97c723eb3e7753b847e"
+  },
+  "type": "product",
+  "productId": {
+    "$oid": "6a33cc222d5174a35e47c617"
+  },
+  "productName": "Galaxy S23 Ultra",
+  "quantity": 1,
+  "unitPrice": 980000,
+  "totalAmount": 980000,
+  "clientName": "JELLL",
+  "clientWhatsapp": "+22898076583",
+  "status": "completed",
+  "saleInfo": {
+    "amount": 0,
+    "amountPaid": 0,
+    "paymentMethod": "cash",
+    "invoiceUrl": "",
+    "notes": ""
+  },
+  "createdAt": {
+    "$date": "2026-07-09T18:33:32.484Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-09T18:33:32.485Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a4fec0f1c13097f4fb34c72"
+  },
+  "type": "product",
+  "productId": {
+    "$oid": "6a33cc222d5174a35e47c61a"
+  },
+  "productName": "Galaxy A54",
+  "quantity": 1,
+  "unitPrice": 330000,
+  "totalAmount": 330000,
+  "clientName": "Noellie",
+  "clientWhatsapp": "+22897076583",
+  "status": "completed",
+  "saleInfo": {
+    "amount": 0,
+    "amountPaid": 0,
+    "paymentMethod": "cash",
+    "invoiceUrl": "",
+    "notes": ""
+  },
+  "createdAt": {
+    "$date": "2026-07-09T18:44:31.254Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-09T18:44:31.256Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a4feef10d84238c2a0e9914"
+  },
+  "type": "product",
+  "productId": {
+    "$oid": "6a33cfc92d5174a35e47c68e"
+  },
+  "productName": "iPhone 16 e",
+  "quantity": 1,
+  "unitPrice": 550000,
+  "totalAmount": 550000,
+  "clientName": "Johnson",
+  "clientWhatsapp": "+22897789898",
+  "status": "completed",
+  "saleInfo": {
+    "amount": 0,
+    "amountPaid": 0,
+    "paymentMethod": "cash",
+    "invoiceUrl": "",
+    "notes": ""
+  },
+  "createdAt": {
+    "$date": "2026-07-09T18:56:49.172Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-09T18:56:49.174Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a4fefc442ddbca99018bec4"
+  },
+  "type": "product",
+  "productId": {
+    "$oid": "6a33cfc92d5174a35e47c68e"
+  },
+  "productName": "iPhone 16 e",
+  "quantity": 1,
+  "unitPrice": 550000,
+  "totalAmount": 550000,
+  "clientName": "Lawson",
+  "clientWhatsapp": "+22878988586",
+  "status": "completed",
+  "saleInfo": {
+    "amount": 0,
+    "amountPaid": 0,
+    "paymentMethod": "cash",
+    "invoiceUrl": "",
+    "notes": ""
+  },
+  "createdAt": {
+    "$date": "2026-07-09T19:00:20.031Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-09T19:00:20.032Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a4ff1ded1d9f539c37b6635"
+  },
+  "type": "product",
+  "productId": {
+    "$oid": "6a33cc222d5174a35e47c61a"
+  },
+  "productName": "Galaxy A54",
+  "quantity": 1,
+  "unitPrice": 330000,
+  "totalAmount": 330000,
+  "clientName": "Aimé",
+  "clientWhatsapp": "+22891336631",
+  "status": "completed",
+  "saleInfo": {
+    "amount": 0,
+    "amountPaid": 0,
+    "paymentMethod": "cash",
+    "invoiceUrl": "",
+    "notes": ""
+  },
+  "createdAt": {
+    "$date": "2026-07-09T19:09:18.249Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-09T19:09:18.250Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a4ff6085875244a089be701"
+  },
+  "type": "product",
+  "productId": {
+    "$oid": "6a33cc222d5174a35e47c61a"
+  },
+  "productName": "Galaxy A54",
+  "productBrand": "Samsung",
+  "quantity": 1,
+  "unitPrice": 330000,
+  "totalAmount": 330000,
+  "clientName": "OBED",
+  "clientWhatsapp": "+22898955642",
+  "status": "completed",
+  "saleInfo": {
+    "amount": 330000,
+    "amountPaid": 330000,
+    "paymentMethod": "cash",
+    "paymentDate": {
+      "$date": "2026-07-09T19:27:04.021Z"
+    },
+    "invoiceUrl": "/uploads/invoices/invoice_1783625224043.pdf",
+    "notes": "tatatat"
+  },
+  "createdAt": {
+    "$date": "2026-07-09T19:27:04.028Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-09T19:27:04.185Z"
+  },
+  "__v": 0
+}]

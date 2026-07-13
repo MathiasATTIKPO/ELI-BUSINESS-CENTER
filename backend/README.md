@@ -20,7 +20,7 @@ API backend Node.js pour le site vitrine et une future application mobile.
 3. Configurer MongoDB dans `.env` :
 
    ```env
-   MONGO_URI=mongodb://localhost:27017/eli_business_center
+   MONGO_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/eli_business_center?retryWrites=true&w=majority
    PORT=4001
    JWT_SECRET=votre_secret_jwt
    ADMIN_USER=admin@elibusiness.com

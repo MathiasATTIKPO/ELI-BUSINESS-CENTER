@@ -1,0 +1,101 @@
+[{
+  "_id": {
+    "$oid": "6a33d2b02d5174a35e47c754"
+  },
+  "clientName": "Koffi  ATTIKPO",
+  "clientWhatsapp": "+22892076583",
+  "deviceModel": "iphone 12",
+  "condition": "État moyen",
+  "photos": [
+    "/uploads/1781781168982-iphone-14.jpg"
+  ],
+  "targetProduct": "iPhone 14 Pro",
+  "proposedValue": 450000,
+  "assignedTo": {
+    "$oid": "6a33cc222d5174a35e47c603"
+  },
+  "status": "paid",
+  "saleInfo": {
+    "amount": 450000,
+    "paymentMethod": "mobile_money",
+    "paymentDate": {
+      "$date": "2026-06-18T11:15:30.993Z"
+    },
+    "notes": "L'échange encaissé",
+    "validatedBy": "Caissier Par Défaut",
+    "invoiceUrl": "/uploads/invoices/invoice_1781781331004.pdf"
+  },
+  "createdAt": {
+    "$date": "2026-06-18T11:12:48.986Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-18T11:12:48.986Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a3907492296e606c01d40a0"
+  },
+  "clientName": "Ruth M",
+  "clientWhatsapp": "+2289784568",
+  "deviceModel": "Samsung S22",
+  "condition": "good",
+  "photos": [],
+  "targetProduct": "iPhone 16 e",
+  "proposedValue": 200000,
+  "assignedTo": {
+    "$oid": "6a33cc222d5174a35e47c603"
+  },
+  "status": "paid",
+  "saleInfo": {
+    "amount": 200000,
+    "paymentMethod": "cash",
+    "paymentDate": {
+      "$date": "2026-07-06T14:42:48.284Z"
+    },
+    "notes": "",
+    "validatedBy": "Caissier Par Défaut",
+    "invoiceUrl": "/uploads/invoices/invoice_1783348968288.pdf"
+  },
+  "createdAt": {
+    "$date": "2026-06-22T09:58:33.124Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-22T09:58:33.124Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a4bc8fa9c755ca01b693ed6"
+  },
+  "clientName": "Koffi Mathias-Stan ATTIKPO",
+  "clientWhatsapp": "+22892076583",
+  "deviceModel": "iphone 12",
+  "condition": "État moyen",
+  "photos": [],
+  "targetProduct": "iPhone 16 Pro",
+  "proposedValue": 0,
+  "assignedTo": {
+    "$oid": "6a33cc222d5174a35e47c603"
+  },
+  "status": "paid",
+  "saleInfo": {
+    "amount": 450000,
+    "paymentMethod": "mobile_money",
+    "paymentDate": {
+      "$date": "2026-07-08T12:24:09.585Z"
+    },
+    "notes": "tmoney",
+    "validatedBy": "Caissier Par Défaut",
+    "invoiceUrl": "/uploads/invoices/invoice_1783513449599.pdf"
+  },
+  "createdAt": {
+    "$date": "2026-07-06T15:25:46.781Z"
+  },
+  "updatedAt": {
+    "$date": "2026-07-06T15:25:46.781Z"
+  },
+  "__v": 0
+}]

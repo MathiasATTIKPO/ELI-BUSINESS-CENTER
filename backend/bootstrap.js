@@ -9,11 +9,7 @@ const getMongoUri = () => {
     return process.env.MONGO_URI;
   }
 
-  if (process.env.VERCEL) {
-    throw new Error('MONGO_URI is missing in Vercel environment variables');
-  }
-
-  return 'mongodb://127.0.0.1:27017/eli_business_center';
+  throw new Error('MONGO_URI is missing. Configure an Atlas connection string in environment variables');
 };
 
 const state = {
