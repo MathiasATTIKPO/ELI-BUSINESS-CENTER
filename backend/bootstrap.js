@@ -20,6 +20,21 @@ const state = {
   seedDone: false,
 };
 
+const getDatabaseStatus = () => {
+  const readyState = mongoose.connection.readyState;
+
+  return {
+    readyState,
+    connected: readyState === 1,
+    connecting: readyState === 2,
+    disconnecting: readyState === 3,
+    disconnected: readyState === 0,
+    host: mongoose.connection?.host || null,
+    name: mongoose.connection?.name || null,
+    stateFromBootstrap: state.dbConnected,
+  };
+};
+
 let connectPromise = null;
 
 const connectDatabase = async () => {
@@ -137,4 +152,5 @@ module.exports = {
   connectDatabase,
   ensureSeedData,
   startBackgroundJobs,
+  getDatabaseStatus,
 };

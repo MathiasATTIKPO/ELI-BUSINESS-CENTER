@@ -122,6 +122,7 @@ const invoiceRoutes = require('./routes/invoice');
 const technicianRoutes = require('./routes/technician');
 const adminController = require('./controllers/adminController');
 const clientRoutes = require('./routes/clientRoutes');
+const { getDatabaseStatus } = require('./bootstrap');
 
 const app = express();
 
@@ -178,7 +179,26 @@ app.use('/api/client', clientRoutes);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.get('/api/health', (req, res) => {
-  res.json({ success: true, data: null, message: 'API is running' });
+  const db = getDatabaseStatus();
+
+  res.json({
+    success: true,
+    data: {
+      api: 'running',
+      database: db,
+    },
+    message: db.connected ? 'API and MongoDB are running' : 'API is running but MongoDB is not connected',
+  });
+});
+
+app.get('/api/db-status', (req, res) => {
+  const db = getDatabaseStatus();
+
+  res.status(db.connected ? 200 : 503).json({
+    success: db.connected,
+    data: db,
+    message: db.connected ? 'MongoDB connected' : 'MongoDB disconnected',
+  });
 });
 
 const adminDistPath = path.join(__dirname, '..', 'admin', 'dist');
