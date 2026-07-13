@@ -4,13 +4,18 @@ const Product = require('./models/Product');
 const Employee = require('./models/Employee');
 const logger = require('./utils/logger');
 
+const normalizeMongoUri = (value) => {
+  if (!value) return value;
+  return String(value).trim().replace(/^"|"$/g, '');
+};
+
 const getMongoUri = () => {
   if (process.env.MONGO_URI) {
-    return process.env.MONGO_URI;
+    return normalizeMongoUri(process.env.MONGO_URI);
   }
 
   if (process.env.MONGODB_URI) {
-    return process.env.MONGODB_URI;
+    return normalizeMongoUri(process.env.MONGODB_URI);
   }
 
   throw new Error('MONGO_URI (or MONGODB_URI) is missing. Configure an Atlas connection string in environment variables');
@@ -19,6 +24,9 @@ const getMongoUri = () => {
 const state = {
   dbConnected: false,
   seedDone: false,
+  lastAttemptAt: null,
+  lastConnectedAt: null,
+  lastError: null,
 };
 
 const getDatabaseStatus = () => {
@@ -33,6 +41,9 @@ const getDatabaseStatus = () => {
     host: mongoose.connection?.host || null,
     name: mongoose.connection?.name || null,
     stateFromBootstrap: state.dbConnected,
+    lastAttemptAt: state.lastAttemptAt,
+    lastConnectedAt: state.lastConnectedAt,
+    lastError: state.lastError,
   };
 };
 
@@ -47,6 +58,9 @@ const connectDatabase = async () => {
   const mongoUri = getMongoUri();
 
   if (!connectPromise) {
+    state.lastAttemptAt = new Date().toISOString();
+    state.lastError = null;
+
     connectPromise = mongoose
       .connect(mongoUri, {
         serverSelectionTimeoutMS: 15000,
@@ -54,6 +68,8 @@ const connectDatabase = async () => {
       })
       .then(() => {
         state.dbConnected = true;
+        state.lastConnectedAt = new Date().toISOString();
+        state.lastError = null;
         const host = mongoose.connection?.host || 'unknown-host';
         const dbName = mongoose.connection?.name || 'unknown-db';
         logger.info('db', 'MongoDB connected', { host, dbName, readyState: mongoose.connection.readyState });
@@ -61,6 +77,7 @@ const connectDatabase = async () => {
       })
       .catch((error) => {
         connectPromise = null;
+        state.lastError = error.message;
         logger.error('db', 'MongoDB connection failed', { message: error.message });
         throw error;
       });
