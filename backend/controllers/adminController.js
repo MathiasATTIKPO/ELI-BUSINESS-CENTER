@@ -145,7 +145,8 @@ exports.markAllNotificationsRead = async (req, res) => {
 // ==================== AUTHENTIFICATION ====================
 const loginEmployee = async (req, res, allowedRoles) => {
   try {
-    const { email, password } = req.body;
+    const email = String(req.body?.email || '').trim();
+    const password = String(req.body?.password || '').trim();
     if (!email || !password) return res.status(400).json({ success: false, message: 'Identifiants requis.' });
 
     const employee = await Employee.findOne({ email, isActive: true });
@@ -165,7 +166,8 @@ const loginEmployee = async (req, res, allowedRoles) => {
 };
 
 exports.login = async (req, res) => {
-  const { email, password } = req.body;
+  const email = String(req.body?.email || '').trim();
+  const password = String(req.body?.password || '').trim();
   if (!email || !password) return res.status(400).json({ success: false, message: 'Identifiants requis.' });
 
   const ADMIN_USER = process.env.ADMIN_USER || 'admin@elibusiness.com';
