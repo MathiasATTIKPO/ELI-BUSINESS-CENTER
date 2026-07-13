@@ -3,21 +3,30 @@ require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const { app } = require('./app');
 const { connectDatabase, ensureSeedData, startBackgroundJobs } = require('./bootstrap');
+const logger = require('./utils/logger');
 
 const PORT = process.env.PORT || 4001;
 
 const startServer = async () => {
   try {
+    logger.info('startup', 'Backend bootstrap started', {
+      env: process.env.VERCEL ? 'vercel' : 'local',
+      port: PORT,
+    });
+
     await connectDatabase();
     await ensureSeedData();
 
     app.listen(PORT, () => {
-      console.log(`Swagger docs available at: http://localhost:${PORT}/api-docs`);
+      logger.info('startup', 'HTTP server started', {
+        port: PORT,
+        docs: `http://localhost:${PORT}/api-docs`,
+      });
     });
 
     startBackgroundJobs();
   } catch (error) {
-    console.error('MongoDB connection error:', error.message);
+    logger.error('startup', 'MongoDB connection error', { message: error.message });
     process.exit(1);
   }
 };

@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const swaggerJSDoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
+const logger = require('./utils/logger');
 
 dotenv.config({ path: path.join(__dirname, '.env') });
 
@@ -126,6 +127,21 @@ const { getDatabaseStatus } = require('./bootstrap');
 
 const app = express();
 
+app.use((req, res, next) => {
+  const startedAt = Date.now();
+
+  res.on('finish', () => {
+    logger.info('http', 'Request completed', {
+      method: req.method,
+      path: req.originalUrl,
+      statusCode: res.statusCode,
+      durationMs: Date.now() - startedAt,
+    });
+  });
+
+  next();
+});
+
 const corsOptions = {
   origin: (origin, callback) => {
     if (!origin) {
@@ -181,6 +197,8 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.get('/api/health', (req, res) => {
   const db = getDatabaseStatus();
 
+  logger.info('health', 'Health check requested', { databaseConnected: db.connected, readyState: db.readyState });
+
   res.json({
     success: true,
     data: {
@@ -193,6 +211,8 @@ app.get('/api/health', (req, res) => {
 
 app.get('/api/db-status', (req, res) => {
   const db = getDatabaseStatus();
+
+  logger.info('db', 'Database status requested', { connected: db.connected, readyState: db.readyState, host: db.host, name: db.name });
 
   res.status(db.connected ? 200 : 503).json({
     success: db.connected,
@@ -217,7 +237,11 @@ app.use((req, res) => {
 });
 
 app.use((err, req, res, next) => {
-  console.error(`[SERVER ERROR] ${req.method} ${req.url}:`, err.stack || err.message);
+  logger.error('http', 'Unhandled server error', {
+    method: req.method,
+    path: req.originalUrl,
+    message: err.message,
+  });
   res.status(500).json({ success: false, data: null, message: err.message || 'Server error' });
 });
 

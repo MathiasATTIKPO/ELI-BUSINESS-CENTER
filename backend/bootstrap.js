@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const Product = require('./models/Product');
 const Employee = require('./models/Employee');
+const logger = require('./utils/logger');
 
 const getMongoUri = () => {
   if (process.env.MONGO_URI) {
@@ -55,11 +56,12 @@ const connectDatabase = async () => {
         state.dbConnected = true;
         const host = mongoose.connection?.host || 'unknown-host';
         const dbName = mongoose.connection?.name || 'unknown-db';
-        console.log(`MongoDB connected: ${host}/${dbName}`);
+        logger.info('db', 'MongoDB connected', { host, dbName, readyState: mongoose.connection.readyState });
         return mongoose.connection;
       })
       .catch((error) => {
         connectPromise = null;
+        logger.error('db', 'MongoDB connection failed', { message: error.message });
         throw error;
       });
   }
@@ -81,7 +83,7 @@ const createDefaultEmployees = async () => {
     };
 
     await Employee.create(defaultTechnician);
-    console.log('Technicien par defaut cree avec succes');
+    logger.info('seed', 'Default technician created', { email: defaultTechnician.email, role: defaultTechnician.role });
   }
 
   const existingCashier = await Employee.findOne({ role: 'cashier' });
@@ -97,7 +99,7 @@ const createDefaultEmployees = async () => {
     };
 
     await Employee.create(defaultCashier);
-    console.log('Caissier par defaut cree avec succes');
+    logger.info('seed', 'Default cashier created', { email: defaultCashier.email, role: defaultCashier.role });
   }
 };
 
@@ -115,36 +117,40 @@ const createDefaultProducts = async () => {
     const existing = await Product.findOne({ name: productData.name, brand: productData.brand });
     if (!existing) {
       await Product.create(productData);
-      console.log(`Produit ajoute: ${productData.brand} ${productData.name}`);
+      logger.info('seed', 'Default product created', { brand: productData.brand, name: productData.name, price: productData.price });
     }
   }
 };
 
 const ensureSeedData = async () => {
   if (state.seedDone) {
+    logger.debug('seed', 'Seed already completed, skipping');
     return;
   }
 
+  logger.info('seed', 'Starting default data seed');
   await createDefaultEmployees();
   await createDefaultProducts();
   state.seedDone = true;
+  logger.info('seed', 'Default data seed completed');
 };
 
 const startBackgroundJobs = () => {
   if (process.env.VERCEL) {
+    logger.info('jobs', 'Background jobs disabled in Vercel runtime');
     return;
   }
 
   try {
     const contractExpiryJob = require('./jobs/contractExpiryJob');
     contractExpiryJob.start();
-    console.log('Contract expiry job started');
+    logger.info('jobs', 'Contract expiry job started');
 
     const vipMonthlyInvoiceJob = require('./jobs/vipMonthlyInvoiceJob');
     vipMonthlyInvoiceJob.start();
-    console.log('VIP monthly invoice job started');
+    logger.info('jobs', 'VIP monthly invoice job started');
   } catch (error) {
-    console.error('Failed to start background jobs:', error.message);
+    logger.error('jobs', 'Failed to start background jobs', { message: error.message });
   }
 };
 
