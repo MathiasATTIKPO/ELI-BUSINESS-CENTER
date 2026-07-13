@@ -67,8 +67,9 @@ export default function Repairs() {
     return { total, pending, inProgress, ready, completed }
   }, [repairs])
 
-  const filteredRepairs = useMemo(() => {
-    return repairs.filter((repair) => {
+const filteredRepairs = useMemo(() => {
+  return repairs
+    .filter((repair) => {
       const statusMatch = statusFilter === 'all' || repair.status === statusFilter
       const techMatch = technicianFilter === 'all' || repair.assignedTo?._id === technicianFilter
       const dateMatch = (!dateFrom || new Date(repair.createdAt) >= new Date(dateFrom)) &&
@@ -82,7 +83,8 @@ export default function Repairs() {
 
       return statusMatch && techMatch && dateMatch && searchMatch
     })
-  }, [repairs, statusFilter, technicianFilter, dateFrom, dateTo, searchTerm])
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) // ⬅️ Tri du plus récent au plus ancien
+}, [repairs, statusFilter, technicianFilter, dateFrom, dateTo, searchTerm])
 
   const handleExportRepairs = () => {
     const csvRows = filteredRepairs.map((repair) => ({
@@ -170,7 +172,7 @@ export default function Repairs() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12 py-8 space-y-8">
       {toast && <Toast type={toast.type} message={toast.message} />}
 
       {/* En-tête avec stats */}

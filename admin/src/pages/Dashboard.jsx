@@ -17,6 +17,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import api from '../services/api'
 import Toast from '../components/Toast'
+import { exportCsv } from '../utils/exportCsv'
 
 export default function Dashboard() {
   const navigate = useNavigate()
@@ -31,6 +32,9 @@ export default function Dashboard() {
     repairRevenue: 0, tradeinRevenue: 0, phoneSalesRevenue: 0, totalRevenue: 0,
     technicians: 0, cashiers: 0, employees: 0,
     totalTradeins: 0, pendingTradeins: 0, totalPhoneSales: 0,
+    activeResellers: 0, soldContractsCount: 0, activeContractsCount: 0, resellerSalesAmount: 0,
+    totalVIPClients: 0, activeVIPClients: 0, vipRepairsCount: 0, vipInvoicesCount: 0, vipRevenue: 0,
+    vipRepairsByClient: [], resellerPerformance: [],
     repairsByStatus: [], tradeinsByStatus: [], monthlyRevenue: [],
     recentRepairs: [], recentSales: [], recentTradeins: [], recentPhoneSales: []
   })
@@ -76,13 +80,30 @@ export default function Dashboard() {
     try {
       setLoading(true)
       
-      const [repairsRes, employeesRes, tradeinsRes, productsRes, inventoryRes, phoneSalesRes] = await Promise.all([
+      const [
+        repairsRes,
+        employeesRes,
+        tradeinsRes,
+        productsRes,
+        inventoryRes,
+        phoneSalesRes,
+        resellersRes,
+        resellerContractsRes,
+        vipClientsRes,
+        vipRepairsRes,
+        vipInvoicesRes
+      ] = await Promise.all([
         api.get('/api/admin/repairs'),
         api.get('/api/admin/employees'),
         api.get('/api/admin/tradeins'),
         api.get('/api/admin/products'),
         api.get('/api/admin/inventory'),
-        api.get('/api/admin/sales')
+        api.get('/api/admin/sales'),
+        api.get('/api/admin/resellers').catch(() => ({ data: { data: [] } })),
+        api.get('/api/admin/resellers/contracts/all').catch(() => ({ data: { data: [] } })),
+        api.get('/api/admin/vips').catch(() => ({ data: { data: [] } })),
+        api.get('/api/admin/vips/repairs').catch(() => ({ data: { data: [] } })),
+        api.get('/api/admin/vips/invoices').catch(() => ({ data: { data: [] } }))
       ])
 
       const repairs = repairsRes.data.data || []
@@ -91,6 +112,11 @@ export default function Dashboard() {
       const productsList = productsRes.data.data || []
       const inventoryList = inventoryRes.data.data || []
       const phoneSalesRaw = phoneSalesRes.data.data || []
+      const resellersList = resellersRes.data.data || []
+      const resellerContractsList = resellerContractsRes.data.data || []
+      const vipClientsList = vipClientsRes.data.data || []
+      const vipRepairsList = vipRepairsRes.data.data || []
+      const vipInvoicesList = vipInvoicesRes.data.data || []
 
       // Compter les réparations et échanges en attente
       setPendingRepairsCount(repairs.filter(r => r.status === 'pending').length)
@@ -301,6 +327,43 @@ export default function Dashboard() {
       
       setWeeklyActivity(weeklyData)
 
+      const vipRepairsByClientMap = vipRepairsList.reduce((acc, repair) => {
+        const client = repair.vipClient
+        const clientId = typeof client === 'object' ? client?._id : client
+        const clientName = typeof client === 'object' ? client?.name : 'Client VIP'
+        const key = clientId || 'unknown'
+
+        if (!acc[key]) {
+          acc[key] = { clientName: clientName || 'Client VIP', repairsCount: 0, totalCost: 0 }
+        }
+
+        acc[key].repairsCount += 1
+        acc[key].totalCost += repair.cost || 0
+        return acc
+      }, {})
+
+      const vipRepairsByClient = Object.values(vipRepairsByClientMap)
+        .sort((a, b) => b.repairsCount - a.repairsCount)
+        .slice(0, 5)
+
+      const resellerPerformance = resellersList
+        .map((seller) => {
+          const sellerContracts = resellerContractsList.filter(c => {
+            const resellerId = typeof c.reseller === 'object' ? c.reseller?._id : c.reseller
+            return resellerId === seller._id
+          })
+          const soldContracts = sellerContracts.filter(c => c.status === 'sold')
+
+          return {
+            resellerName: seller.name || 'Revendeur',
+            soldCount: soldContracts.length,
+            activeCount: sellerContracts.filter(c => c.status === 'active').length,
+            generatedAmount: soldContracts.reduce((sum, c) => sum + (c.saleInfo?.amount || 0), 0)
+          }
+        })
+        .sort((a, b) => b.soldCount - a.soldCount)
+        .slice(0, 5)
+
       setStats({
         totalRepairs: repairs.length,
         completedRepairsCount: repairs.filter(r => r.status === 'completed' || r.status === 'paid').length,
@@ -315,6 +378,17 @@ export default function Dashboard() {
         totalTradeins: tradeins.length,
         pendingTradeins: tradeins.filter(t => t.status === 'pending').length,
         totalPhoneSales: phoneSalesList.length,
+        activeResellers: resellersList.filter(r => r.isActive !== false).length,
+        soldContractsCount: resellerContractsList.filter(c => c.status === 'sold').length,
+        activeContractsCount: resellerContractsList.filter(c => c.status === 'active').length,
+        resellerSalesAmount: resellerContractsList.reduce((sum, c) => sum + (c.saleInfo?.amount || 0), 0),
+        totalVIPClients: vipClientsList.length,
+        activeVIPClients: vipClientsList.filter(v => v.isActive !== false).length,
+        vipRepairsCount: vipRepairsList.length,
+        vipInvoicesCount: vipInvoicesList.length,
+        vipRevenue: vipInvoicesList.reduce((sum, inv) => sum + (inv.total || 0), 0),
+        vipRepairsByClient,
+        resellerPerformance,
         repairsByStatus,
         tradeinsByStatus,
         monthlyRevenue,
@@ -555,6 +629,38 @@ const handleLogout = () => {
     ]
   }
 
+  const exportVipResellerStatsCsv = () => {
+    const rows = [
+      { Bloc: 'KPI VIP', Indicateur: 'Clients VIP total', Valeur: stats.totalVIPClients },
+      { Bloc: 'KPI VIP', Indicateur: 'Clients VIP actifs', Valeur: stats.activeVIPClients },
+      { Bloc: 'KPI VIP', Indicateur: 'Reparations VIP', Valeur: stats.vipRepairsCount },
+      { Bloc: 'KPI VIP', Indicateur: 'Factures VIP', Valeur: stats.vipInvoicesCount },
+      { Bloc: 'KPI VIP', Indicateur: 'CA VIP (FCFA)', Valeur: stats.vipRevenue },
+      { Bloc: 'KPI Revendeur', Indicateur: 'Revendeurs actifs', Valeur: stats.activeResellers },
+      { Bloc: 'KPI Revendeur', Indicateur: 'Contrats vendus', Valeur: stats.soldContractsCount },
+      { Bloc: 'KPI Revendeur', Indicateur: 'Contrats actifs', Valeur: stats.activeContractsCount },
+      { Bloc: 'KPI Revendeur', Indicateur: 'CA Revendeur (FCFA)', Valeur: stats.resellerSalesAmount },
+      ...stats.vipRepairsByClient.map((item, idx) => ({
+        Bloc: 'Top VIP',
+        Indicateur: `Top VIP #${idx + 1} - ${item.clientName}`,
+        Valeur: `${item.repairsCount} reparations | ${(item.totalCost || 0).toLocaleString('fr-FR')} FCFA`
+      })),
+      ...stats.resellerPerformance.map((item, idx) => ({
+        Bloc: 'Top Revendeur',
+        Indicateur: `Top Revendeur #${idx + 1} - ${item.resellerName}`,
+        Valeur: `${item.soldCount} vendus | ${item.activeCount} actifs | ${(item.generatedAmount || 0).toLocaleString('fr-FR')} FCFA`
+      }))
+    ]
+
+    if (!rows.length) {
+      setToast({ type: 'error', message: 'Aucune statistique VIP/revendeur a exporter.' })
+      return
+    }
+
+    exportCsv(rows, 'stats_vip_revendeurs_dashboard')
+    setToast({ type: 'success', message: 'Export CSV des statistiques VIP/revendeurs genere.' })
+  }
+
   const productColumns = [
     { header: 'Produit', render: (p) => <span className="font-medium text-gray-900">{p.name}</span> },
     { header: 'Marque', render: (p) => p.brand || '-' },
@@ -649,7 +755,7 @@ const handleLogout = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/30">
       {toast && <Toast {...toast} onClose={() => setToast(null)} />}
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+      <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12 py-8 space-y-6">
         {/* Onglets principaux avec badges */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <nav className="flex gap-1 px-2 overflow-x-auto scrollbar-hide">
@@ -917,12 +1023,61 @@ const handleLogout = () => {
           <div className="animate-fadeIn">
             {activeSubTab === 'overview' && (
               <div className="space-y-6">
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={exportVipResellerStatsCsv}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-50 transition-all duration-200 shadow-sm"
+                  >
+                    <Download size={16} />
+                    Export CSV VIP/Revendeurs
+                  </button>
+                </div>
+
                 {/* Cartes statistiques */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
                   <StatCard icon={Wrench} title="Réparations" value={stats.totalRepairs} subtitle={`${stats.completedRepairsCount} terminées`} gradient="from-blue-500 to-cyan-500" />
                   <StatCard icon={RefreshCw} title="Échanges" value={stats.totalTradeins} subtitle={`${stats.totalTradeins - stats.pendingTradeins} traités`} gradient="from-purple-500 to-violet-500" />
                   <StatCard icon={Smartphone} title="Ventes téléphones" value={stats.totalPhoneSales} subtitle={`${stats.phoneSalesRevenue.toLocaleString('fr-FR')} FCFA`} gradient="from-cyan-500 to-blue-500" />
                   <StatCard icon={DollarSign} title="CA total" value={`${(stats.totalRevenue / 1000000).toFixed(1)}M FCFA`} subtitle={`Réparations: ${(stats.repairRevenue/1000).toFixed(0)}k | Échanges: ${(stats.tradeinRevenue/1000).toFixed(0)}k | Tél: ${(stats.phoneSalesRevenue/1000).toFixed(0)}k`} gradient="from-emerald-500 to-green-500" />
+                  <StatCard icon={Users} title="Clients VIP" value={stats.totalVIPClients} subtitle={`${stats.vipRepairsCount} réparations | ${stats.vipRevenue.toLocaleString('fr-FR')} FCFA`} gradient="from-amber-500 to-orange-500" />
+                  <StatCard icon={ShoppingCart} title="Revendeurs" value={stats.activeResellers} subtitle={`${stats.soldContractsCount} ventes | ${stats.resellerSalesAmount.toLocaleString('fr-FR')} FCFA`} gradient="from-teal-500 to-emerald-500" />
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                    <h3 className="text-lg font-bold text-gray-900 mb-4">Top clients VIP (réparations)</h3>
+                    <div className="space-y-3">
+                      {stats.vipRepairsByClient.length > 0 ? stats.vipRepairsByClient.map((item, idx) => (
+                        <div key={`${item.clientName}-${idx}`} className="flex items-center justify-between p-3 rounded-xl bg-amber-50 border border-amber-100">
+                          <div>
+                            <p className="font-semibold text-gray-900">{item.clientName}</p>
+                            <p className="text-sm text-gray-600">{item.repairsCount} réparations</p>
+                          </div>
+                          <span className="font-bold text-amber-700">{(item.totalCost || 0).toLocaleString('fr-FR')} FCFA</span>
+                        </div>
+                      )) : (
+                        <p className="text-gray-500 text-sm">Aucune réparation VIP pour le moment</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                    <h3 className="text-lg font-bold text-gray-900 mb-4">Performance revendeurs</h3>
+                    <div className="space-y-3">
+                      {stats.resellerPerformance.length > 0 ? stats.resellerPerformance.map((item, idx) => (
+                        <div key={`${item.resellerName}-${idx}`} className="flex items-center justify-between p-3 rounded-xl bg-emerald-50 border border-emerald-100">
+                          <div>
+                            <p className="font-semibold text-gray-900">{item.resellerName}</p>
+                            <p className="text-sm text-gray-600">{item.soldCount} vendus | {item.activeCount} actifs</p>
+                          </div>
+                          <span className="font-bold text-emerald-700">{(item.generatedAmount || 0).toLocaleString('fr-FR')} FCFA</span>
+                        </div>
+                      )) : (
+                        <p className="text-gray-500 text-sm">Aucune performance revendeur disponible</p>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 {/* Graphiques d'évolution */}

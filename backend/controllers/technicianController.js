@@ -90,6 +90,22 @@ exports.updateRepairStatus = async (req, res) => {
       updateData.technicianReport = technicianReport;
     }
 
+    if (repair.isVip && ['ready', 'completed'].includes(status) && !repair.vipBilling?.invoiceId) {
+      updateData.vipBilling = {
+        ...(repair.vipBilling || {}),
+        status: 'billable',
+        auditTrail: [
+          ...((repair.vipBilling && Array.isArray(repair.vipBilling.auditTrail)) ? repair.vipBilling.auditTrail : []),
+          {
+            action: 'marked_billable',
+            at: new Date(),
+            byRole: req.user?.role || 'technician',
+            byId: req.user?.id || null
+          }
+        ]
+      };
+    }
+
     if (status === 'completed') {
       updateData.completedAt = new Date();
     }
@@ -380,8 +396,10 @@ exports.createRepair = async (req, res) => {
       clientWhatsapp,
       deviceModel,
       issueDescription: issueDescription || '',
-      estimatedCost: estimatedCost || 0,
-      notes: notes || '',
+      estimatedPrice: estimatedCost || 0,
+      technicianReport: notes || '',
+      isVip: false,
+      billingMode: 'immediate',
       assignedTo: technicianId,
       status: 'assigned'
     });

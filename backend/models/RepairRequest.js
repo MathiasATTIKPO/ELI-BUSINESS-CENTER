@@ -3,6 +3,9 @@ const mongoose = require('mongoose');
 const repairRequestSchema = new mongoose.Schema({
   clientName: { type: String, trim: true },
   clientWhatsapp: { type: String, required: true, trim: true },
+  vipClient: { type: mongoose.Schema.Types.ObjectId, ref: 'VIPClient', default: null },
+  isVip: { type: Boolean, default: false },
+  billingMode: { type: String, enum: ['immediate', 'monthly_invoice'], default: 'immediate' },
   deviceModel: { type: String, trim: true },
   issueDescription: { type: String, trim: true },
   photos: { type: [String], default: [] },
@@ -24,6 +27,18 @@ const repairRequestSchema = new mongoose.Schema({
     paymentDate: { type: Date },
     invoiceUrl: { type: String, default: '' },
     notes: { type: String, default: '' }
+  },
+  vipBilling: {
+    status: {
+      type: String,
+      enum: ['not_applicable', 'pending', 'billable', 'invoiced', 'paid'],
+      default: 'not_applicable'
+    },
+    invoiceId: { type: mongoose.Schema.Types.ObjectId, ref: 'VIPInvoice', default: null },
+    invoicedAt: { type: Date, default: null },
+    paidAt: { type: Date, default: null },
+    paymentId: { type: mongoose.Schema.Types.Mixed, default: null },
+    auditTrail: { type: [mongoose.Schema.Types.Mixed], default: [] }
   }
 });
 

@@ -171,7 +171,7 @@ export default function CashierTradeInDetail() {
   const isPaid = tradein.status === 'paid'
 
   return (
-    <div className="space-y-6">
+    <div className="eli-canvas eli-content">
       {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
 
       {/* Header */}

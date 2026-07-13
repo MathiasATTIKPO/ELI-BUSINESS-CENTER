@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import {
   Wrench, RefreshCw, Smartphone, DollarSign,
-  Search, X, CheckCircle, Download
+  Search, X, CheckCircle, Download, CreditCard, Banknote, Send, FileText, Eye
 } from 'lucide-react'
 import {
   ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend
@@ -16,8 +16,17 @@ export default function CashierSales() {
   const [repairs, setRepairs] = useState([])
   const [tradeins, setTradeins] = useState([])
   const [phoneSales, setPhoneSales] = useState([])
+  const [vipBillableRepairs, setVipBillableRepairs] = useState([])
+  const [vipInvoices, setVipInvoices] = useState([])
+  const [resellerContractsPending, setResellerContractsPending] = useState([])
+  const [resellerContractSummary, setResellerContractSummary] = useState({
+    pendingCount: 0,
+    pendingAmount: 0,
+    paidCount: 0,
+    paidAmount: 0,
+    overdueCount: 0
+  })
   const [products, setProducts] = useState([])
-
   const [loading, setLoading] = useState(true)
   const [toast, setToast] = useState(null)
   const [invoiceLink, setInvoiceLink] = useState('')
@@ -50,11 +59,38 @@ export default function CashierSales() {
   const [newTradeinPayment, setNewTradeinPayment] = useState({
     tradeinId: '', amountPaid: '', paymentMethod: 'cash', notes: ''
   })
+  const [showResellerContractPaymentModal, setShowResellerContractPaymentModal] = useState(false)
+  const [selectedResellerContract, setSelectedResellerContract] = useState(null)
+  const [resellerContractPaymentData, setResellerContractPaymentData] = useState({
+    amount: '',
+    paymentMethod: 'cash',
+    notes: '',
+    overrideReason: ''
+  })
+  const [vipFilters, setVipFilters] = useState({
+    client: '',
+    fromDate: '',
+    toDate: '',
+    status: 'all',
+    repairNumber: ''
+  })
+  const [selectedVipRepairIds, setSelectedVipRepairIds] = useState([])
+  const [showVipPreviewModal, setShowVipPreviewModal] = useState(false)
+  const [selectedVipPreview, setSelectedVipPreview] = useState(null)
+  const [showVipInvoicePaymentModal, setShowVipInvoicePaymentModal] = useState(false)
+  const [selectedVipInvoice, setSelectedVipInvoice] = useState(null)
+  const [vipInvoicePaymentData, setVipInvoicePaymentData] = useState({
+    amount: '',
+    paymentMethod: 'cash',
+    paymentReference: '',
+    paymentDate: new Date().toISOString().slice(0, 10),
+    note: ''
+  })
 
   // UI : onglets, recherche, pagination
   const [activeTab, setActiveTab] = useState('repairs')
   const [searchTerm, setSearchTerm] = useState('')
-  const [currentPage, setCurrentPage] = useState({ repairs: 1, tradeins: 1, phones: 1 })
+  const [currentPage, setCurrentPage] = useState({ repairs: 1, vipRepairs: 1, vipInvoices: 1, tradeins: 1, phones: 1, contracts: 1 })
   const [processing, setProcessing] = useState(false)
   const itemsPerPage = 6
 
@@ -67,11 +103,15 @@ export default function CashierSales() {
     setLoading(true)
     try {
       const base = isAdminView ? '/api/admin' : '/api/cashier'
-      const [repairsRes, tradeinsRes, productsRes, salesRes] = await Promise.all([
+      const vipBase = isAdminView ? '/api/admin/vip' : '/api/cashier/vip'
+      const [repairsRes, tradeinsRes, productsRes, salesRes, contractsRes, vipRepairsRes, vipInvoicesRes] = await Promise.all([
         api.get(`${base}/repairs`).catch(() => ({ data: { data: [] } })),
         api.get(`${base}/tradeins`).catch(() => ({ data: { data: [] } })),
         api.get(`${base}/products`).catch(() => ({ data: { data: [] } })),
-        api.get(`${base}/sales`).catch(() => ({ data: { data: [] } }))
+        api.get(`${base}/sales`).catch(() => ({ data: { data: [] } })),
+        api.get(`${base}/reseller-contracts/pending-payment`).catch(() => ({ data: { data: [] } })),
+        api.get(`${vipBase}/repairs/billable`).catch(() => ({ data: { data: [] } })),
+        api.get(`${vipBase}/invoices`).catch(() => ({ data: { data: [] } }))
       ])
 
       setRepairs(repairsRes.data?.data || repairsRes.data || [])
@@ -93,6 +133,10 @@ export default function CashierSales() {
       )
 
       setPhoneSales(salesRes.data?.data || salesRes.data || [])
+      setVipBillableRepairs(Array.isArray(vipRepairsRes.data?.data) ? vipRepairsRes.data.data : [])
+      setVipInvoices(Array.isArray(vipInvoicesRes.data?.data) ? vipInvoicesRes.data.data : [])
+      setResellerContractsPending(contractsRes.data?.data || contractsRes.data || [])
+      setResellerContractSummary(contractsRes.data?.meta || { pendingCount: 0, pendingAmount: 0, paidCount: 0, paidAmount: 0, overdueCount: 0 })
     } catch (error) {
       console.error('Erreur chargement:', error)
       if (error.response?.status === 401) {
@@ -112,9 +156,17 @@ export default function CashierSales() {
 
   // ========== DONNÉES CALCULÉES ==========
   const readyRepairs = useMemo(() =>
-    repairs.filter(r => r.status === 'completed' || r.status === 'ready'),
+    repairs.filter(r => (r.status === 'completed' || r.status === 'ready') && !r.isVip),
     [repairs]
   )
+
+  const vipRepairs = useMemo(() => (
+    Array.isArray(vipBillableRepairs) ? vipBillableRepairs : []
+  ), [vipBillableRepairs])
+
+  const vipInvoicesPending = useMemo(() => (
+    (Array.isArray(vipInvoices) ? vipInvoices : []).filter(inv => String(inv.status || '').toLowerCase() === 'issued')
+  ), [vipInvoices])
 
   const acceptedTradeins = useMemo(() =>
     tradeins.filter(t => t.status === 'completed' || t.status === 'accepted'),
@@ -169,7 +221,10 @@ export default function CashierSales() {
       .reduce((sum, s) => sum + (s.totalAmount || s.amount || 0), 0)
     
     // Total unifié
-    const totalRevenue = allPaidPayments.reduce((sum, p) => sum + (p.paidAmount || 0), 0)
+    const totalRevenue = allPaidPayments.reduce((sum, p) => sum + (p.paidAmount || 0), 0) + Number(resellerContractSummary.paidAmount || 0)
+    const resellerContractsToCollect = Number(resellerContractSummary.pendingCount || 0)
+    const resellerContractsAmount = Number(resellerContractSummary.pendingAmount || 0)
+    const resellerContractsCollectedAmount = Number(resellerContractSummary.paidAmount || 0)
     
     return {
       readyRepairs: readyRepairs.length,
@@ -178,10 +233,13 @@ export default function CashierSales() {
       phoneSalesRevenue,
       repairRevenue,
       tradeinRevenue,
+      resellerContractsToCollect,
+      resellerContractsAmount,
+      resellerContractsCollectedAmount,
       totalRevenue,
-      totalTransactions: allPaidPayments.length
+      totalTransactions: allPaidPayments.length + Number(resellerContractSummary.paidCount || 0)
     }
-  }, [readyRepairs, acceptedTradeins, phoneSales, repairs, tradeins, allPaidPayments])
+  }, [readyRepairs, acceptedTradeins, phoneSales, repairs, tradeins, allPaidPayments, resellerContractsPending, resellerContractSummary])
 
   const paymentMethodData = useMemo(() => {
     const methods = {}
@@ -208,16 +266,83 @@ export default function CashierSales() {
   }
 
   const filteredRepairs = useMemo(() => filterByTerm(readyRepairs, ['clientName', 'clientWhatsapp']), [readyRepairs, searchTerm])
+  const filteredVipRepairs = useMemo(() => {
+    return vipRepairs.filter((item) => {
+      const matchSearch = !searchTerm ||
+        String(item.clientName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        String(item.clientWhatsapp || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        String(item.deviceModel || '').toLowerCase().includes(searchTerm.toLowerCase())
+
+      const matchClient = !vipFilters.client || String(item.clientName || '').toLowerCase().includes(vipFilters.client.toLowerCase())
+      const matchRepairNumber = !vipFilters.repairNumber || String(item.repairNumber || item._id || '').toLowerCase().includes(vipFilters.repairNumber.toLowerCase())
+      const matchStatus = vipFilters.status === 'all'
+        ? true
+        : String(item.status || '').toLowerCase() === vipFilters.status.toLowerCase()
+          || String(item.billingStatus || item.vipBilling?.status || '').toLowerCase() === vipFilters.status.toLowerCase()
+
+      const rowDate = item.repairDate || item.completedAt || item.createdAt
+      const rowDateObj = rowDate ? new Date(rowDate) : null
+      const fromDateObj = vipFilters.fromDate ? new Date(vipFilters.fromDate) : null
+      const toDateObj = vipFilters.toDate ? new Date(vipFilters.toDate) : null
+      const matchDateFrom = !fromDateObj || (rowDateObj && rowDateObj >= fromDateObj)
+      const matchDateTo = !toDateObj || (rowDateObj && rowDateObj <= new Date(toDateObj.getTime() + 24 * 60 * 60 * 1000 - 1))
+
+      return matchSearch && matchClient && matchRepairNumber && matchStatus && matchDateFrom && matchDateTo
+    })
+  }, [vipRepairs, searchTerm, vipFilters])
+  const filteredVipInvoices = useMemo(() => {
+    return vipInvoicesPending.filter((item) => {
+      if (!searchTerm) return true
+      const term = searchTerm.toLowerCase()
+      return String(item.invoiceNumber || '').toLowerCase().includes(term)
+        || String(item.status || '').toLowerCase().includes(term)
+        || String(item.vipClient?.name || '').toLowerCase().includes(term)
+    })
+  }, [vipInvoicesPending, searchTerm])
   const filteredTradeins = useMemo(() => filterByTerm(acceptedTradeins, ['clientName', 'clientWhatsapp']), [acceptedTradeins, searchTerm])
   const filteredProducts = useMemo(() => filterByTerm(products, ['name', 'brand']), [products, searchTerm])
+  const filteredResellerContracts = useMemo(() => filterByTerm(resellerContractsPending, ['number']), [resellerContractsPending, searchTerm])
 
   const paginatedRepairs = filteredRepairs.slice((currentPage.repairs - 1) * itemsPerPage, currentPage.repairs * itemsPerPage)
+  const paginatedVipRepairs = filteredVipRepairs.slice((currentPage.vipRepairs - 1) * itemsPerPage, currentPage.vipRepairs * itemsPerPage)
+  const paginatedVipInvoices = filteredVipInvoices.slice((currentPage.vipInvoices - 1) * itemsPerPage, currentPage.vipInvoices * itemsPerPage)
   const paginatedTradeins = filteredTradeins.slice((currentPage.tradeins - 1) * itemsPerPage, currentPage.tradeins * itemsPerPage)
   const paginatedPhones = filteredProducts.slice((currentPage.phones - 1) * itemsPerPage, currentPage.phones * itemsPerPage)
+  const paginatedContracts = filteredResellerContracts.slice((currentPage.contracts - 1) * itemsPerPage, currentPage.contracts * itemsPerPage)
 
   const totalRepairsPages = Math.ceil(filteredRepairs.length / itemsPerPage)
+  const totalVipRepairsPages = Math.ceil(filteredVipRepairs.length / itemsPerPage)
+  const totalVipInvoicesPages = Math.ceil(filteredVipInvoices.length / itemsPerPage)
   const totalTradeinsPages = Math.ceil(filteredTradeins.length / itemsPerPage)
   const totalPhonesPages = Math.ceil(filteredProducts.length / itemsPerPage)
+  const totalContractsPages = Math.ceil(filteredResellerContracts.length / itemsPerPage)
+
+  const formatInvoiceStatus = (status) => {
+    const normalized = String(status || '').toLowerCase()
+    if (normalized === 'issued') return 'Émise'
+    if (normalized === 'paid') return 'Payée'
+    if (normalized === 'partially_paid') return 'Partiellement payée'
+    if (normalized === 'cancelled') return 'Annulée'
+    if (normalized === 'overdue') return 'En retard'
+    if (normalized === 'draft') return 'Brouillon'
+    return status || '-'
+  }
+
+  const formatRepairStatus = (status) => {
+    const normalized = String(status || '').toLowerCase()
+    if (normalized === 'ready') return 'Terminée'
+    if (normalized === 'completed') return 'Terminée'
+    if (normalized === 'paid') return 'Soldée'
+    return status || '-'
+  }
+
+  const formatBillingStatus = (status) => {
+    const normalized = String(status || '').toLowerCase()
+    if (normalized === 'billable' || normalized === 'pending') return 'Non facturée'
+    if (normalized === 'invoiced') return 'Facturée'
+    if (normalized === 'paid') return 'Soldée'
+    return status || 'Non facturée'
+  }
 
   // ========== GÉNÉRATION FACTURE (Fonction centralisée) ==========
   const generateInvoice = async ({ requestType, requestId, clientName, clientWhatsapp, amount, quantity, itemName, paymentMethod }) => {
@@ -494,6 +619,214 @@ export default function CashierSales() {
     }
   }
 
+  const openResellerContractPaymentModal = (contract) => {
+    setSelectedResellerContract(contract)
+    setResellerContractPaymentData({
+      amount: String(contract.payment?.amountExpected || contract.saleInfo?.amount || ''),
+      paymentMethod: 'cash',
+      notes: '',
+      overrideReason: ''
+    })
+    setShowResellerContractPaymentModal(true)
+  }
+
+  const closeResellerContractPaymentModal = () => {
+    setShowResellerContractPaymentModal(false)
+    setSelectedResellerContract(null)
+    setResellerContractPaymentData({ amount: '', paymentMethod: 'cash', notes: '', overrideReason: '' })
+  }
+
+  const handleCollectResellerContract = async (e) => {
+    e.preventDefault()
+    if (!selectedResellerContract) return
+
+    const amount = Number(resellerContractPaymentData.amount)
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setToast({ type: 'error', message: 'Montant invalide.' })
+      return
+    }
+
+    const isOverdue = Boolean(selectedResellerContract?.payment?.isOverdue)
+    if (isOverdue && isAdminView && !String(resellerContractPaymentData.overrideReason || '').trim()) {
+      setToast({ type: 'error', message: 'Motif obligatoire pour un encaissement hors delai.' })
+      return
+    }
+
+    setProcessing(true)
+    try {
+      const base = isAdminView ? '/api/admin' : '/api/cashier'
+      const res = await api.put(`${base}/reseller-contracts/${selectedResellerContract._id}/pay`, {
+        amount,
+        paymentMethod: resellerContractPaymentData.paymentMethod,
+        note: resellerContractPaymentData.notes,
+        overrideReason: resellerContractPaymentData.overrideReason
+      })
+
+      if (res.data?.success) {
+        await generateInvoice({
+          requestType: 'reseller_contract',
+          requestId: selectedResellerContract._id,
+          clientName: selectedResellerContract.reseller?.name || 'Revendeur',
+          clientWhatsapp: selectedResellerContract.reseller?.whatsapp || selectedResellerContract.reseller?.phone || '',
+          amount,
+          itemName: selectedResellerContract.product?.name || 'Téléphone',
+          paymentMethod: resellerContractPaymentData.paymentMethod
+        })
+        setToast({ type: 'success', message: 'Encaissement enregistré avec succès.' })
+        closeResellerContractPaymentModal()
+        await fetchAllData()
+      }
+    } catch (e) {
+      setToast({ type: 'error', message: e.response?.data?.message || 'Erreur lors de l\'encaissement.' })
+    } finally {
+      setProcessing(false)
+    }
+  }
+
+  const openVipPreview = (repair, explicitRepairs = null) => {
+    const vipClientId = repair?.vipClient?._id || repair?.vipClient || explicitRepairs?.[0]?.vipClient?._id || explicitRepairs?.[0]?.vipClient
+    if (!vipClientId) {
+      setToast({ type: 'error', message: 'Client VIP introuvable pour cette réparation.' })
+      return
+    }
+
+    const sourceRepairs = Array.isArray(explicitRepairs) && explicitRepairs.length ? explicitRepairs : vipRepairs
+    const clientRepairs = sourceRepairs.filter((row) => {
+      const rowVipId = row?.vipClient?._id || row?.vipClient
+      return String(rowVipId) === String(vipClientId)
+    })
+
+    const total = clientRepairs.reduce((sum, row) => sum + Number(row.cost || 0), 0)
+    const vipClientRef = repair?.vipClient && typeof repair.vipClient === 'object' ? repair.vipClient : (clientRepairs[0]?.vipClient && typeof clientRepairs[0].vipClient === 'object' ? clientRepairs[0].vipClient : null)
+    setSelectedVipPreview({
+      vipClientId,
+      clientName: repair.clientName || 'Client VIP',
+      clientWhatsapp: repair.clientWhatsapp || '',
+      clientPhone: vipClientRef?.phone || repair.clientWhatsapp || '',
+      clientAddress: vipClientRef?.metadata?.address || '',
+      vipStatus: vipClientRef?.isActive === false ? 'Inactif' : 'Actif',
+      repairs: clientRepairs,
+      total
+    })
+    setShowVipPreviewModal(true)
+  }
+
+  const openVipPreviewForSelection = () => {
+    if (!selectedVipRepairIds.length) {
+      setToast({ type: 'error', message: 'Sélectionnez au moins une réparation VIP.' })
+      return
+    }
+
+    const selectedRows = vipRepairs.filter((row) => selectedVipRepairIds.includes(String(row._id)))
+    if (!selectedRows.length) {
+      setToast({ type: 'error', message: 'Sélection invalide.' })
+      return
+    }
+
+    const clientIds = [...new Set(selectedRows.map((row) => String(row?.vipClient?._id || row?.vipClient || '')))]
+    if (clientIds.length !== 1) {
+      setToast({ type: 'error', message: 'La sélection doit contenir un seul client VIP.' })
+      return
+    }
+
+    openVipPreview(selectedRows[0], selectedRows)
+  }
+
+  const closeVipPreview = () => {
+    setShowVipPreviewModal(false)
+    setSelectedVipPreview(null)
+  }
+
+  const handleGenerateVipInvoiceFromPreview = async () => {
+    if (!selectedVipPreview || !selectedVipPreview.repairs?.length) {
+      setToast({ type: 'error', message: 'Aucune réparation à facturer.' })
+      return
+    }
+
+    setProcessing(true)
+    try {
+      const vipBase = isAdminView ? '/api/admin/vip' : '/api/cashier/vip'
+      const repairIds = selectedVipPreview.repairs.map((row) => String(row._id))
+      const res = await api.post(`${vipBase}/invoices/generate-manual`, {
+        vipClientId: selectedVipPreview.vipClientId,
+        repairIds,
+        tvaRate: 0
+      })
+
+      if (res.data?.success) {
+        const invoice = res.data?.data
+        if (invoice?.pdfPath) {
+          const link = invoice.pdfPath.startsWith('http') ? invoice.pdfPath : `${API_BASE_URL}${invoice.pdfPath}`
+          setInvoiceLink(link)
+        }
+        setToast({ type: 'success', message: 'Facture VIP générée avec succès.' })
+        setSelectedVipRepairIds([])
+        closeVipPreview()
+        await fetchAllData()
+      }
+    } catch (e) {
+      setToast({ type: 'error', message: e.response?.data?.message || 'Impossible de générer la facture VIP.' })
+    } finally {
+      setProcessing(false)
+    }
+  }
+
+  const openVipInvoicePaymentModal = (invoice) => {
+    setSelectedVipInvoice(invoice)
+    setVipInvoicePaymentData({
+      amount: String(Math.max(0, Number(invoice.balance || invoice.total || 0))),
+      paymentMethod: 'cash',
+      paymentReference: '',
+      paymentDate: new Date().toISOString().slice(0, 10),
+      note: ''
+    })
+    setShowVipInvoicePaymentModal(true)
+  }
+
+  const closeVipInvoicePaymentModal = () => {
+    setShowVipInvoicePaymentModal(false)
+    setSelectedVipInvoice(null)
+    setVipInvoicePaymentData({ amount: '', paymentMethod: 'cash', paymentReference: '', paymentDate: new Date().toISOString().slice(0, 10), note: '' })
+  }
+
+  const handleCollectVipInvoicePayment = async (e) => {
+    e.preventDefault()
+    if (!selectedVipInvoice) return
+
+    const amount = Number(vipInvoicePaymentData.amount)
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setToast({ type: 'error', message: 'Montant invalide.' })
+      return
+    }
+
+    setProcessing(true)
+    try {
+      const vipBase = isAdminView ? '/api/admin/vip' : '/api/cashier/vip'
+      const res = await api.put(`${vipBase}/invoices/${selectedVipInvoice._id}/pay`, {
+        amount,
+        paymentMethod: vipInvoicePaymentData.paymentMethod,
+        paymentReference: vipInvoicePaymentData.paymentReference,
+        paymentDate: vipInvoicePaymentData.paymentDate,
+        note: vipInvoicePaymentData.note
+      })
+
+      if (res.data?.success) {
+        const receipt = res.data?.data?.receiptPath
+        if (receipt) {
+          const link = receipt.startsWith('http') ? receipt : `${API_BASE_URL}${receipt}`
+          setInvoiceLink(link)
+        }
+        setToast({ type: 'success', message: 'Encaissement VIP enregistré.' })
+        closeVipInvoicePaymentModal()
+        await fetchAllData()
+      }
+    } catch (e) {
+      setToast({ type: 'error', message: e.response?.data?.message || 'Erreur lors de l\'encaissement VIP.' })
+    } finally {
+      setProcessing(false)
+    }
+  }
+
   // ========== RENDU ==========
   if (loading) {
     return (
@@ -516,24 +849,46 @@ export default function CashierSales() {
           <div className="bg-blue-50 rounded-2xl border border-blue-200 p-4 flex justify-between items-center">
             <div>
               <p className="font-bold text-blue-900">📄 Facture prête</p>
-              <p className="text-sm text-blue-700">Cliquez sur le bouton pour télécharger</p>
+              <p className="text-sm text-blue-700">Actions: imprimer, télécharger ou envoyer au client</p>
             </div>
-            <button 
-              onClick={() => window.open(invoiceLink, '_blank')} 
-              className="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm hover:bg-blue-700 transition flex items-center gap-2"
-            >
-              <Download size={16} />
-              Télécharger
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => window.open(invoiceLink, '_blank')}
+                className="px-3 py-2 bg-gray-700 text-white rounded-xl text-sm hover:bg-gray-800 transition"
+              >
+                Imprimer
+              </button>
+              <button
+                onClick={() => window.open(invoiceLink, '_blank')}
+                className="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm hover:bg-blue-700 transition flex items-center gap-2"
+              >
+                <Download size={16} />
+                Télécharger PDF
+              </button>
+              <button
+                onClick={() => {
+                  if (selectedVipPreview?.clientWhatsapp) {
+                    const phone = String(selectedVipPreview.clientWhatsapp).replace(/\D/g, '')
+                    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(`Votre document est disponible: ${invoiceLink}`)}`, '_blank')
+                  } else {
+                    setToast({ type: 'error', message: 'Téléphone client indisponible pour l\'envoi.' })
+                  }
+                }}
+                className="px-3 py-2 bg-emerald-600 text-white rounded-xl text-sm hover:bg-emerald-700 transition"
+              >
+                Envoyer
+              </button>
+            </div>
           </div>
         )}
 
         {/* Statistiques */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
           {[
             { label: 'Réparations prêtes', value: stats.readyRepairs, sub: `${stats.repairRevenue.toLocaleString()} FCFA`, icon: Wrench, grad: 'from-blue-500 to-cyan-500' },
             { label: 'Échanges à encaisser', value: stats.acceptedTradeins, sub: `${stats.tradeinRevenue.toLocaleString()} FCFA`, icon: RefreshCw, grad: 'from-amber-500 to-orange-500' },
             { label: 'Téléphones vendus', value: stats.phoneSalesCount, sub: `${stats.phoneSalesRevenue.toLocaleString()} FCFA`, icon: Smartphone, grad: 'from-emerald-500 to-green-500' },
+            { label: 'Contrats revendeur à encaisser', value: `${stats.resellerContractsAmount.toLocaleString()} FCFA`, sub: `${stats.resellerContractsToCollect} en attente • ${Number(resellerContractSummary.overdueCount || 0)} depasses`, icon: DollarSign, grad: 'from-indigo-500 to-blue-500' },
             { label: 'Total encaissé', value: `${stats.totalRevenue.toLocaleString()} FCFA`, sub: `${stats.totalTransactions} transactions`, icon: DollarSign, grad: 'from-purple-500 to-violet-500' },
           ].map(s => (
             <div key={s.label} className="bg-white rounded-2xl shadow-sm border p-5">
@@ -588,8 +943,11 @@ export default function CashierSales() {
           <div className="flex border-b">
             {[
               { id: 'repairs', label: 'Réparations', icon: Wrench, count: readyRepairs.length },
+              { id: 'vipRepairs', label: 'Réparations VIP', icon: Wrench, count: vipRepairs.length },
+              { id: 'vipInvoices', label: 'Factures VIP en attente', icon: FileText, count: vipInvoicesPending.length },
               { id: 'tradeins', label: 'Échanges', icon: RefreshCw, count: acceptedTradeins.length },
               { id: 'phones', label: 'Téléphones', icon: Smartphone, count: products.length },
+              { id: 'contracts', label: 'Contrats revendeur', icon: DollarSign, count: resellerContractsPending.length },
             ].map(tab => (
               <button key={tab.id}
                 onClick={() => { setActiveTab(tab.id); setCurrentPage(p => ({...p, [tab.id]: 1})) }}
@@ -637,6 +995,173 @@ export default function CashierSales() {
                   ))}
                 </div>
                 <Pagination page={currentPage.repairs} total={totalRepairsPages} onChange={p => setCurrentPage(prev => ({...prev, repairs: p}))} />
+              </>
+            ))}
+
+            {/* Onglet Réparations VIP */}
+            {activeTab === 'vipRepairs' && (filteredVipRepairs.length === 0 ? (
+              <div className="p-16 text-center text-gray-400"><Wrench size={48} className="mx-auto mb-2"/><p>Aucune réparation VIP en attente</p></div>
+            ) : (
+              <>
+                <div className="px-4 py-3 bg-blue-50 text-blue-700 text-sm border-b border-blue-100">
+                  Paiements VIP à encaisser: une ligne par réparation (non facturée), avec prévisualisation avant génération de facture.
+                </div>
+                <div className="p-4 grid grid-cols-1 md:grid-cols-5 gap-3 border-b border-gray-100 bg-gray-50/50">
+                  <input
+                    type="text"
+                    placeholder="Filtrer client VIP"
+                    value={vipFilters.client}
+                    onChange={(e) => setVipFilters({ ...vipFilters, client: e.target.value })}
+                    className="px-3 py-2 border rounded-lg"
+                  />
+                  <input
+                    type="date"
+                    value={vipFilters.fromDate}
+                    onChange={(e) => setVipFilters({ ...vipFilters, fromDate: e.target.value })}
+                    className="px-3 py-2 border rounded-lg"
+                    placeholder="Du"
+                  />
+                  <input
+                    type="date"
+                    value={vipFilters.toDate}
+                    onChange={(e) => setVipFilters({ ...vipFilters, toDate: e.target.value })}
+                    className="px-3 py-2 border rounded-lg"
+                    placeholder="Au"
+                  />
+                  <select
+                    value={vipFilters.status}
+                    onChange={(e) => setVipFilters({ ...vipFilters, status: e.target.value })}
+                    className="px-3 py-2 border rounded-lg"
+                  >
+                    <option value="all">Tous statuts</option>
+                    <option value="ready">Terminée</option>
+                    <option value="completed">Terminée</option>
+                    <option value="billable">Facturable</option>
+                  </select>
+                </div>
+                <div className="px-4 pb-4 bg-gray-50/50 border-b border-gray-100 flex flex-wrap items-center justify-between gap-2">
+                  <input
+                    type="text"
+                    placeholder="N° réparation"
+                    value={vipFilters.repairNumber}
+                    onChange={(e) => setVipFilters({ ...vipFilters, repairNumber: e.target.value })}
+                    className="px-3 py-2 border rounded-lg min-w-[220px]"
+                  />
+                  <button
+                    type="button"
+                    onClick={openVipPreviewForSelection}
+                    disabled={!selectedVipRepairIds.length}
+                    className="px-3 py-2 rounded-lg text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
+                  >
+                    Prévisualiser la sélection ({selectedVipRepairIds.length})
+                  </button>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50 text-xs uppercase text-gray-500">
+                      <tr>
+                        <th className="px-3 py-2 text-left">Sélection</th>
+                        <th className="px-3 py-2 text-left">N° Réparation</th>
+                        <th className="px-3 py-2 text-left">Client VIP</th>
+                        <th className="px-3 py-2 text-left">Téléphone</th>
+                        <th className="px-3 py-2 text-left">IMEI</th>
+                        <th className="px-3 py-2 text-left">Nature</th>
+                        <th className="px-3 py-2 text-left">Date</th>
+                        <th className="px-3 py-2 text-left">Technicien</th>
+                        <th className="px-3 py-2 text-left">Montant</th>
+                        <th className="px-3 py-2 text-left">Statut réparation</th>
+                        <th className="px-3 py-2 text-left">Statut facturation</th>
+                        <th className="px-3 py-2 text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {paginatedVipRepairs.map((r) => (
+                        <tr key={r._id} className="hover:bg-gray-50">
+                          <td className="px-3 py-2 text-sm">
+                            <input
+                              type="checkbox"
+                              checked={selectedVipRepairIds.includes(String(r._id))}
+                              onChange={(e) => {
+                                const id = String(r._id)
+                                if (e.target.checked) {
+                                  setSelectedVipRepairIds((prev) => [...prev, id])
+                                } else {
+                                  setSelectedVipRepairIds((prev) => prev.filter((item) => item !== id))
+                                }
+                              }}
+                            />
+                          </td>
+                          <td className="px-3 py-2 text-sm font-semibold">{r.repairNumber || String(r._id).slice(-6).toUpperCase()}</td>
+                          <td className="px-3 py-2 text-sm">{r.clientName || 'Client VIP'}</td>
+                          <td className="px-3 py-2 text-sm">{r.deviceModel || '-'}</td>
+                          <td className="px-3 py-2 text-sm">{r.imei || '-'}</td>
+                          <td className="px-3 py-2 text-sm">{r.issueDescription || '-'}</td>
+                          <td className="px-3 py-2 text-sm">{new Date(r.repairDate || r.createdAt).toLocaleDateString('fr-FR')}</td>
+                          <td className="px-3 py-2 text-sm">{r.technician?.name || '-'}</td>
+                          <td className="px-3 py-2 text-sm font-semibold text-indigo-700">{Number(r.cost || 0).toLocaleString('fr-FR')} FCFA</td>
+                          <td className="px-3 py-2 text-sm">{formatRepairStatus(r.status)}</td>
+                          <td className="px-3 py-2 text-sm">{formatBillingStatus(r.billingStatus || r.vipBilling?.status)}</td>
+                          <td className="px-3 py-2 text-right">
+                            <button
+                              type="button"
+                              onClick={() => openVipPreview(r)}
+                              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700"
+                            >
+                              Prévisualiser
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <Pagination page={currentPage.vipRepairs} total={totalVipRepairsPages} onChange={p => setCurrentPage(prev => ({...prev, vipRepairs: p}))} />
+              </>
+            ))}
+
+            {/* Onglet Factures VIP en attente d'encaissement */}
+            {activeTab === 'vipInvoices' && (filteredVipInvoices.length === 0 ? (
+              <div className="p-16 text-center text-gray-400"><FileText size={48} className="mx-auto mb-2"/><p>Aucune facture VIP en attente d'encaissement</p></div>
+            ) : (
+              <>
+                <div className="divide-y">
+                  {paginatedVipInvoices.map((inv) => (
+                    <div key={inv._id} className="p-4 flex flex-wrap items-center justify-between gap-3 hover:bg-gray-50/50 transition">
+                      <div className="flex-1 min-w-[200px]">
+                        <p className="font-semibold text-gray-900">{inv.invoiceNumber || String(inv._id).slice(-6).toUpperCase()}</p>
+                        <p className="text-sm text-gray-500">Client VIP: {inv.vipClient?.name || '-'}</p>
+                        <p className="text-xs text-gray-400">Date émission: {new Date(inv.issuedAt || inv.createdAt).toLocaleDateString('fr-FR')} • Réparations: {(inv.repairs || []).length} • Statut: {formatInvoiceStatus(inv.status)}</p>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <span className="font-bold text-indigo-600">{Number(inv.total ?? 0).toLocaleString('fr-FR')} FCFA</span>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedVipPreview({
+                            invoice: inv,
+                            clientName: inv.vipClient?.name || 'Client VIP',
+                            clientWhatsapp: inv.vipClient?.whatsapp || inv.vipClient?.phone || '',
+                            clientPhone: inv.vipClient?.phone || '',
+                            clientAddress: inv.vipClient?.metadata?.address || '',
+                            vipStatus: inv.vipClient?.isActive === false ? 'Inactif' : 'Actif',
+                            repairs: inv.repairs || [],
+                            total: Number(inv.total || 0)
+                          }) || setShowVipPreviewModal(true)}
+                          className="px-3 py-2 rounded-lg text-xs font-semibold bg-gray-700 text-white hover:bg-gray-800 flex items-center gap-1"
+                        >
+                          <Eye size={14} /> Consulter
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => openVipInvoicePaymentModal(inv)}
+                          className="px-3 py-2 rounded-lg text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700"
+                        >
+                          Encaisser
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <Pagination page={currentPage.vipInvoices} total={totalVipInvoicesPages} onChange={p => setCurrentPage(prev => ({...prev, vipInvoices: p}))} />
               </>
             ))}
 
@@ -719,9 +1244,285 @@ export default function CashierSales() {
                 <Pagination page={currentPage.phones} total={totalPhonesPages} onChange={p => setCurrentPage(prev => ({...prev, phones: p}))} />
               </>
             ))}
+
+            {/* Onglet Contrats revendeur */}
+            {activeTab === 'contracts' && (filteredResellerContracts.length === 0 ? (
+              <div className="p-16 text-center text-gray-400"><DollarSign size={48} className="mx-auto mb-2"/><p>Aucun contrat revendeur à encaisser</p></div>
+            ) : (
+              <>
+                <div className="divide-y">
+                  {paginatedContracts.map(c => (
+                    <div key={c._id} className="p-4 flex flex-wrap items-center justify-between gap-3 hover:bg-gray-50/50 transition">
+                      <div className="flex-1 min-w-[180px]">
+                        <p className="font-semibold text-gray-900">{c.number}</p>
+                        <p className="text-sm text-gray-500">Revendeur: {c.reseller?.name || '-'}</p>
+                        <p className="text-xs text-gray-400">Téléphone: {c.product?.name || '-'}</p>
+                        {c.payment?.remainingMs !== null && c.payment?.remainingMs !== undefined && (
+                          <p className={`text-xs mt-1 ${c.payment?.isOverdue ? 'text-red-600' : 'text-amber-700'}`}>
+                            {c.payment?.isOverdue
+                              ? 'Delai depasse (plus de 5h)'
+                              : `Temps restant: ${Math.max(0, Math.floor(c.payment.remainingMs / 3600000))}h ${Math.max(0, Math.floor((c.payment.remainingMs % 3600000) / 60000))}m`}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <span className="font-bold text-indigo-600">{Number(c.payment?.amountExpected || c.saleInfo?.amount || 0).toLocaleString()} FCFA</span>
+                        <button
+                          type="button"
+                          onClick={() => openResellerContractPaymentModal(c)}
+                          disabled={processing || (c.payment?.isOverdue && !isAdminView)}
+                          className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700 transition disabled:opacity-60"
+                        >
+                          {c.payment?.isOverdue && !isAdminView ? 'Manager requis' : 'Encaisser'}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <Pagination page={currentPage.contracts} total={totalContractsPages} onChange={p => setCurrentPage(prev => ({...prev, contracts: p}))} />
+              </>
+            ))}
           </div>
         </div>
       </div>
+
+      {showVipPreviewModal && selectedVipPreview && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={closeVipPreview}>
+          <div className="bg-white rounded-2xl max-w-3xl w-full shadow-2xl max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="p-6 border-b">
+              <h3 className="text-xl font-bold">{selectedVipPreview.invoice ? 'Consultation facture VIP' : 'Prévisualisation facture VIP'}</h3>
+              <p className="text-sm text-gray-500">Client: {selectedVipPreview.clientName}</p>
+              {selectedVipPreview.clientWhatsapp && <p className="text-xs text-gray-400">Téléphone: {selectedVipPreview.clientWhatsapp}</p>}
+              {selectedVipPreview.clientAddress && <p className="text-xs text-gray-400">Adresse: {selectedVipPreview.clientAddress}</p>}
+              <p className="text-xs text-gray-400">Statut VIP: {selectedVipPreview.vipStatus || 'Actif'}</p>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50 text-gray-500 uppercase text-xs">
+                    <tr>
+                      <th className="px-3 py-2 text-left">N° réparation</th>
+                      <th className="px-3 py-2 text-left">Date</th>
+                      <th className="px-3 py-2 text-left">Téléphone</th>
+                      <th className="px-3 py-2 text-left">IMEI</th>
+                      <th className="px-3 py-2 text-left">Nature</th>
+                      <th className="px-3 py-2 text-left">Intervention</th>
+                      <th className="px-3 py-2 text-left">Technicien</th>
+                      <th className="px-3 py-2 text-left">Montant</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {(selectedVipPreview.repairs || []).map((row, index) => (
+                      <tr key={row._id || index}>
+                        <td className="px-3 py-2">{row.repairNumber || String(row.repairId || row._id || '').slice(-6).toUpperCase()}</td>
+                        <td className="px-3 py-2">{new Date(row.repairDate || row.createdAt || Date.now()).toLocaleDateString('fr-FR')}</td>
+                        <td className="px-3 py-2">{row.deviceModel || '-'}</td>
+                        <td className="px-3 py-2">{row.imei || '-'}</td>
+                        <td className="px-3 py-2">{row.issueDescription || row.description || '-'}</td>
+                        <td className="px-3 py-2">{row.technicianReport || '-'}</td>
+                        <td className="px-3 py-2">{row.technician?.name || row.technicianName || '-'}</td>
+                        <td className="px-3 py-2 font-semibold text-indigo-700">{Number(row.cost || row.total || 0).toLocaleString('fr-FR')} FCFA</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4">
+                <p className="text-sm text-indigo-800">Nombre total de réparations: <span className="font-bold">{(selectedVipPreview.repairs || []).length}</span></p>
+                <p className="text-sm text-indigo-800">Total général: <span className="font-bold">{Number(selectedVipPreview.total || 0).toLocaleString('fr-FR')} FCFA</span></p>
+                <p className="text-xs text-indigo-700 mt-1">Observation: la génération crée une créance (facture émise), sans encaissement automatique.</p>
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <button type="button" onClick={closeVipPreview} className="px-5 py-2.5 border rounded-xl">Fermer</button>
+                {!selectedVipPreview.invoice && (
+                  <button
+                    type="button"
+                    onClick={handleGenerateVipInvoiceFromPreview}
+                    disabled={processing}
+                    className="px-5 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 disabled:opacity-50"
+                  >
+                    Générer la facture
+                  </button>
+                )}
+                {selectedVipPreview.invoice && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      closeVipPreview()
+                      openVipInvoicePaymentModal(selectedVipPreview.invoice)
+                    }}
+                    className="px-5 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700"
+                  >
+                    Encaisser
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showVipInvoicePaymentModal && selectedVipInvoice && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={closeVipInvoicePaymentModal}>
+          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="p-6 border-b">
+              <h3 className="text-xl font-bold">Encaisser facture VIP</h3>
+              <p className="text-sm text-gray-500">{selectedVipInvoice.invoiceNumber || String(selectedVipInvoice._id).slice(-6).toUpperCase()}</p>
+            </div>
+            <form onSubmit={handleCollectVipInvoicePayment} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-semibold mb-1">Montant payé (solde à régler)</label>
+                <input
+                  type="number"
+                  min="1"
+                  value={vipInvoicePaymentData.amount}
+                  readOnly
+                  className="w-full px-4 py-2.5 border rounded-xl"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold mb-1">Mode de paiement</label>
+                <select
+                  value={vipInvoicePaymentData.paymentMethod}
+                  onChange={e => setVipInvoicePaymentData({ ...vipInvoicePaymentData, paymentMethod: e.target.value })}
+                  className="w-full px-4 py-2.5 border rounded-xl"
+                >
+                  <option value="cash">Espèces</option>
+                  <option value="mobile_money">Monnaie mobile</option>
+                  <option value="card">Carte</option>
+                  <option value="transfer">Virement</option>
+                  <option value="check">Chèque</option>
+                  <option value="other">Autre</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold mb-1">Date paiement</label>
+                <input
+                  type="date"
+                  value={vipInvoicePaymentData.paymentDate}
+                  onChange={e => setVipInvoicePaymentData({ ...vipInvoicePaymentData, paymentDate: e.target.value })}
+                  className="w-full px-4 py-2.5 border rounded-xl"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold mb-1">Référence de paiement</label>
+                <input
+                  type="text"
+                  value={vipInvoicePaymentData.paymentReference}
+                  onChange={e => setVipInvoicePaymentData({ ...vipInvoicePaymentData, paymentReference: e.target.value })}
+                  className="w-full px-4 py-2.5 border rounded-xl"
+                  placeholder="Transaction, ticket, etc."
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold mb-1">Note</label>
+                <textarea
+                  rows={2}
+                  value={vipInvoicePaymentData.note}
+                  onChange={e => setVipInvoicePaymentData({ ...vipInvoicePaymentData, note: e.target.value })}
+                  className="w-full px-4 py-2.5 border rounded-xl"
+                />
+              </div>
+              <div className="flex justify-end gap-3">
+                <button type="button" onClick={closeVipInvoicePaymentModal} className="px-4 py-2.5 border rounded-xl">Annuler</button>
+                <button type="submit" disabled={processing} className="px-4 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 disabled:opacity-50">
+                  Enregistrer le paiement
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showResellerContractPaymentModal && selectedResellerContract && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={closeResellerContractPaymentModal}>
+          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="p-6 border-b">
+              <h3 className="text-xl font-bold">Encaisser le contrat revendeur</h3>
+              <p className="text-sm text-gray-500">
+                {selectedResellerContract.number} - {selectedResellerContract.reseller?.name || 'Revendeur'}
+              </p>
+            </div>
+            <form onSubmit={handleCollectResellerContract} className="p-6 space-y-4">
+              {selectedResellerContract.payment?.isOverdue && (
+                <div className="p-3 rounded-xl border border-red-200 bg-red-50 text-red-700 text-sm">
+                  Delai de 5h depasse. Un override manager avec motif est requis.
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-semibold mb-1">Montant (FCFA) *</label>
+                <input
+                  type="number"
+                  value={resellerContractPaymentData.amount}
+                  onChange={e => setResellerContractPaymentData({ ...resellerContractPaymentData, amount: e.target.value })}
+                  className="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-emerald-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold mb-2">Méthode de paiement</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { value: 'cash', label: 'Espèces', icon: Banknote },
+                    { value: 'card', label: 'Carte', icon: CreditCard },
+                    { value: 'mobile_money', label: 'Monnaie mobile', icon: Smartphone },
+                    { value: 'transfer', label: 'Virement', icon: Send },
+                  ].map(m => (
+                    <button
+                      key={m.value}
+                      type="button"
+                      onClick={() => setResellerContractPaymentData({ ...resellerContractPaymentData, paymentMethod: m.value })}
+                      className={`flex items-center gap-2 p-2.5 rounded-xl border-2 text-sm ${
+                        resellerContractPaymentData.paymentMethod === m.value ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-gray-200 text-gray-600'
+                      }`}
+                    >
+                      <m.icon size={16} /> {m.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold mb-1">Notes</label>
+                <textarea
+                  value={resellerContractPaymentData.notes}
+                  onChange={e => setResellerContractPaymentData({ ...resellerContractPaymentData, notes: e.target.value })}
+                  rows={2}
+                  className="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+
+              {selectedResellerContract.payment?.isOverdue && isAdminView && (
+                <div>
+                  <label className="block text-sm font-semibold mb-1">Motif d'override manager *</label>
+                  <textarea
+                    value={resellerContractPaymentData.overrideReason}
+                    onChange={e => setResellerContractPaymentData({ ...resellerContractPaymentData, overrideReason: e.target.value })}
+                    rows={3}
+                    required
+                    placeholder="Expliquez pourquoi l'encaissement est autorise apres le delai de 5h"
+                    className="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+              )}
+
+              <div className="flex gap-3 justify-end">
+                <button type="button" onClick={closeResellerContractPaymentModal} className="px-5 py-2.5 border rounded-xl">Annuler</button>
+                <button type="submit" disabled={processing} className="px-5 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 disabled:opacity-50 flex items-center gap-2">
+                  {processing ? <RefreshCw className="animate-spin" size={16} /> : <CheckCircle size={18} />}
+                  Valider
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* MODALE NOUVELLE VENTE */}
       {showNewSale && (
@@ -900,7 +1701,7 @@ export default function CashierSales() {
                   {[
                     { value: 'cash', label: '💵 Espèces' },
                     { value: 'card', label: '💳 Carte' },
-                    { value: 'mobile_money', label: '📱 Mobile Money' },
+                    { value: 'mobile_money', label: '📱 Monnaie mobile' },
                     { value: 'transfer', label: '🏦 Virement' },
                     { value: 'check', label: '🧾 Chèque' },
                   ].map(method => (
@@ -1065,7 +1866,7 @@ export default function CashierSales() {
                 {[
                   { value: 'cash', label: '💵 Espèces' },
                   { value: 'card', label: '💳 Carte' },
-                  { value: 'mobile_money', label: '📱 Mobile Money' },
+                  { value: 'mobile_money', label: '📱 Monnaie mobile' },
                   { value: 'transfer', label: '🏦 Virement' },
                 ].map(method => (
                   <button

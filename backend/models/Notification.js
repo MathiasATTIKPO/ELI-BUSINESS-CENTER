@@ -1,8 +1,9 @@
 const mongoose = require('mongoose');
 
 const notificationSchema = new mongoose.Schema({
-  recipientId: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'Employee' },
-  recipientRole: { type: String, enum: ['admin', 'cashier', 'technician'], required: true },
+  recipientId: { type: mongoose.Schema.Types.Mixed, required: true },
+  // Étendu pour supporter les rôles externes (reseller, vip)
+  recipientRole: { type: String, enum: ['admin', 'cashier', 'technician', 'reseller', 'vip'], required: true },
   type: {
     type: String,
     required: true,

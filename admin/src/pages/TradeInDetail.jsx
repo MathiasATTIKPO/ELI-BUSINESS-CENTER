@@ -356,7 +356,7 @@ export default function TradeInDetail() {
   const isCompleted = tradein.status === 'paid' || tradein.status === 'completed'
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/30">
+    <div className="eli-canvas">
       {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
 
       {/* Bandeau informatif si l'échange est payé */}
@@ -388,7 +388,7 @@ export default function TradeInDetail() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+      <div className="eli-content">
         {/* Notification Facture */}
         {invoiceLink && (
           <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl border border-blue-200 p-6 animate-fadeIn">

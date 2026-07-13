@@ -248,7 +248,7 @@ export default function Employees() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12 py-8 space-y-8">
       {error && <Toast message={error} type="error" onClose={() => setError('')} />}
       {success && <Toast message={success} type="success" onClose={() => setSuccess('')} />}
 
@@ -262,6 +262,13 @@ export default function Employees() {
         </div>
         
         <div className="flex gap-3">
+          <button
+            onClick={() => navigate('/admin/accounts')}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-50 transition-all duration-200 shadow-sm"
+          >
+            <Users size={18} />
+            <span className="hidden sm:inline">Retour Comptes</span>
+          </button>
           <button
             onClick={handleExportEmployees}
             className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-50 transition-all duration-200 shadow-sm"

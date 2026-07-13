@@ -50,6 +50,17 @@ export default function EmployeeForm() {
   const [showPassword, setShowPassword] = useState(false)
 
   const roles = [
+    {
+      value: 'super_admin',
+      label: 'Super Administrateur',
+      description: 'Pilotage global et administration avancée',
+      icon: Shield,
+      gradient: 'from-slate-700 to-slate-900',
+      color: 'slate',
+      bgColor: 'bg-slate-50',
+      borderColor: 'border-slate-300',
+      textColor: 'text-slate-700'
+    },
     { 
       value: 'admin', 
       label: 'Administrateur', 
@@ -60,6 +71,17 @@ export default function EmployeeForm() {
       bgColor: 'bg-purple-50',
       borderColor: 'border-purple-300',
       textColor: 'text-purple-700'
+    },
+    {
+      value: 'commercial_manager',
+      label: 'Gestionnaire Commercial',
+      description: 'Suivi revendeurs, VIP et performance commerciale',
+      icon: Shield,
+      gradient: 'from-fuchsia-500 to-pink-500',
+      color: 'fuchsia',
+      bgColor: 'bg-fuchsia-50',
+      borderColor: 'border-fuchsia-300',
+      textColor: 'text-fuchsia-700'
     },
     { 
       value: 'technician', 
@@ -132,11 +154,6 @@ export default function EmployeeForm() {
       return
     }
 
-    if (!id && !formData.password) {
-      setError('Le mot de passe est obligatoire pour un nouvel employé')
-      return
-    }
-
     if (formData.password && formData.password.length < 6) {
       setError('Le mot de passe doit contenir au moins 6 caractères')
       return
@@ -168,7 +185,7 @@ export default function EmployeeForm() {
   const getSelectedRole = () => roles.find(r => r.value === formData.role) || roles[1]
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+    <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12 py-8 space-y-6">
       {error && <Toast message={error} type="error" onClose={() => setError('')} />}
       {success && <Toast message={success} type="success" onClose={() => setSuccess('')} />}
 
@@ -285,8 +302,7 @@ export default function EmployeeForm() {
               <div className="space-y-2">
                 <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
                   <Lock size={16} className="text-blue-600" />
-                  {isEditing ? 'Nouveau mot de passe' : 'Mot de passe'}
-                  {!isEditing && <span className="text-red-500">*</span>}
+                  {isEditing ? 'Nouveau mot de passe' : 'Mot de passe (optionnel)'}
                 </label>
                 <div className="relative group">
                   <input
@@ -296,7 +312,6 @@ export default function EmployeeForm() {
                     onChange={handleChange}
                     placeholder={isEditing ? 'Laisser vide pour ne pas changer' : 'Minimum 6 caractères'}
                     className="w-full pl-4 pr-12 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-gray-300 transition-all duration-200"
-                    required={!isEditing}
                     minLength={6}
                   />
                   <button
@@ -310,7 +325,7 @@ export default function EmployeeForm() {
                 {!isEditing && (
                   <p className="text-xs text-gray-500 flex items-center gap-1">
                     <AlertCircle size={12} />
-                    Le mot de passe doit contenir au moins 6 caractères
+                    Si laissé vide, un mot de passe temporaire sera généré automatiquement
                   </p>
                 )}
               </div>
@@ -529,7 +544,7 @@ export default function EmployeeForm() {
 
         {/* Barre d'actions */}
         <div className="sticky bottom-0 z-10 bg-white/95 backdrop-blur-sm border-t border-gray-200 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 shadow-lg">
-          <div className="max-w-4xl mx-auto flex flex-col sm:flex-row gap-3 sm:justify-end">
+          <div className="w-full flex flex-col sm:flex-row gap-3 sm:justify-end">
             <button
               type="button"
               onClick={() => navigate('/admin/employees')}

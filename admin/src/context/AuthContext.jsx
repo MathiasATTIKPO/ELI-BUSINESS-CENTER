@@ -12,7 +12,7 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const initAuth = async () => {
-      const roles = ['admin', 'cashier', 'technician']
+      const roles = ['admin', 'cashier', 'technician', 'reseller', 'vip']
       let found = false
       
       for (const role of roles) {
@@ -70,7 +70,7 @@ export const AuthProvider = ({ children }) => {
       // Vérifier si c'était le rôle actif
       if (activeRole === role) {
         // Chercher un autre rôle connecté
-        const roles = ['admin', 'cashier', 'technician']
+        const roles = ['admin', 'cashier', 'technician', 'reseller', 'vip']
         let found = false
         
         for (const r of roles) {

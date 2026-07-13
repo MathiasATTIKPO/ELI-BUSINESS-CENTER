@@ -152,9 +152,17 @@ export default function CashierRepairDetail() {
   // Le bouton de paiement est visible si le statut est 'accepted' (accepté par le technicien)
 const isReadyForPayment = ['accepted', 'completed', 'ready'].includes(repair.status)
 const isPaid = repair.status === 'paid'
+const isVipRepair = Boolean(repair.isVip)
   return (
-    <div className="space-y-6">
+    <div className="eli-canvas eli-content">
       {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
+
+      {isVipRepair && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+          <p className="text-sm font-semibold text-amber-800">Dossier VIP</p>
+          <p className="text-sm text-amber-700">Cette réparation est facturée mensuellement au client VIP. Encaissement immédiat désactivé.</p>
+        </div>
+      )}
 
       {/* Barre de retour */}
       <div className="flex items-center gap-4 mb-4">
@@ -204,7 +212,7 @@ const isPaid = repair.status === 'paid'
               Créé le {formatDate(repair.createdAt)}
             </p>
           </div>
-          {isReadyForPayment && !isPaid && (
+          {isReadyForPayment && !isPaid && !isVipRepair && (
             <button
               onClick={() => {
                 setPaymentData({

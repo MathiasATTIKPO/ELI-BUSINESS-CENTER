@@ -1,5 +1,7 @@
 const Notification = require('../models/Notification');
 const Employee = require('../models/Employee');
+const Reseller = require('../models/Reseller');
+const VIPClient = require('../models/VIPClient');
 
 const VALID_PRIORITIES = ['low', 'medium', 'high', 'urgent'];
 const DEFAULT_PRIORITY = 'medium';
@@ -72,13 +74,30 @@ const notifyUsers = async ({ recipients, recipientRole, ...payload }) => {
 
 const notifyRole = async ({ role, ...payload }) => {
   try {
-    const users = await Employee.find({ role, isActive: true });
-    if (!users.length) {
-      console.info(`[notifications] no active user for role:${role}`);
-      return [];
+    // Support employees and external roles (reseller, vip)
+    if (['admin', 'cashier', 'technician'].includes(role)) {
+      const users = await Employee.find({ role, isActive: true });
+      if (!users.length) {
+        console.info(`[notifications] no active user for role:${role}`);
+        return [];
+      }
+      return notifyUsers({ recipients: users, recipientRole: role, ...payload });
     }
 
-    return notifyUsers({ recipients: users, recipientRole: role, ...payload });
+    if (role === 'reseller') {
+      const resellers = await Reseller.find({ isActive: true });
+      if (!resellers.length) return [];
+      return notifyUsers({ recipients: resellers, recipientRole: 'reseller', ...payload });
+    }
+
+    if (role === 'vip') {
+      const vips = await VIPClient.find({ isActive: true });
+      if (!vips.length) return [];
+      return notifyUsers({ recipients: vips, recipientRole: 'vip', ...payload });
+    }
+
+    console.info(`[notifications] unknown role:${role}`);
+    return [];
   } catch (error) {
     console.error('[notifications] notifyRole failed:', error.message);
     return [];

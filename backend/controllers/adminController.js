@@ -6,11 +6,17 @@ const TradeinRequest = require('../models/TradeinRequest');
 const SaleRequest = require('../models/Sale');
 const Employee = require('../models/Employee');
 const InventoryItem = require('../models/InventoryItem');
+const Reseller = require('../models/Reseller');
+const ResellerContract = require('../models/ResellerContract');
+const VIPClient = require('../models/VIPClient');
+const VIPRepair = require('../models/VIPRepair');
+const VIPInvoice = require('../models/VIPInvoice');
 const invoiceController = require('./invoiceController');
 const Notification = require('../models/Notification');
 const notificationService = require('../services/notificationService');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 
 // ==================== NOTIFICATIONS ====================
 
@@ -67,15 +73,33 @@ const notifyCashiers = async (type, title, message, requestId, clientName, refer
 
 // ==================== NOTIFICATIONS EXPORTS ====================
 
+const normalizeNotificationRole = (role) => {
+  if (role === 'super_admin' || role === 'commercial_manager') {
+    return 'admin';
+  }
+  return role;
+};
+
+const buildNotificationFilter = (user) => {
+  const normalizedRole = normalizeNotificationRole(user?.role);
+
+  // Environment admin token does not map to a real employee _id.
+  if (normalizedRole === 'admin' && String(user?.id) === 'admin_id') {
+    return { recipientRole: 'admin' };
+  }
+
+  return {
+    recipientId: user?.id,
+    recipientRole: normalizedRole
+  };
+};
+
 exports.getNotifications = async (req, res) => {
   try {
     if (!req.user?.id || !req.user?.role) {
       return res.status(401).json({ success: false, message: 'Authentification requise.' });
     }
-    const notifications = await Notification.find({ 
-      recipientId: req.user.id, 
-      recipientRole: req.user.role 
-    }).sort({ createdAt: -1 });
+    const notifications = await Notification.find(buildNotificationFilter(req.user)).sort({ createdAt: -1 });
     res.json({ success: true, data: notifications, message: 'Notifications récupérées.' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -84,7 +108,16 @@ exports.getNotifications = async (req, res) => {
 
 exports.markNotificationRead = async (req, res) => {
   try {
-    const notification = await Notification.findByIdAndUpdate(req.params.id, { read: true }, { new: true });
+    if (!req.user?.id || !req.user?.role) {
+      return res.status(401).json({ success: false, message: 'Authentification requise.' });
+    }
+
+    const notification = await Notification.findOneAndUpdate(
+      { _id: req.params.id, ...buildNotificationFilter(req.user) },
+      { read: true },
+      { new: true }
+    );
+
     if (!notification) {
       return res.status(404).json({ success: false, message: 'Notification introuvable.' });
     }
@@ -100,7 +133,7 @@ exports.markAllNotificationsRead = async (req, res) => {
       return res.status(401).json({ success: false, message: 'Authentification requise.' });
     }
     const result = await Notification.updateMany(
-      { recipientId: req.user.id, read: false }, 
+      { ...buildNotificationFilter(req.user), read: false },
       { read: true }
     );
     res.json({ success: true, data: result, message: 'Toutes les notifications marquées comme lues.' });
@@ -146,7 +179,7 @@ exports.login = async (req, res) => {
   }
 
   try {
-    const employee = await Employee.findOne({ email, isActive: true, role: 'admin' });
+    const employee = await Employee.findOne({ email, isActive: true, role: { $in: ['admin', 'super_admin', 'commercial_manager'] } });
     if (employee && await bcrypt.compare(password, employee.password)) {
       const token = signToken({ id: employee._id, email: employee.email, role: employee.role, name: employee.name });
       const { password: _, ...user } = employee.toObject();
@@ -165,7 +198,7 @@ exports.cashierLogin = (req, res) => loginEmployee(req, res, ['cashier', 'admin'
 // ==================== PRODUITS ====================
 exports.getProducts = async (req, res) => {
   try {
-    const products = await Product.find({ active: true }).sort({ name: 1 });
+    const products = await Product.find().sort({ active: -1, name: 1 });
     res.json({ success: true, data: products });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -213,7 +246,10 @@ exports.updateProduct = async (req, res) => {
 
 exports.deleteProduct = async (req, res) => {
   try {
-    await Product.findByIdAndDelete(req.params.id);
+    const deleted = await Product.findByIdAndDelete(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ success: false, message: 'Produit introuvable.' });
+    }
     res.json({ success: true, message: 'Produit supprimé.' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -222,7 +258,7 @@ exports.deleteProduct = async (req, res) => {
 
 exports.sellProduct = async (req, res) => {
   try {
-    const { quantity = 1, clientName, clientWhatsapp, amount, paymentMethod } = req.body;
+    const { quantity = 1, clientName, clientWhatsapp, amount, paymentMethod, notes } = req.body;
     const qty = +quantity;
     if (!clientWhatsapp || !amount || qty <= 0) return res.status(400).json({ success: false, message: 'Champs requis manquants.' });
 
@@ -233,14 +269,47 @@ exports.sellProduct = async (req, res) => {
     product.stock -= qty;
     await product.save();
 
+    const sale = await SaleRequest.create({
+      type: 'product',
+      productId: product._id,
+      productName: product.name,
+      productBrand: product.brand || '',
+      quantity: qty,
+      unitPrice: product.price,
+      totalAmount: +amount,
+      clientName,
+      clientWhatsapp,
+      saleInfo: {
+        amount: +amount,
+        amountPaid: +amount,
+        paymentMethod: paymentMethod || 'cash',
+        paymentDate: new Date(),
+        notes: notes || '',
+        invoiceUrl: ''
+      }
+    });
+
     let invoice = null;
-    try { invoice = await invoiceController.createInvoicePdf({ requestType: 'inventory', requestId: product._id, clientName, clientWhatsapp, amount: +amount }); } catch(e) {}
-
     try {
-      await SaleRequest.create({ type: 'product', productId: product._id, productName: product.name, quantity: qty, unitPrice: product.price, totalAmount: +amount, clientName, clientWhatsapp, paymentMethod, seller: req.user?.name || 'Caissier' });
-    } catch(e) {}
+      invoice = await invoiceController.createInvoicePdf({
+        requestType: 'product',
+        requestId: product._id,
+        clientName,
+        clientWhatsapp,
+        amount: +amount,
+        quantity: qty,
+        itemName: product.name,
+        paymentMethod: paymentMethod || 'cash',
+        forceNew: true
+      });
 
-    res.status(201).json({ success: true, data: { product, invoice } });
+      if (invoice?.pdfUrl) {
+        sale.saleInfo = { ...(sale.saleInfo || {}), invoiceUrl: invoice.pdfUrl };
+        await sale.save();
+      }
+    } catch (e) {}
+
+    res.status(201).json({ success: true, data: { product, invoice, sale } });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -363,6 +432,29 @@ exports.updateRepairStatus = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Réparation introuvable.' });
     }
     console.log(`✅ [updateRepairStatus] Réparation trouvée : ${repair._id}, statut actuel: ${repair.status}, clientWhatsapp: ${repair.clientWhatsapp}`);
+
+    if (repair.isVip && status === 'paid') {
+      return res.status(400).json({
+        success: false,
+        message: 'Une réparation VIP ne peut pas être encaissée immédiatement. Elle sera ajoutée à la facture mensuelle VIP.'
+      });
+    }
+
+    if (repair.isVip && ['ready', 'completed'].includes(status) && !repair.vipBilling?.invoiceId) {
+      repair.vipBilling = {
+        ...(repair.vipBilling || {}),
+        status: 'billable',
+        auditTrail: [
+          ...((repair.vipBilling && Array.isArray(repair.vipBilling.auditTrail)) ? repair.vipBilling.auditTrail : []),
+          {
+            action: 'marked_billable',
+            at: new Date(),
+            byRole: req.user?.role || '',
+            byId: req.user?.id || null
+          }
+        ]
+      };
+    }
 
     repair.status = status;
     if (technicianReport) {
@@ -490,6 +582,13 @@ exports.payRepair = async (req, res) => {
     const repair = await RepairRequest.findById(id);
     if (!repair) {
       return res.status(404).json({ success: false, message: 'Réparation introuvable.' });
+    }
+
+    if (repair.isVip) {
+      return res.status(400).json({
+        success: false,
+        message: 'Paiement immédiat interdit pour une réparation VIP. Elle sera intégrée à la facture mensuelle.'
+      });
     }
     
     // Vérifier que la réparation n'est pas déjà payée
@@ -780,7 +879,7 @@ exports.assignTradein = async (req, res) => {
 // ==================== EMPLOYÉS ====================
 exports.getEmployees = async (req, res) => {
   try {
-    const employees = await Employee.find({ isActive: true }).sort({ name: 1 });
+    const employees = await Employee.find().sort({ isActive: -1, name: 1 });
     res.json({ success: true, data: employees.map(e => { const { password, ...rest } = e.toObject(); return rest; }) });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -790,11 +889,43 @@ exports.getEmployees = async (req, res) => {
 exports.createEmployee = async (req, res) => {
   try {
     const { name, phone, email, password, role, skills } = req.body;
-    if (await Employee.findOne({ email })) return res.status(400).json({ success: false, message: 'Email déjà utilisé.' });
-    if (!['admin', 'technician', 'cashier'].includes(role)) return res.status(400).json({ success: false, message: 'Rôle invalide.' });
-    const employee = await Employee.create({ name, phone, email, password: await bcrypt.hash(password, 12), role, skills: skills || [] });
-    const { password: _, ...result } = employee.toObject();
-    res.status(201).json({ success: true, data: result });
+
+    if (!name || !phone || !email) {
+      return res.status(400).json({ success: false, message: 'Nom, téléphone et email sont requis.' });
+    }
+
+    if (await Employee.findOne({ email })) {
+      return res.status(400).json({ success: false, message: 'Email déjà utilisé.' });
+    }
+
+    if (!['super_admin', 'admin', 'commercial_manager', 'technician', 'cashier'].includes(role)) {
+      return res.status(400).json({ success: false, message: 'Rôle invalide.' });
+    }
+
+    let rawPassword = password;
+    let forcePasswordChange = false;
+
+    if (!rawPassword) {
+      rawPassword = crypto.randomBytes(4).toString('hex');
+      forcePasswordChange = true;
+    }
+
+    const employee = await Employee.create({
+      name,
+      phone,
+      email,
+      password: await bcrypt.hash(rawPassword, 12),
+      role,
+      skills: skills || [],
+      forcePasswordChange
+    });
+
+    const { password: _p, ...result } = employee.toObject();
+    res.status(201).json({
+      success: true,
+      data: result,
+      generatedPassword: forcePasswordChange ? rawPassword : undefined
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -815,8 +946,11 @@ exports.updateEmployee = async (req, res) => {
 
 exports.deleteEmployee = async (req, res) => {
   try {
-    await Employee.findByIdAndUpdate(req.params.id, { isActive: false });
-    res.json({ success: true, message: 'Employé supprimé.' });
+    const deleted = await Employee.findByIdAndDelete(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ success: false, message: 'Employé introuvable.' });
+    }
+    res.json({ success: true, message: 'Employé supprimé définitivement.' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -1031,14 +1165,24 @@ exports.getStats = async (req, res) => {
       employees,
       products,
       inventory,
-      phoneSales
+      phoneSales,
+      resellers,
+      resellerContracts,
+      vipClients,
+      vipRepairs,
+      vipInvoices
     ] = await Promise.all([
       RepairRequest.find().lean(),
       TradeinRequest.find().lean(),
       Employee.find().lean(),
       Product.find().lean(),
       InventoryItem.find().lean(),
-      SaleRequest.find({ type: 'product' }).lean()
+      SaleRequest.find({ type: 'product' }).lean(),
+      Reseller.find().lean(),
+      ResellerContract.find().lean(),
+      VIPClient.find().lean(),
+      VIPRepair.find().populate('vipClient', 'name').lean(),
+      VIPInvoice.find().lean()
     ])
     
     const totalRepairs = repairs.length
@@ -1088,6 +1232,47 @@ exports.getStats = async (req, res) => {
     const monthlyRevenue = Object.entries(monthlyData)
       .map(([month, revenue]) => ({ month, revenue }))
       .slice(-6)
+
+    const activeResellers = resellers.filter(r => r.isActive !== false).length
+    const soldContractsCount = resellerContracts.filter(c => c.status === 'sold').length
+    const activeContractsCount = resellerContracts.filter(c => c.status === 'active').length
+    const resellerSalesAmount = resellerContracts.reduce((sum, c) => sum + (c.saleInfo?.amount || 0), 0)
+
+    const vipRepairsCount = vipRepairs.length
+    const vipInvoicesCount = vipInvoices.length
+    const vipRevenue = vipInvoices.reduce((sum, inv) => sum + (inv.total || 0), 0)
+
+    const vipRepairsByClientMap = vipRepairs.reduce((acc, repair) => {
+      const key = repair.vipClient?._id?.toString() || 'unknown'
+      const name = repair.vipClient?.name || 'Client VIP'
+      if (!acc[key]) acc[key] = { clientId: key, clientName: name, repairsCount: 0, totalCost: 0 }
+      acc[key].repairsCount += 1
+      acc[key].totalCost += repair.cost || 0
+      return acc
+    }, {})
+
+    const vipRepairsByClient = Object.values(vipRepairsByClientMap)
+      .sort((a, b) => b.repairsCount - a.repairsCount)
+      .slice(0, 5)
+
+    const resellerPerformance = resellers
+      .map((seller) => {
+        const sellerId = seller._id.toString()
+        const contracts = resellerContracts.filter(c => c.reseller?.toString() === sellerId)
+        const sold = contracts.filter(c => c.status === 'sold')
+        const soldAmount = sold.reduce((sum, c) => sum + (c.saleInfo?.amount || 0), 0)
+
+        return {
+          resellerId: sellerId,
+          resellerName: seller.name,
+          soldCount: sold.length,
+          activeCount: contracts.filter(c => c.status === 'active').length,
+          returnedCount: contracts.filter(c => c.status === 'returned').length,
+          generatedAmount: soldAmount
+        }
+      })
+      .sort((a, b) => b.soldCount - a.soldCount)
+      .slice(0, 5)
     
     res.json({
       success: true,
@@ -1105,6 +1290,17 @@ exports.getStats = async (req, res) => {
         totalTradeins: tradeins.length,
         pendingTradeins: tradeins.filter(t => t.status === 'pending').length,
         totalPhoneSales: phoneSales.length,
+        activeResellers,
+        soldContractsCount,
+        activeContractsCount,
+        resellerSalesAmount,
+        totalVIPClients: vipClients.length,
+        activeVIPClients: vipClients.filter(v => v.isActive !== false).length,
+        vipRepairsCount,
+        vipInvoicesCount,
+        vipRevenue,
+        vipRepairsByClient,
+        resellerPerformance,
         repairsByStatus,
         monthlyRevenue,
         recentRepairs: repairs.slice(0, 5),

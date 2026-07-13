@@ -7,12 +7,16 @@ const TOKEN_KEYS = {
   admin: 'admin_token',
   technician: 'technician_token',
   cashier: 'cashier_token',
+  reseller: 'reseller_token',
+  vip: 'vip_token',
 }
 
 const USER_KEYS = {
   admin: 'admin_user',
   technician: 'technician_user',
   cashier: 'cashier_user',
+  reseller: 'reseller_user',
+  vip: 'vip_user',
 }
 
 class TokenManager {
@@ -34,6 +38,12 @@ class TokenManager {
     }
     if (url?.includes('/cashier/')) {
       return this.getTokenByRole('cashier')
+    }
+    if (url?.includes('/reseller/')) {
+      return this.getTokenByRole('reseller')
+    }
+    if (url?.includes('/vip/')) {
+      return this.getTokenByRole('vip')
     }
     return this.getTokenByRole('admin')
   }
@@ -97,6 +107,8 @@ class TokenManager {
     if (this.getTokenByRole('admin')) return 'admin'
     if (this.getTokenByRole('technician')) return 'technician'
     if (this.getTokenByRole('cashier')) return 'cashier'
+    if (this.getTokenByRole('reseller')) return 'reseller'
+    if (this.getTokenByRole('vip')) return 'vip'
     return null
   }
 }

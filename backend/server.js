@@ -102,6 +102,8 @@ const repairRoutes = require('./routes/repair');
 const tradeinRoutes = require('./routes/tradein');
 const uploadRoutes = require('./routes/upload');
 const adminRoutes = require('./routes/admin');
+const resellerRoutes = require('./routes/reseller');
+const vipRoutes = require('./routes/vip');
 const cashierRoutes = require('./routes/cashier');
 const invoiceRoutes = require('./routes/invoice');
 const technicianRoutes = require('./routes/technician');
@@ -153,6 +155,8 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/technician', technicianRoutes);
 app.use('/api/cashier', cashierRoutes);
 app.use('/api/invoice', invoiceRoutes);
+app.use('/api/reseller', resellerRoutes);
+app.use('/api/vip', vipRoutes);
 app.post('/api/client/repairs', adminController.createRepairFromClient);
 app.post('/api/client/tradeins', adminController.createTradeinFromClient);
 app.use('/api/client', clientRoutes);
@@ -269,6 +273,18 @@ mongoose
       console.log(`Swagger docs available at: http://localhost:${PORT}/api-docs`);
      // console.log('To access the platform online, run in another terminal: npm run tunnel');
     });
+    // Start background jobs
+    try {
+      const contractExpiryJob = require('./jobs/contractExpiryJob');
+      contractExpiryJob.start();
+      console.log('Contract expiry job started');
+
+      const vipMonthlyInvoiceJob = require('./jobs/vipMonthlyInvoiceJob');
+      vipMonthlyInvoiceJob.start();
+      console.log('VIP monthly invoice job started');
+    } catch (e) {
+      console.error('Failed to start background jobs:', e.message);
+    }
   })
   .catch((error) => {
     console.error('MongoDB connection error:', error.message);

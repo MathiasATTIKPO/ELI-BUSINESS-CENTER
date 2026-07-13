@@ -260,10 +260,19 @@ export default function RepairDetail() {
   const statusConfig = getStatusConfig(repair.status)
   const StatusIcon = statusConfig.icon
   const isPaid = repair.status === 'paid'
+  const isVipRepair = Boolean(repair.isVip)
+  const effectiveStatusFlow = isVipRepair ? statusFlow.filter((s) => s !== 'paid') : statusFlow
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+    <div className="eli-content">
       {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
+
+      {isVipRepair && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+          <p className="font-semibold text-amber-800">Réparation VIP</p>
+          <p className="text-sm text-amber-700">Encaissement immédiat désactivé: cette réparation sera ajoutée à la facture mensuelle VIP.</p>
+        </div>
+      )}
 
       {isPaid && (
         <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center gap-3">
@@ -346,10 +355,10 @@ export default function RepairDetail() {
 
           <div className="mt-6 pt-6 border-t border-gray-100">
             <div className="flex items-center gap-2 overflow-x-auto pb-2">
-              {statusFlow.map((status, index) => {
+              {effectiveStatusFlow.map((status, index) => {
                 const config = getStatusConfig(status)
                 const Icon = config.icon
-                const currentStatusIndex = statusFlow.indexOf(repair.status)
+                const currentStatusIndex = effectiveStatusFlow.indexOf(repair.status)
                 const isCompleted = currentStatusIndex >= index
                 const isCurrent = repair.status === status
                 const isDisabled = isPaid && !isCurrent && !isCompleted

@@ -3,6 +3,7 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const upload = require('../middleware/upload');
 const adminController = require('../controllers/adminController');
+const resellerController = require('../controllers/resellerController');
 
 /**
  * @openapi
@@ -86,6 +87,8 @@ router.put('/notifications/read-all', adminController.markAllNotificationsRead);
 router.get('/sales', adminController.getSales);
 router.get('/all-sales', adminController.getAllSales);
 router.get('/sales/by-period', adminController.getSalesByPeriod);
+router.get('/reseller-contracts/pending-payment', resellerController.getPendingCashierCollections);
+router.put('/reseller-contracts/:id/pay', resellerController.collectSoldContractPayment);
 
 // ===== STATS ROUTES =====
 router.get('/stats', adminController.getStats);
@@ -94,5 +97,12 @@ router.get('/stats', adminController.getStats);
 router.get('/sales/:id/invoice', adminController.downloadSaleInvoice);
 router.get('/repairs/:id/invoice', adminController.downloadRepairInvoice);
 router.get('/tradeins/:id/invoice', adminController.downloadTradeinInvoice);
+
+// ===== RESELLERS & VIP ROUTES =====
+const resellerRoutes = require('./reseller');
+const vipRoutes = require('./vip');
+router.use('/resellers', resellerRoutes);
+router.use('/vip', vipRoutes);
+router.use('/vips', vipRoutes);
 
 module.exports = router;

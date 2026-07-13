@@ -8,6 +8,8 @@ import Repair from './pages/Repair';
 import TradeIn from './pages/TradeIn';
 import Tracking from './pages/Tracking';
 import Contact from './pages/Contact';
+import ResellerDashboard from './pages/reseller/Dashboard';
+import VIPDashboard from './pages/vip/Dashboard';
 
 function App() {
   const phoneNumber = '+22890178475';
@@ -24,6 +26,8 @@ function App() {
           <Route path="/echange" element={<TradeIn phoneNumber={phoneNumber} />} />
           <Route path="/suivi" element={<Tracking phoneNumber={phoneNumber} />} />
           <Route path="/contact" element={<Contact phoneNumber={phoneNumber} />} />
+          <Route path="/reseller" element={<ResellerDashboard />} />
+          <Route path="/vip" element={<VIPDashboard />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

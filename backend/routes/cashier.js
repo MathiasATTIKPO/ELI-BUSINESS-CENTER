@@ -2,6 +2,8 @@ const express = require('express')
 const router = express.Router()
 const authCashier = require('../middleware/authCashier')
 const adminController = require('../controllers/adminController')
+const resellerController = require('../controllers/resellerController')
+const vipController = require('../controllers/vipController')
 
 /**
  * @openapi
@@ -228,6 +230,17 @@ router.post('/products/:id/sell', adminController.sellProduct)
  *         description: Sales list retrieved
  */
 router.get('/sales', adminController.getPhoneSales)
+
+// ===== VIP MANUAL BILLING =====
+router.get('/vip/repairs/billable', vipController.getBillableVIPRepairs)
+router.post('/vip/invoices/generate-manual', vipController.generateManualInvoice)
+router.get('/vip/invoices', vipController.getVIPInvoices)
+router.put('/vip/invoices/:id/pay', vipController.recordVIPInvoicePayment)
+router.get('/vip/clients/:clientId/history', vipController.getVIPClientHistory)
+
+// ===== RESELLER CONTRACT CASH COLLECTION =====
+router.get('/reseller-contracts/pending-payment', resellerController.getPendingCashierCollections)
+router.put('/reseller-contracts/:id/pay', resellerController.collectSoldContractPayment)
 
 router.get('/repairs/:id', adminController.getRepairById)
 

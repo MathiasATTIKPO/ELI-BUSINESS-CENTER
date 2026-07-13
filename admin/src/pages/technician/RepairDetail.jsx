@@ -192,7 +192,7 @@ export default function TechnicianRepairDetail() {
   const nextStatuses = getNextStatuses(repair.status)
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/30">
+    <div className="eli-canvas">
       {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
 
       {/* Barre supérieure */}
@@ -226,7 +226,7 @@ export default function TechnicianRepairDetail() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+      <div className="eli-content">
         {/* En-tête */}
         <div className="relative overflow-hidden bg-white rounded-2xl shadow-sm border border-gray-100">
           <div className={`absolute top-0 left-0 w-full h-2 bg-gradient-to-r ${statusConfig.gradient}`}></div>
@@ -237,6 +237,11 @@ export default function TechnicianRepairDetail() {
                   <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
                     {repair.deviceModel || repair.phoneModel || 'Réparation'}
                   </h1>
+                  {repair.isVip && (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border bg-amber-50 text-amber-700 border-amber-200">
+                      VIP
+                    </span>
+                  )}
                   <span className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium border ${statusConfig.color}`}>
                     <StatusIcon size={14} />
                     {statusConfig.label}
@@ -246,6 +251,9 @@ export default function TechnicianRepairDetail() {
                   <Calendar size={14} />
                   Créée le {formatDate(repair.createdAt)}
                 </p>
+                {repair.isVip && (
+                  <p className="text-xs text-amber-700">Réparation VIP: ne pas encaisser en caisse, ajout automatique à la facture mensuelle VIP.</p>
+                )}
               </div>
               
               {nextStatuses.length > 0 && (

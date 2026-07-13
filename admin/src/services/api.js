@@ -12,15 +12,22 @@ const api = axios.create({
 // Intercepteur pour ajouter le token selon le rôle de l'URL
 api.interceptors.request.use((config) => {
   let role = null
-  if (config.url.includes('/admin/')) {
+  const url = config.url || ''
+  const isPublicAuthEndpoint = /\/(admin|cashier|technician|reseller|vip)\/(login|forgot|reset)\b/.test(url)
+
+  if (url.includes('/admin/')) {
     role = 'admin'
-  } else if (config.url.includes('/cashier/')) {
+  } else if (url.includes('/cashier/')) {
     role = 'cashier'
-  } else if (config.url.includes('/technician/')) {
+  } else if (url.includes('/technician/')) {
     role = 'technician'
+  } else if (url.includes('/reseller/')) {
+    role = 'reseller'
+  } else if (url.includes('/vip/')) {
+    role = 'vip'
   }
   
-  if (role) {
+  if (role && !isPublicAuthEndpoint) {
     const token = TokenManager.getTokenByRole(role)
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
@@ -28,6 +35,11 @@ api.interceptors.request.use((config) => {
     } else {
       console.warn(`[API] Aucun token trouvé pour le rôle ${role}`)
     }
+  }
+  // If no specific role, try generic token
+  if (!config.headers.Authorization) {
+    const generic = TokenManager.getTokenByRole('admin') || TokenManager.getTokenByRole('cashier') || TokenManager.getTokenByRole('technician')
+    if (generic) config.headers.Authorization = `Bearer ${generic}`
   }
   return config
 })

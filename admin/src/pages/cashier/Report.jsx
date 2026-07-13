@@ -18,6 +18,7 @@ import Toast from '../../components/Toast'
 export default function CashierReport() {
   const [repairs, setRepairs] = useState([])
   const [tradeins, setTradeins] = useState([])
+  const [resellerContracts, setResellerContracts] = useState([])
   const [loading, setLoading] = useState(false)
   const [toast, setToast] = useState(null)
   const [startDate, setStartDate] = useState('')
@@ -50,10 +51,11 @@ export default function CashierReport() {
       const tradeinsUrl = isAdminView ? '/api/admin/tradeins' : '/api/cashier/tradeins'
       const salesUrl = isAdminView ? '/api/admin/sales' : '/api/cashier/sales'
 
-      const [repairsResponse, tradeinsResponse, salesResponse] = await Promise.all([
+      const [repairsResponse, tradeinsResponse, salesResponse, resellerContractsResponse] = await Promise.all([
         api.get(repairsUrl),
         api.get(tradeinsUrl).catch(() => ({ data: { data: [] } })),
-        api.get(salesUrl).catch(() => ({ data: { data: [] } }))
+        api.get(salesUrl).catch(() => ({ data: { data: [] } })),
+        api.get(`${isAdminView ? '/api/admin' : '/api/cashier'}/reseller-contracts/pending-payment?status=paid`).catch(() => ({ data: { data: [] } }))
       ])
 
       const paidRepairs = repairsResponse.data.data?.filter(r => r.status === 'paid') || []
@@ -63,6 +65,7 @@ export default function CashierReport() {
       setRepairs(paidRepairs)
       setTradeins(completedTradeins)
       setPhoneSales(Array.isArray(phoneSalesData) ? phoneSalesData : [])
+      setResellerContracts(Array.isArray(resellerContractsResponse.data?.data) ? resellerContractsResponse.data.data : [])
     } catch (error) {
       setToast({ type: 'error', message: 'Erreur lors du chargement' })
     } finally {
@@ -71,9 +74,7 @@ export default function CashierReport() {
   }
 
   const allTransactions = useMemo(() => [
-    // Réparations
     ...repairs.map(r => {
-      // Vérifier si une facture existe
       const invoiceUrl = r.saleInfo?.invoiceUrl || r.invoiceUrl || null
       return {
         ...r,
@@ -91,7 +92,6 @@ export default function CashierReport() {
       }
     }),
     
-    // Échanges
     ...tradeins.map(t => {
       const amount = t.saleInfo?.amountPaid || t.proposedValue || 0
       const invoiceUrl = t.saleInfo?.invoiceUrl || t.invoiceUrl || null
@@ -112,26 +112,57 @@ export default function CashierReport() {
       }
     }),
     
-    // Ventes de téléphones
     ...phoneSales.map(s => {
-      const invoiceUrl = s.invoiceUrl || null
+      const invoiceUrl = s.saleInfo?.invoiceUrl || s.invoiceUrl || null
       return {
         ...s,
         transactionType: 'phone',
         clientName: s.clientName || 'Client',
         clientWhatsapp: s.clientWhatsapp || '',
         saleInfo: {
-          amount: s.totalAmount || s.amount || 0,
-          amountPaid: s.totalAmount || s.amount || 0,
-          paymentMethod: s.paymentMethod || 'cash',
-          paymentDate: s.createdAt || s.paymentDate || s.date,
-          notes: s.notes || '',
+          ...(s.saleInfo || {}),
+          amount: s.saleInfo?.amountPaid || s.totalAmount || s.amount || 0,
+          amountPaid: s.saleInfo?.amountPaid || s.totalAmount || s.amount || 0,
+          paymentMethod: s.saleInfo?.paymentMethod || s.paymentMethod || 'cash',
+          paymentDate: s.saleInfo?.paymentDate || s.createdAt || s.paymentDate || s.date,
+          notes: s.saleInfo?.notes || s.notes || '',
           validatedBy: s.seller || s.validatedBy || 'Caissier',
           invoiceUrl: invoiceUrl
         }
       }
+    }),
+
+    ...resellerContracts.map(c => {
+      const historyOverride = Array.isArray(c.history)
+        ? [...c.history].reverse().find(h => h?.action === 'cash_collected_manager_override')
+        : null
+
+      return {
+        ...c,
+        transactionType: 'reseller_contract',
+        clientName: c.reseller?.name || 'Revendeur',
+        clientWhatsapp: c.reseller?.whatsapp || c.reseller?.phone || '',
+        saleInfo: {
+          ...(c.saleInfo || {}),
+          amount: c.payment?.amountPaid || c.saleInfo?.amount || 0,
+          amountPaid: c.payment?.amountPaid || c.saleInfo?.amount || 0,
+          paymentMethod: c.payment?.paymentMethod || c.saleInfo?.paymentMethod || 'cash',
+          paymentDate: c.payment?.paidAt || c.saleInfo?.collectedAt || c.updatedAt,
+          notes: c.payment?.note || c.saleInfo?.notes || '',
+          validatedBy: c.saleInfo?.collectedBy || c.payment?.paidByRole || 'Caissier',
+          invoiceUrl: c.payment?.invoiceUrl || null,
+          override: c.saleInfo?.override || (historyOverride
+            ? {
+                applied: true,
+                reason: historyOverride?.data?.overrideReason || '',
+                byRole: historyOverride?.data?.byRole || historyOverride?.byRole || c.payment?.paidByRole || '',
+                at: historyOverride?.createdAt || c.payment?.paidAt || c.updatedAt
+              }
+            : { applied: false })
+        }
+      }
     })
-  ], [repairs, tradeins, phoneSales])
+  ], [repairs, tradeins, phoneSales, resellerContracts])
 
   const filteredTransactions = useMemo(() => {
     return allTransactions.filter(item => {
@@ -152,6 +183,23 @@ export default function CashierReport() {
     })
   }, [allTransactions, startDate, endDate, paymentMethod, searchTerm])
 
+  const managerOverrides = useMemo(() => {
+    return filteredTransactions
+      .filter(item => item.transactionType === 'reseller_contract' && item.saleInfo?.override?.applied)
+      .map(item => ({
+        id: item._id,
+        contractNumber: item.number || item.reference || '-',
+        clientName: item.clientName || 'Revendeur',
+        amount: item.saleInfo?.amountPaid || item.saleInfo?.amount || 0,
+        paymentDate: item.saleInfo?.paymentDate,
+        reason: item.saleInfo?.override?.reason || 'Non renseigné',
+        authorizedBy: item.saleInfo?.validatedBy || item.saleInfo?.override?.byRole || 'Manager',
+        authorizedRole: item.saleInfo?.override?.byRole || '-',
+        invoiceUrl: item.saleInfo?.invoiceUrl || null
+      }))
+      .sort((a, b) => new Date(b.paymentDate || 0) - new Date(a.paymentDate || 0))
+  }, [filteredTransactions])
+
   const stats = useMemo(() => {
     const totalAmount = filteredTransactions.reduce((sum, item) => 
       sum + (item.saleInfo?.amountPaid || item.saleInfo?.amount || item.price || 0), 0)
@@ -160,8 +208,9 @@ export default function CashierReport() {
     const repairCount = filteredTransactions.filter(t => t.transactionType === 'repair').length
     const tradeinCount = filteredTransactions.filter(t => t.transactionType === 'tradein').length
     const phoneSalesCount = filteredTransactions.filter(t => t.transactionType === 'phone').length
+    const resellerContractCount = filteredTransactions.filter(t => t.transactionType === 'reseller_contract').length
 
-    return { totalAmount, totalTransactions, averageAmount, repairCount, tradeinCount, phoneSalesCount }
+    return { totalAmount, totalTransactions, averageAmount, repairCount, tradeinCount, phoneSalesCount, resellerContractCount }
   }, [filteredTransactions])
 
   const paymentMethods = useMemo(() => {
@@ -195,7 +244,6 @@ export default function CashierReport() {
     return Object.entries(daily).map(([date, amount]) => ({ date, amount })).slice(-7)
   }, [filteredTransactions])
 
-  // Pagination
   const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage)
   const paginatedTransactions = filteredTransactions.slice(
     (currentPage - 1) * itemsPerPage,
@@ -213,7 +261,15 @@ export default function CashierReport() {
     return configs[method] || { label: 'Autre', icon: DollarSign, color: 'text-gray-600', bgColor: 'bg-gray-50' }
   }
 
-  // Fonction pour ouvrir la facture
+  const getPaymentMethodLabel = (method) => {
+    if (method === 'cash') return 'Espèces'
+    if (method === 'card') return 'Carte'
+    if (method === 'mobile_money') return 'Monnaie mobile'
+    if (method === 'check') return 'Chèque'
+    if (method === 'transfer') return 'Virement'
+    return method || '-'
+  }
+
   const openInvoice = (invoiceUrl) => {
     if (!invoiceUrl) {
       setToast({ type: 'error', message: 'Aucune facture disponible pour cette transaction' })
@@ -224,19 +280,23 @@ export default function CashierReport() {
   }
 
   const exportReport = () => {
-    let csv = 'Date,Type,Client,WhatsApp,Transaction ID,Montant,Méthode,Validé par,Facture,Notes\n'
+    let csv = 'Date,Type,Client,WhatsApp,Transaction ID,Montant,Méthode,Validé par,Override manager,Motif override,Facture,Notes\n'
     filteredTransactions.forEach(item => {
       const date = item.saleInfo?.paymentDate ? new Date(item.saleInfo.paymentDate).toLocaleDateString('fr-FR') : '-'
       const amount = item.saleInfo?.amountPaid || item.saleInfo?.amount || item.price || 0
-      const method = item.saleInfo?.paymentMethod || '-'
+      const method = getPaymentMethodLabel(item.saleInfo?.paymentMethod)
       const validatedBy = item.saleInfo?.validatedBy || '-' 
       const notes = item.saleInfo?.notes?.replace(/"/g, '""') || ''
+      const isOverride = item.transactionType === 'reseller_contract' && item.saleInfo?.override?.applied
+      const overrideLabel = isOverride ? 'Oui' : 'Non'
+      const overrideReason = isOverride ? (item.saleInfo?.override?.reason || '').replace(/"/g, '""') : ''
       const type = item.transactionType === 'tradein' ? 'Échange' : 
-                   item.transactionType === 'phone' ? 'Téléphone' : 'Réparation'
+           item.transactionType === 'phone' ? 'Téléphone' :
+           item.transactionType === 'reseller_contract' ? 'Contrat revendeur' : 'Réparation'
       const hasInvoice = item.saleInfo?.invoiceUrl ? 'Oui' : 'Non'
       const transactionId = item._id || item.reference || '-'
       
-      csv += `"${date}","${type}","${item.clientName || '-'}","${item.clientWhatsapp || '-'}","${transactionId}","${amount}","${method}","${validatedBy}","${hasInvoice}","${notes}"\n`
+      csv += `"${date}","${type}","${item.clientName || '-'}","${item.clientWhatsapp || '-'}","${transactionId}","${amount}","${method}","${validatedBy}","${overrideLabel}","${overrideReason}","${hasInvoice}","${notes}"\n`
     })
 
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
@@ -273,47 +333,12 @@ export default function CashierReport() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-emerald-50/30">
       {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
 
-      {/* Barre supérieure 
-      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-4">
-              <div className="p-2 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500">
-                <BarChart3 size={20} className="text-white" />
-              </div>
-              <div>
-                <h1 className="text-lg font-bold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">
-                  Rapport de Caisse
-                </h1>
-                <p className="text-xs text-gray-500">Analyse des ventes et paiements</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => navigate(`${basePath}/sales`)}
-                className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all duration-200"
-              >
-                <ListChecks size={18} />
-                <span className="hidden sm:inline font-medium">Ventes</span>
-              </button>
-              <button
-                onClick={logout}
-                className="flex items-center gap-2 px-4 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-xl transition-all duration-200"
-              >
-                <LogOut size={18} />
-                <span className="hidden sm:inline font-medium">Déconnexion</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-*/}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         {/* Cartes statistiques */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[
             { label: 'Total des ventes', value: `${stats.totalAmount.toLocaleString('fr-FR')} FCFA`, icon: DollarSign, gradient: 'from-emerald-500 to-green-500', trend: '+12%' },
-            { label: 'Transactions', value: stats.totalTransactions, icon: Activity, gradient: 'from-blue-500 to-cyan-500', subtitle: `${stats.repairCount} réparations • ${stats.tradeinCount} échanges • ${stats.phoneSalesCount} ventes` },
+            { label: 'Transactions', value: stats.totalTransactions, icon: Activity, gradient: 'from-blue-500 to-cyan-500', subtitle: `${stats.repairCount} réparations • ${stats.tradeinCount} échanges • ${stats.phoneSalesCount} ventes • ${stats.resellerContractCount} contrats` },
             { label: 'Panier moyen', value: `${Math.round(stats.averageAmount).toLocaleString('fr-FR')} FCFA`, icon: TrendingUp, gradient: 'from-purple-500 to-violet-500' },
             { label: 'Méthodes', value: Object.keys(paymentMethods).length, icon: CreditCard, gradient: 'from-amber-500 to-orange-500', subtitle: 'types de paiement' },
           ].map((stat) => {
@@ -344,7 +369,6 @@ export default function CashierReport() {
 
         {/* Graphiques */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Répartition par méthode */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
             <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
               <PieChart size={20} className="text-emerald-600" />
@@ -373,7 +397,6 @@ export default function CashierReport() {
             </div>
           </div>
 
-          {/* Évolution journalière */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
             <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
               <TrendingUp size={20} className="text-blue-600" />
@@ -546,10 +569,13 @@ export default function CashierReport() {
                             ? 'bg-blue-50 text-blue-700 border-blue-200' 
                             : item.transactionType === 'tradein'
                               ? 'bg-purple-50 text-purple-700 border-purple-200'
-                              : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                              : item.transactionType === 'reseller_contract'
+                                ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                                : 'bg-emerald-50 text-emerald-700 border-emerald-200'
                         }`}>
                           {item.transactionType === 'repair' ? '🔧 Réparation' : 
-                           item.transactionType === 'tradein' ? '🔄 Échange' : '📱 Vente'}
+                           item.transactionType === 'tradein' ? '🔄 Échange' :
+                           item.transactionType === 'reseller_contract' ? '🤝 Contrat' : '📱 Vente'}
                         </span>
                       </td>
                       <td className="px-6 py-4">
@@ -596,7 +622,6 @@ export default function CashierReport() {
             </table>
           </div>
 
-          {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100 bg-gray-50/50">
               <div className="text-sm text-gray-600">
@@ -625,6 +650,56 @@ export default function CashierReport() {
                   →
                 </button>
               </div>
+            </div>
+          )}
+        </div>
+
+        {/* Section dédiée: override manager */}
+        <div className="bg-white rounded-2xl shadow-sm border border-amber-200 overflow-hidden">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-amber-100 bg-amber-50/60">
+            <div>
+              <h2 className="text-lg font-bold text-amber-900">Encaissements en override manager</h2>
+              <p className="text-sm text-amber-700">{managerOverrides.length} opération(s) avec dérogation après délai</p>
+            </div>
+          </div>
+
+          {managerOverrides.length === 0 ? (
+            <div className="px-6 py-10 text-sm text-gray-500">Aucun encaissement en override manager sur la période et les filtres sélectionnés.</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-amber-50/40">
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-amber-700 uppercase tracking-wider">Date</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-amber-700 uppercase tracking-wider">Contrat</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-amber-700 uppercase tracking-wider">Revendeur</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-amber-700 uppercase tracking-wider">Montant</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-amber-700 uppercase tracking-wider">Motif</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-amber-700 uppercase tracking-wider">Autorisé par</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-amber-50">
+                  {managerOverrides.map((entry) => (
+                    <tr key={`override-${entry.id}`} className="hover:bg-amber-50/20">
+                      <td className="px-6 py-4 text-sm text-gray-700">
+                        {entry.paymentDate
+                          ? new Date(entry.paymentDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
+                          : '-'}
+                      </td>
+                      <td className="px-6 py-4 text-sm font-medium text-gray-900">{entry.contractNumber}</td>
+                      <td className="px-6 py-4 text-sm text-gray-700">{entry.clientName}</td>
+                      <td className="px-6 py-4 text-sm font-semibold text-amber-700">{entry.amount.toLocaleString('fr-FR')} FCFA</td>
+                      <td className="px-6 py-4 text-sm text-gray-700 max-w-xl">{entry.reason}</td>
+                      <td className="px-6 py-4 text-sm text-gray-700">
+                        <div className="flex flex-col">
+                          <span>{entry.authorizedBy}</span>
+                          <span className="text-xs text-gray-500">Rôle: {entry.authorizedRole}</span>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </div>
