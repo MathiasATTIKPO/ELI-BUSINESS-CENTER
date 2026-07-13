@@ -20,6 +20,16 @@ Ce projet se deploie proprement sur Vercel avec 3 projets separes:
 - `ADMIN_USER` : compte admin initial
 - `ADMIN_PASS` : mot de passe admin initial
 
+### Stockage des images recommandé
+
+- `CLOUDINARY_CLOUD_NAME`
+- `CLOUDINARY_API_KEY`
+- `CLOUDINARY_API_SECRET`
+
+Les fichiers image, factures PDF, contrats revendeur et reçus VIP ne doivent pas rester dans `backend/uploads` sur Vercel, car ce répertoire est éphémère.
+
+En production, le backend envoie désormais ces fichiers vers Cloudinary. En local, il garde un fallback sur `backend/uploads` si les variables Cloudinary ne sont pas définies.
+
 ### Variables backend recommandees
 
 - `BASE_URL` : URL publique backend (ex: `https://eli-backend.vercel.app`)

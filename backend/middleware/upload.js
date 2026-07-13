@@ -1,16 +1,6 @@
 const multer = require('multer');
-const path = require('path');
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, '..', 'uploads'));
-  },
-  filename: (req, file, cb) => {
-    const timestamp = Date.now();
-    const safeName = file.originalname.toLowerCase().replace(/[^a-z0-9.-]/g, '-');
-    cb(null, `${timestamp}-${safeName}`);
-  }
-});
+const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
   const allowed = ['image/jpeg', 'image/jpg', 'image/png'];

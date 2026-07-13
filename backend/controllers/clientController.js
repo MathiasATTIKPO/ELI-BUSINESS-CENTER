@@ -3,6 +3,7 @@ const TradeinRequest = require('../models/TradeinRequest');
 const Product = require('../models/Product');
 const Employee = require('../models/Employee');
 const notificationService = require('../services/notificationService');
+const { uploadImages } = require('../services/cloudinary');
 
 const formatReference = (id) => {
   if (!id) return 'N/A';
@@ -48,7 +49,8 @@ exports.createRepair = async (req, res) => {
     }
     
     // Traitement des photos
-    const photoPaths = req.files ? req.files.map(file => `/uploads/${file.filename}`) : [];
+    const uploadedPhotos = req.files ? await uploadImages(req.files, 'repairs') : [];
+    const photoPaths = uploadedPhotos.map((file) => file.url);
     
     // Création de la réparation
     const repair = await RepairRequest.create({
@@ -105,7 +107,8 @@ exports.createTradein = async (req, res) => {
     }
     
     // Traitement des photos
-    const photoPaths = req.files ? req.files.map(file => `/uploads/${file.filename}`) : [];
+    const uploadedPhotos = req.files ? await uploadImages(req.files, 'tradeins') : [];
+    const photoPaths = uploadedPhotos.map((file) => file.url);
     
     // Création de l'échange
     const tradein = await TradeinRequest.create({

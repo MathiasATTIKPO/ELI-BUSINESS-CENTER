@@ -8,7 +8,7 @@ import {
   ThumbsUp, ThumbsDown, ClipboardCheck, CreditCard, Download,
   Printer, Banknote, Wallet
 } from 'lucide-react'
-import api, { API_BASE_URL } from '../../services/api'
+import api from '../../services/api'
 import Toast from '../../components/Toast'
 import Modal from '../../components/Modal'
 import { formatReference } from '../../utils/formatReference'
@@ -23,6 +23,13 @@ export default function TechnicianTradeInDetail() {
   const [technicianReport, setTechnicianReport] = useState('')
   const [updating, setUpdating] = useState(false)
   const [showFullImage, setShowFullImage] = useState(null)
+
+  const resolveMediaUrl = (value) => {
+    if (!value) return value
+    if (/^https?:\/\//i.test(value) || value.startsWith('data:')) return value
+    const base = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:4001').replace(/\/+$/, '')
+    return value.startsWith('/uploads') ? `${base}${value}` : value
+  }
 
   // ========== ÉTATS POUR LA VALIDATION DE PAIEMENT ==========
   const [showPaymentModal, setShowPaymentModal] = useState(false)
@@ -539,7 +546,7 @@ const handleUpdateStatus = async () => {
                           onClick={() => setShowFullImage(photo)}
                         >
                           <img
-                            src={`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4001'}${photo}`}
+                            src={resolveMediaUrl(photo)}
                             alt={`Photo ${index + 1}`}
                             className="w-full h-32 object-cover rounded-xl border-2 border-gray-100 hover:border-purple-300 transition-all duration-200"
                           />
@@ -908,7 +915,7 @@ const handleUpdateStatus = async () => {
           onClick={() => setShowFullImage(null)}
         >
           <img
-            src={`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4001'}${showFullImage}`}
+            src={resolveMediaUrl(showFullImage)}
             alt="Vue agrandie"
             className="max-w-full max-h-[90vh] object-contain rounded-lg"
           />

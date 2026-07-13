@@ -444,7 +444,7 @@ export default function TechnicianRepairDetail() {
                         onClick={() => setShowFullImage(photo)}
                       >
                         <img
-                          src={`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4001'}${photo}`}
+                          src={photo && /^https?:\/\//i.test(photo) ? photo : `${(import.meta.env.VITE_API_BASE_URL || 'http://localhost:4001').replace(/\/+$/, '')}${photo}`}
                           alt={`Photo ${index + 1}`}
                           className="w-full h-32 object-cover rounded-xl border-2 border-gray-100 hover:border-blue-300 transition-all duration-200"
                         />
@@ -536,7 +536,7 @@ export default function TechnicianRepairDetail() {
           onClick={() => setShowFullImage(null)}
         >
           <img
-            src={`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4001'}${showFullImage}`}
+            src={showFullImage && /^https?:\/\//i.test(showFullImage) ? showFullImage : `${(import.meta.env.VITE_API_BASE_URL || 'http://localhost:4001').replace(/\/+$/, '')}${showFullImage}`}
             alt="Vue agrandie"
             className="max-w-full max-h-[90vh] object-contain rounded-lg"
           />

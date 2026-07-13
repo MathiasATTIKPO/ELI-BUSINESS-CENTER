@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { API_BASE_URL } from '../services/api'
+import { resolveMediaUrl } from '../services/api'
 
 export default function ImageGallery({ images = [], title = 'Galerie photos' }) {
   const [selectedIdx, setSelectedIdx] = useState(0)
@@ -16,7 +16,7 @@ export default function ImageGallery({ images = [], title = 'Galerie photos' }) 
         {/* Main image */}
         <div className="bg-gray-100 rounded-lg overflow-hidden w-full h-64 flex items-center justify-center">
           <img
-            src={images[selectedIdx].startsWith('/uploads') ? `${API_BASE_URL}${images[selectedIdx]}` : images[selectedIdx]}
+            src={resolveMediaUrl(images[selectedIdx])}
             alt={`Photo ${selectedIdx + 1}`}
             className="w-full h-full object-contain"
           />
@@ -32,7 +32,7 @@ export default function ImageGallery({ images = [], title = 'Galerie photos' }) 
                 selectedIdx === idx ? 'border-accent' : 'border-gray-300'
               }`}
             >
-              <img src={img.startsWith('/uploads') ? `${API_BASE_URL}${img}` : img} alt={`Thumb ${idx}`} className="w-full h-full object-cover" />
+              <img src={resolveMediaUrl(img)} alt={`Thumb ${idx}`} className="w-full h-full object-cover" />
             </button>
           ))}
         </div>

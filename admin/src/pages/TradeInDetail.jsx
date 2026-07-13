@@ -28,6 +28,13 @@ export default function TradeInDetail() {
   const [targetModal, setTargetModal] = useState({ isOpen: false, value: '' })
   const [showFullImage, setShowFullImage] = useState(null)
 
+  const resolveMediaUrl = (value) => {
+    if (!value) return value
+    if (/^https?:\/\//i.test(value) || value.startsWith('data:')) return value
+    const base = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:4001').replace(/\/+$/, '')
+    return value.startsWith('/uploads') ? `${base}${value}` : value
+  }
+
   // Validation de paiement
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [paymentData, setPaymentData] = useState({
@@ -532,7 +539,7 @@ export default function TradeInDetail() {
                     <div className="grid grid-cols-3 gap-3">
                       {tradein.photos.map((photo, index) => (
                         <div key={index} className="relative group cursor-pointer" onClick={() => setShowFullImage(photo)}>
-                          <img src={`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4001'}${photo}`} alt={`Photo ${index + 1}`} className="w-full h-32 object-cover rounded-xl border-2 border-gray-100 hover:border-purple-300 transition-all duration-200" />
+                          <img src={resolveMediaUrl(photo)} alt={`Photo ${index + 1}`} className="w-full h-32 object-cover rounded-xl border-2 border-gray-100 hover:border-purple-300 transition-all duration-200" />
                           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 rounded-xl transition-all duration-200 flex items-center justify-center">
                             <Eye size={20} className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
                           </div>
@@ -837,7 +844,7 @@ export default function TradeInDetail() {
       {/* Modal Image plein écran */}
       {showFullImage && (
         <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 cursor-pointer" onClick={() => setShowFullImage(null)}>
-          <img src={`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4001'}${showFullImage}`} alt="Vue agrandie" className="max-w-full max-h-[90vh] object-contain rounded-lg" />
+          <img src={resolveMediaUrl(showFullImage)} alt="Vue agrandie" className="max-w-full max-h-[90vh] object-contain rounded-lg" />
           <button onClick={() => setShowFullImage(null)} className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"><XCircle size={24} /></button>
         </div>
       )}

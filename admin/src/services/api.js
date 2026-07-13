@@ -4,6 +4,13 @@ import TokenManager from './tokenManager'
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:4001').replace(/\/+$/, '')
 
+const resolveMediaUrl = (value) => {
+  if (!value) return value
+  if (/^https?:\/\//i.test(value) || value.startsWith('data:')) return value
+  if (value.startsWith('/uploads')) return `${API_BASE_URL}${value}`
+  return value
+}
+
 const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 30000,
@@ -71,3 +78,4 @@ api.interceptors.response.use(
 
 export default api
 export { API_BASE_URL }
+export { resolveMediaUrl }

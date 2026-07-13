@@ -9,12 +9,7 @@ const InventoryItem = require('../models/InventoryItem');
 const Product = require('../models/Product');
 const VIPInvoice = require('../models/VIPInvoice');
 const ResellerContract = require('../models/ResellerContract');
-
-const ensureDir = (dirPath) => {
-  if (!fs.existsSync(dirPath)) {
-    fs.mkdirSync(dirPath, { recursive: true });
-  }
-};
+const { storeFileBuffer, isAbsoluteUrl } = require('../services/cloudinary');
 
 const getRequestModel = (requestType) => {
   if (requestType === 'repair') return RepairRequest;
@@ -233,8 +228,8 @@ const generateDevisPDF = async ({
 }) => {
   const tvaAmount = totalTTC - totalHT;
   const doc = new PDFDocument({ size: 'A4', margin: 0, bufferPages: true });
-  const stream = fs.createWriteStream(outputPath);
-  doc.pipe(stream);
+  const chunks = [];
+  doc.on('data', (chunk) => chunks.push(chunk));
 
   doc.rect(0, 0, doc.page.width, doc.page.height).fill(C.white);
   drawHeaderDevis(doc, invoiceNumber, date);
@@ -244,9 +239,9 @@ const generateDevisPDF = async ({
 
   doc.end();
 
-  await new Promise((resolve, reject) => {
-    stream.on('finish', resolve);
-    stream.on('error', reject);
+  return new Promise((resolve, reject) => {
+    doc.on('end', () => resolve(Buffer.concat(chunks)));
+    doc.on('error', reject);
   });
 };
 
@@ -277,12 +272,7 @@ exports.createInvoicePdf = async ({
 
   if (!requestData) throw new Error('Demande introuvable.');
 
-  const uploadsDir = path.join(__dirname, '..', 'uploads', 'invoices');
-  ensureDir(uploadsDir);
-
   const fileName = `invoice_${Date.now()}.pdf`;
-  const filePath = path.join(uploadsDir, fileName);
-  const pdfUrl = `/uploads/invoices/${fileName}`;
   const invoiceNumber = `INV-${Date.now().toString().slice(-6)}`;
 
   const safeQuantity = Math.max(1, Number(quantity) || 1);
@@ -291,7 +281,7 @@ exports.createInvoicePdf = async ({
   const totalTTC = totalHT;
   const unitPrice = safeQuantity > 0 ? totalHT / safeQuantity : totalHT;
 
-  await generateDevisPDF({
+  const pdfBuffer = await generateDevisPDF({
     invoiceNumber,
     clientName: clientName || requestData.clientName || 'Client',
     clientAddress: requestData.address || requestData.clientWhatsapp || 'Adresse non renseignee',
@@ -308,9 +298,16 @@ exports.createInvoicePdf = async ({
     tvaRate,
     totalTTC,
     paymentMethod,
-    date: new Date(),
-    outputPath: filePath
+    date: new Date()
   });
+
+  const storedPdf = await storeFileBuffer(pdfBuffer, {
+    folder: 'invoices',
+    fileName,
+    resourceType: 'raw',
+    mimeType: 'application/pdf'
+  });
+  const pdfUrl = storedPdf.url;
 
   const invoice = await Invoice.create({
     requestType,
@@ -389,7 +386,7 @@ exports.sendWhatsapp = async (req, res) => {
     }
 
     const baseUrl = process.env.BASE_URL || 'http://localhost:4001';
-    const pdfLink = `${baseUrl}${invoice.pdfUrl}`;
+    const pdfLink = isAbsoluteUrl(invoice.pdfUrl) ? invoice.pdfUrl : `${baseUrl}${invoice.pdfUrl}`;
 
     const defaultMsg =
       `Bonjour ${invoice.clientName || ''},\n\n` +

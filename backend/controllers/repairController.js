@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const RepairRequest = require('../models/RepairRequest');
+const { uploadImages } = require('../services/cloudinary');
 
 const formatReference = (id) => {
   if (!id) return 'N/A';
@@ -13,7 +14,8 @@ exports.createRepair = async (req, res) => {
       return res.status(400).json({ success: false, data: null, message: 'Le numéro WhatsApp est obligatoire.' });
     }
 
-    const photos = req.files ? req.files.map((file) => `/uploads/${file.filename}`) : [];
+    const uploadedPhotos = req.files ? await uploadImages(req.files, 'repairs') : [];
+    const photos = uploadedPhotos.map((file) => file.url);
 
     const repair = await RepairRequest.create({
       clientName,

@@ -5,6 +5,7 @@ const RepairRequest = require('../models/RepairRequest');
 const TradeinRequest = require('../models/TradeinRequest');
 const SaleRequest = require('../models/Sale');
 const Employee = require('../models/Employee');
+const { uploadImage, isAbsoluteUrl } = require('../services/cloudinary');
 const InventoryItem = require('../models/InventoryItem');
 const Reseller = require('../models/Reseller');
 const ResellerContract = require('../models/ResellerContract');
@@ -220,8 +221,8 @@ exports.getProductById = async (req, res) => {
 exports.createProduct = async (req, res) => {
   try {
     const { name, brand, price, stock, active } = req.body;
-    const photo = req.file ? `/uploads/${req.file.filename}` : null;
-    const product = await Product.create({ name, brand, price: +price, stock: +stock, active: active === 'true', photos: photo ? [photo] : [] });
+    const uploadedPhoto = req.file ? await uploadImage(req.file, 'products') : null;
+    const product = await Product.create({ name, brand, price: +price, stock: +stock, active: active === 'true', photos: uploadedPhoto ? [uploadedPhoto.url] : [] });
     res.status(201).json({ success: true, data: product });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -238,7 +239,10 @@ exports.updateProduct = async (req, res) => {
     if (price !== undefined) product.price = +price;
     if (stock !== undefined) product.stock = +stock;
     if (active !== undefined) product.active = (active === 'true' || active === true);
-    if (req.file) product.photos = [...(product.photos || []), `/uploads/${req.file.filename}`];
+      if (req.file) {
+        const uploadedPhoto = await uploadImage(req.file, 'products');
+        if (uploadedPhoto?.url) product.photos = [...(product.photos || []), uploadedPhoto.url];
+      }
     await product.save();
     res.json({ success: true, data: product });
   } catch (error) {
@@ -339,7 +343,10 @@ exports.getInventory = async (req, res) => {
 exports.createInventoryItem = async (req, res) => {
   try {
     const data = { ...req.body, quantity: +req.body.quantity, minQuantity: +req.body.minQuantity, unitPrice: +req.body.unitPrice };
-    if (req.file) data.photos = [`/uploads/${req.file.filename}`];
+    if (req.file) {
+      const uploadedPhoto = await uploadImage(req.file, 'inventory');
+      data.photos = uploadedPhoto?.url ? [uploadedPhoto.url] : [];
+    }
     const item = await InventoryItem.create(data);
     res.status(201).json({ success: true, data: item });
   } catch (error) {
@@ -1334,13 +1341,16 @@ exports.downloadSaleInvoice = async (req, res) => {
       amount: sale.totalAmount || sale.amount || 0
     });
     
-    const filePath = path.join(__dirname, '..', 'uploads', 'invoices', path.basename(invoice.pdfUrl));
-    
-    if (fs.existsSync(filePath)) {
-      res.download(filePath, `facture_vente_${sale._id}.pdf`);
-    } else {
-      res.status(404).json({ success: false, message: 'Fichier facture introuvable.' });
+    if (isAbsoluteUrl(invoice.pdfUrl)) {
+      return res.redirect(invoice.pdfUrl);
     }
+
+    const filePath = path.join(__dirname, '..', 'uploads', 'invoices', path.basename(invoice.pdfUrl));
+    if (fs.existsSync(filePath)) {
+      return res.download(filePath, `facture_vente_${sale._id}.pdf`);
+    }
+
+    res.status(404).json({ success: false, message: 'Fichier facture introuvable.' });
   } catch (error) {
     console.error('Erreur downloadSaleInvoice:', error);
     res.status(500).json({ success: false, message: error.message });
@@ -1365,13 +1375,16 @@ exports.downloadRepairInvoice = async (req, res) => {
       amount: amount
     });
     
-    const filePath = path.join(__dirname, '..', 'uploads', 'invoices', path.basename(invoice.pdfUrl));
-    
-    if (fs.existsSync(filePath)) {
-      res.download(filePath, `facture_reparation_${repair._id}.pdf`);
-    } else {
-      res.status(404).json({ success: false, message: 'Fichier facture introuvable.' });
+    if (isAbsoluteUrl(invoice.pdfUrl)) {
+      return res.redirect(invoice.pdfUrl);
     }
+
+    const filePath = path.join(__dirname, '..', 'uploads', 'invoices', path.basename(invoice.pdfUrl));
+    if (fs.existsSync(filePath)) {
+      return res.download(filePath, `facture_reparation_${repair._id}.pdf`);
+    }
+
+    res.status(404).json({ success: false, message: 'Fichier facture introuvable.' });
   } catch (error) {
     console.error('Erreur downloadRepairInvoice:', error);
     res.status(500).json({ success: false, message: error.message });
@@ -1396,13 +1409,16 @@ exports.downloadTradeinInvoice = async (req, res) => {
       amount: amount
     });
     
-    const filePath = path.join(__dirname, '..', 'uploads', 'invoices', path.basename(invoice.pdfUrl));
-    
-    if (fs.existsSync(filePath)) {
-      res.download(filePath, `facture_echange_${tradein._id}.pdf`);
-    } else {
-      res.status(404).json({ success: false, message: 'Fichier facture introuvable.' });
+    if (isAbsoluteUrl(invoice.pdfUrl)) {
+      return res.redirect(invoice.pdfUrl);
     }
+
+    const filePath = path.join(__dirname, '..', 'uploads', 'invoices', path.basename(invoice.pdfUrl));
+    if (fs.existsSync(filePath)) {
+      return res.download(filePath, `facture_echange_${tradein._id}.pdf`);
+    }
+
+    res.status(404).json({ success: false, message: 'Fichier facture introuvable.' });
   } catch (error) {
     console.error('Erreur downloadTradeinInvoice:', error);
     res.status(500).json({ success: false, message: error.message });

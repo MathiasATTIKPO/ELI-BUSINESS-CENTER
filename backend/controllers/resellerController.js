@@ -9,6 +9,7 @@ const ResellerContract = require('../models/ResellerContract');
 const InventoryItem = require('../models/InventoryItem');
 const Product = require('../models/Product');
 const notificationService = require('../services/notificationService');
+const { storeFileBuffer, isAbsoluteUrl } = require('../services/cloudinary');
 
 const generateContractNumber = () => {
   const year = new Date().getFullYear();
@@ -99,13 +100,8 @@ const normalizeCatalogPhone = (item, sourceModel) => ({
 });
 
 const createContractPdf = async (contract) => {
-  const uploadsDir = path.join(__dirname, '..', 'uploads', 'contracts');
-  ensureDir(uploadsDir);
-
   const contractNumberSafe = String(contract.number || 'contrat').replace(/[^a-zA-Z0-9_-]/g, '_');
   const fileName = `contrat_${contractNumberSafe}_${Date.now()}.pdf`;
-  const filePath = path.join(uploadsDir, fileName);
-  const pdfUrl = `/uploads/contracts/${fileName}`;
 
   const resolvedProduct = await findPhoneByAnySource(contract.product?._id || contract.product);
   const product = resolvedProduct?.doc;
@@ -122,8 +118,8 @@ const createContractPdf = async (contract) => {
   const dueAt = contract.dueAt ? new Date(contract.dueAt) : null;
 
   const doc = new PDFDocument({ size: 'A4', margin: 40 });
-  const stream = fs.createWriteStream(filePath);
-  doc.pipe(stream);
+  const chunks = [];
+  doc.on('data', (chunk) => chunks.push(chunk));
 
   doc.rect(0, 0, doc.page.width, 110).fill('#0F172A');
   doc.font('Helvetica-Bold').fontSize(22).fillColor('#FFFFFF').text('CONTRAT REVENDEUR', 40, 36);
@@ -187,12 +183,19 @@ const createContractPdf = async (contract) => {
 
   doc.end();
 
-  await new Promise((resolve, reject) => {
-    stream.on('finish', resolve);
-    stream.on('error', reject);
+  const pdfBuffer = await new Promise((resolve, reject) => {
+    doc.on('end', () => resolve(Buffer.concat(chunks)));
+    doc.on('error', reject);
   });
 
-  return { pdfUrl, filePath };
+  const storedPdf = await storeFileBuffer(pdfBuffer, {
+    folder: 'contracts',
+    fileName,
+    resourceType: 'raw',
+    mimeType: 'application/pdf'
+  });
+
+  return { pdfUrl: storedPdf.url, filePath: storedPdf.filePath };
 };
 
 const findPhoneByAnySource = async (productId) => {
@@ -817,18 +820,19 @@ exports.downloadContractPdf = async (req, res) => {
     }
 
     let pdfUrl = contract.contractPdfUrl;
-    let filePath = pdfUrl
-      ? path.join(__dirname, '..', pdfUrl.replace(/^\/+/, '').replace(/\//g, path.sep))
-      : '';
 
-    if (!pdfUrl || !fs.existsSync(filePath)) {
+    if (!pdfUrl) {
       const generated = await createContractPdf(contract);
       pdfUrl = generated.pdfUrl;
-      filePath = generated.filePath;
       contract.contractPdfUrl = pdfUrl;
       await contract.save();
     }
 
+    if (isAbsoluteUrl(pdfUrl)) {
+      return res.redirect(pdfUrl);
+    }
+
+    const filePath = path.join(__dirname, '..', pdfUrl.replace(/^\/+/, '').replace(/\//g, path.sep));
     return res.download(filePath, `contrat_revendeur_${contract.number}.pdf`);
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });

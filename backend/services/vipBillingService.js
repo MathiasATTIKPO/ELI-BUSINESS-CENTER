@@ -19,7 +19,7 @@ const generateInvoiceNumber = (periodStart, vipId, mode = 'automatic') => {
 const getBillableRepairs = async ({ vipClientId, periodStart, periodEnd, repairIds = null, session = null }) => {
   const query = {
     isVip: true,
-    status: { $in: ['ready', 'completed', 'paid'] },
+    status: { $in: ['ready', 'completed'] },
     'vipBilling.invoiceId': null
   };
 

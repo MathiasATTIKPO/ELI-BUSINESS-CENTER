@@ -15,6 +15,7 @@ const { signToken } = require('../utils/jwt');
 const path = require('path');
 const fs = require('fs');
 const PDFDocument = require('pdfkit');
+const { storeFileBuffer, isAbsoluteUrl } = require('../services/cloudinary');
 
 // ============================================================
 //  UTILITAIRES
@@ -52,7 +53,7 @@ const ensureDir = (dirPath) => {
 //  GÉNÉRATION PDF VIP (même format que les autres factures)
 // ============================================================
 
-const generateVIPInvoicePDF = async ({ invoice, vipClient, repairs, tvaRate = 0, outputPath }) => {
+const generateVIPInvoicePDF = async ({ invoice, vipClient, repairs, tvaRate = 0 }) => {
   const invoiceNumber = invoice.invoiceNumber || `VIP-INV-${Date.now().toString().slice(-6)}`;
 
   const items = repairs.map((repair) => ({
@@ -66,7 +67,7 @@ const generateVIPInvoicePDF = async ({ invoice, vipClient, repairs, tvaRate = 0,
   const tvaAmount = totalHT * (tvaRate / 100);
   const totalTTC = totalHT + tvaAmount;
 
-  await generateDevisPDF({
+  return generateDevisPDF({
     invoiceNumber,
     clientName: vipClient?.name || 'Client VIP',
     clientAddress: vipClient?.address || vipClient?.phone || 'Adresse non renseignée',
@@ -76,8 +77,7 @@ const generateVIPInvoicePDF = async ({ invoice, vipClient, repairs, tvaRate = 0,
     tvaRate,
     totalTTC,
     paymentMethod: 'transfer',
-    date: new Date(),
-    outputPath
+    date: new Date()
   });
 };
 
@@ -300,21 +300,22 @@ exports.generateMonthlyInvoice = async (req, res) => {
       const vipClient = await VIPClient.findById(vipClientId);
       const repairs = await RepairRequest.find({ _id: { $in: invoice.repairRefs || [] }, isVip: true });
 
-      const uploadsDir = path.join(__dirname, '..', 'uploads', 'vip_invoices');
-      ensureDir(uploadsDir);
       const fileName = `VIP_${invoice.invoiceNumber || invoice._id}_${Date.now()}.pdf`;
-      const filePath = path.join(uploadsDir, fileName);
-      const pdfUrl = `/uploads/vip_invoices/${fileName}`;
-
-      await generateVIPInvoicePDF({
+      const pdfBuffer = await generateVIPInvoicePDF({
         invoice,
         vipClient,
         repairs,
-        tvaRate: tvaRate || 0,
-        outputPath: filePath
+        tvaRate: tvaRate || 0
       });
 
-      invoice.pdfPath = pdfUrl;
+      const storedPdf = await storeFileBuffer(pdfBuffer, {
+        folder: 'vip_invoices',
+        fileName,
+        resourceType: 'raw',
+        mimeType: 'application/pdf'
+      });
+
+      invoice.pdfPath = storedPdf.url;
       await invoice.save();
     }
 
@@ -359,21 +360,22 @@ exports.generateManualInvoice = async (req, res) => {
       const vipClient = await VIPClient.findById(vipClientId);
       const repairs = await RepairRequest.find({ _id: { $in: repairIds }, isVip: true });
 
-      const uploadsDir = path.join(__dirname, '..', 'uploads', 'vip_invoices');
-      ensureDir(uploadsDir);
       const fileName = `VIP_${invoice.invoiceNumber || invoice._id}_${Date.now()}.pdf`;
-      const filePath = path.join(uploadsDir, fileName);
-      const pdfUrl = `/uploads/vip_invoices/${fileName}`;
-
-      await generateVIPInvoicePDF({
+      const pdfBuffer = await generateVIPInvoicePDF({
         invoice,
         vipClient,
         repairs,
-        tvaRate: tvaRate || 0,
-        outputPath: filePath
+        tvaRate: tvaRate || 0
       });
 
-      invoice.pdfPath = pdfUrl;
+      const storedPdf = await storeFileBuffer(pdfBuffer, {
+        folder: 'vip_invoices',
+        fileName,
+        resourceType: 'raw',
+        mimeType: 'application/pdf'
+      });
+
+      invoice.pdfPath = storedPdf.url;
       await invoice.save();
     }
 
@@ -579,35 +581,38 @@ exports.getVIPInvoices = async (req, res) => {
 };
 
 const generateReceiptPdf = async ({ invoice, payment, vipClient }) => {
-  const receiptsDir = path.join(__dirname, '..', 'uploads', 'receipts');
-  ensureDir(receiptsDir);
   const fileName = `receipt_vip_${invoice.invoiceNumber || invoice._id}_${Date.now()}.pdf`;
-  const filePath = path.join(receiptsDir, fileName);
-  const publicUrl = `/uploads/receipts/${fileName}`;
+  const doc = new PDFDocument({ size: 'A4', margin: 50 });
+  const chunks = [];
+  doc.on('data', (chunk) => chunks.push(chunk));
 
-  await new Promise((resolve, reject) => {
-    const doc = new PDFDocument({ size: 'A4', margin: 50 });
-    const stream = fs.createWriteStream(filePath);
-    stream.on('finish', resolve);
-    stream.on('error', reject);
-    doc.pipe(stream);
+  doc.fontSize(20).text('Reçu de paiement VIP', { align: 'center' });
+  doc.moveDown(1.2);
+  doc.fontSize(11).text(`Facture: ${invoice.invoiceNumber || invoice._id}`);
+  doc.text(`Client VIP: ${vipClient?.name || '-'}`);
+  doc.text(`Date paiement: ${new Date(payment.paidAt).toLocaleString('fr-FR')}`);
+  doc.text(`Montant reçu: ${Number(payment.amount || 0).toLocaleString('fr-FR')} FCFA`);
+  doc.text(`Méthode: ${payment.method}`);
+  if (payment.reference) doc.text(`Référence: ${payment.reference}`);
+  if (payment.note) doc.text(`Note: ${payment.note}`);
+  doc.moveDown();
+  doc.text(`Encaisse par: ${payment.receivedByName || payment.receivedByRole || '-'}`);
+  doc.text(`Solde facture après paiement: ${Number(invoice.balance || 0).toLocaleString('fr-FR')} FCFA`);
+  doc.end();
 
-    doc.fontSize(20).text('Reçu de paiement VIP', { align: 'center' });
-    doc.moveDown(1.2);
-    doc.fontSize(11).text(`Facture: ${invoice.invoiceNumber || invoice._id}`);
-    doc.text(`Client VIP: ${vipClient?.name || '-'}`);
-    doc.text(`Date paiement: ${new Date(payment.paidAt).toLocaleString('fr-FR')}`);
-    doc.text(`Montant reçu: ${Number(payment.amount || 0).toLocaleString('fr-FR')} FCFA`);
-    doc.text(`Méthode: ${payment.method}`);
-    if (payment.reference) doc.text(`Référence: ${payment.reference}`);
-    if (payment.note) doc.text(`Note: ${payment.note}`);
-    doc.moveDown();
-    doc.text(`Encaisse par: ${payment.receivedByName || payment.receivedByRole || '-'}`);
-    doc.text(`Solde facture après paiement: ${Number(invoice.balance || 0).toLocaleString('fr-FR')} FCFA`);
-    doc.end();
+  const pdfBuffer = await new Promise((resolve, reject) => {
+    doc.on('end', () => resolve(Buffer.concat(chunks)));
+    doc.on('error', reject);
   });
 
-  return { filePath, publicUrl };
+  const storedReceipt = await storeFileBuffer(pdfBuffer, {
+    folder: 'receipts',
+    fileName,
+    resourceType: 'raw',
+    mimeType: 'application/pdf'
+  });
+
+  return { filePath: storedReceipt.filePath, publicUrl: storedReceipt.url };
 };
 
 /**
@@ -860,6 +865,10 @@ exports.downloadVIPInvoicePdf = async (req, res) => {
 
     if (!invoice.pdfPath) {
       return res.status(404).json({ success: false, message: 'PDF not available for this invoice' });
+    }
+
+    if (isAbsoluteUrl(invoice.pdfPath)) {
+      return res.redirect(invoice.pdfPath);
     }
 
     const normalized = String(invoice.pdfPath).replace(/^\/+/, '');

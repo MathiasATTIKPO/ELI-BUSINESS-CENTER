@@ -8,7 +8,7 @@ import {
   GoalIcon
 } from 'lucide-react'
 import { useCashierAuth } from '../../context/CashierAuthContext'
-import api, { API_BASE_URL } from '../../services/api'
+import api from '../../services/api'
 import Toast from '../../components/Toast'
 import { formatReference } from '../../utils/formatReference'
 
@@ -30,6 +30,13 @@ export default function CashierRepairDetail() {
   const [invoiceLink, setInvoiceLink] = useState('')
   const [processing, setProcessing] = useState(false)
   const [showFullImage, setShowFullImage] = useState(null)
+
+  const resolveMediaUrl = (value) => {
+    if (!value) return value
+    if (/^https?:\/\//i.test(value) || value.startsWith('data:')) return value
+    const base = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:4001').replace(/\/+$/, '')
+    return value.startsWith('/uploads') ? `${base}${value}` : value
+  }
 
   const isAdminView = window.location.pathname.startsWith('/admin/cashier')
   const basePath = isAdminView ? '/admin/cashier' : '/cashier'
@@ -298,7 +305,7 @@ const isVipRepair = Boolean(repair.isVip)
             {repair.photos.map((photo, i) => (
               <img
                 key={i}
-                src={`${API_BASE_URL}${photo}`}
+                src={resolveMediaUrl(photo)}
                 alt={`Photo ${i+1}`}
                 className="rounded-xl cursor-pointer hover:ring-2 ring-purple-300"
                 onClick={() => setShowFullImage(photo)}
@@ -376,7 +383,7 @@ const isVipRepair = Boolean(repair.isVip)
       {/* Modal image plein écran */}
       {showFullImage && (
         <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 cursor-pointer" onClick={() => setShowFullImage(null)}>
-          <img src={`${API_BASE_URL}${showFullImage}`} alt="Agrandie" className="max-w-full max-h-[90vh] object-contain" />
+          <img src={resolveMediaUrl(showFullImage)} alt="Agrandie" className="max-w-full max-h-[90vh] object-contain" />
         </div>
       )}
     </div>

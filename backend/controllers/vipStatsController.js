@@ -17,7 +17,7 @@ exports.getStats = async (req, res) => {
       // RepairRequest is the main operational source for VIP repair billing.
       require('../models/RepairRequest').countDocuments({
         isVip: true,
-        status: { $in: ['ready', 'completed', 'paid'] },
+        status: { $in: ['ready', 'completed'] },
         'vipBilling.invoiceId': null
       }),
       require('../models/RepairRequest').countDocuments({

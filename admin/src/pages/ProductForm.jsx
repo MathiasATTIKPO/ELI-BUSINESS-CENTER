@@ -25,7 +25,7 @@ import {
   EyeOff,
   Truck
 } from 'lucide-react'
-import api from '../services/api'
+import api, { resolveMediaUrl } from '../services/api'
 import Toast from '../components/Toast'
 
 export default function ProductForm() {
@@ -70,9 +70,8 @@ export default function ProductForm() {
       setActive(product.active !== undefined ? product.active : true)
       
       // Gestion de la photo
-      const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4001'
       const firstPhoto = product.photos && product.photos.length > 0 ? product.photos[0] : null
-      setPreview(firstPhoto ? `${base}${firstPhoto}` : null)
+      setPreview(firstPhoto ? resolveMediaUrl(firstPhoto) : null)
     } catch (error) {
       console.error('Erreur lors du chargement:', error)
       setToast({ type: 'error', message: 'Erreur lors du chargement du produit' })

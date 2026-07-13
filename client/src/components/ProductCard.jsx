@@ -5,7 +5,7 @@ function ProductCard({ product, phoneNumber }) {
   // Utiliser la première photo du tableau photos avec l'URL complète du backend
   const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000').replace(/\/+$/, '');
   const imageUrl = product.photos && product.photos.length > 0
-    ? `${API_BASE_URL}${product.photos[0]}`
+    ? (product.photos[0].startsWith('http') ? product.photos[0] : `${API_BASE_URL}${product.photos[0]}`)
     : 'https://via.placeholder.com/400x300/f3f4f6/9ca3af?text=Pas+d%27image';
 
   return (
