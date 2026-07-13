@@ -32,6 +32,7 @@ router.post('/invoices/generate-manual', auth, authorizeRoles('admin', 'cashier'
 router.get('/repairs/billable', auth, authorizeRoles('admin', 'cashier', 'super_admin', 'commercial_manager'), vipController.getBillableVIPRepairs);
 router.get('/invoices', auth, authorizeRoles('admin', 'cashier', 'super_admin', 'commercial_manager', 'vip'), vipController.getVIPInvoices);
 router.put('/invoices/:id/pay', auth, authorizeRoles('admin', 'cashier', 'super_admin', 'commercial_manager'), vipController.recordVIPInvoicePayment);
+router.post('/invoices/:id/send-receipt', auth, authorizeRoles('admin', 'cashier', 'super_admin', 'commercial_manager'), vipController.sendVIPReceiptToClient);
 router.get('/invoices/:id/pdf', auth, authorizeRoles('admin', 'cashier', 'super_admin', 'commercial_manager', 'vip'), vipController.downloadVIPInvoicePdf);
 router.get('/clients/:clientId/history', auth, authorizeRoles('admin', 'cashier', 'super_admin', 'commercial_manager'), vipController.getVIPClientHistory);
 

@@ -699,8 +699,8 @@ exports.recordVIPInvoicePayment = async (req, res) => {
         { _id: { $in: invoice.repairRefs } },
         {
           $set: {
-            status: 'paid', // ⬅️ Le statut global passe à "payé"
-            'vipBilling.status': invoice.status === 'paid' ? 'paid' : 'invoiced',
+            status: 'soldee',
+            'vipBilling.status': invoice.status === 'paid' ? 'soldee' : 'invoiced',
             'vipBilling.paidAt': invoice.status === 'paid' ? now : null,
             'vipBilling.paymentId': invoice.payments[paymentIndex]?._id || null
           },
@@ -876,5 +876,50 @@ exports.downloadVIPInvoicePdf = async (req, res) => {
     return res.download(absolutePath);
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.sendVIPReceiptToClient = async (req, res) => {
+  try {
+    const invoice = await VIPInvoice.findById(req.params.id).populate('vipClient');
+    if (!invoice) return res.status(404).json({ success: false, message: 'Facture VIP introuvable.' });
+
+    const latestPayment = Array.isArray(invoice.payments) && invoice.payments.length
+      ? invoice.payments[invoice.payments.length - 1]
+      : null;
+
+    const receiptUrl = latestPayment?.receiptUrl || invoice.receiptPath || '';
+    if (!receiptUrl) {
+      return res.status(400).json({ success: false, message: 'Aucun reçu disponible pour cette facture.' });
+    }
+
+    const phone = invoice.vipClient?.whatsapp || invoice.vipClient?.phone || '';
+    if (!phone) {
+      return res.status(400).json({ success: false, message: 'Numéro client VIP manquant.' });
+    }
+
+    const baseUrl = process.env.BASE_URL || process.env.API_URL || 'http://localhost:4001';
+    const resolvedReceiptUrl = /^https?:\/\//i.test(receiptUrl) ? receiptUrl : `${String(baseUrl).replace(/\/+$/, '')}${receiptUrl}`;
+    const paymentAmount = Number(latestPayment?.amount || invoice.paidAmount || invoice.total || 0);
+    const message =
+      `Bonjour ${invoice.vipClient?.name || ''},\n\n` +
+      `Votre reçu VIP est disponible.\n` +
+      `Facture: ${invoice.invoiceNumber || invoice._id}\n` +
+      `Montant réglé: ${paymentAmount.toLocaleString('fr-FR')} FCFA\n` +
+      `Lien du reçu: ${resolvedReceiptUrl}\n\n` +
+      `Merci.\nEli Business Center`;
+
+    const whatsappUrl = `https://wa.me/${String(phone).replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
+
+    return res.json({
+      success: true,
+      data: {
+        whatsappUrl,
+        receiptUrl: resolvedReceiptUrl,
+      },
+      message: 'Lien de reçu généré.'
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
   }
 };

@@ -13,7 +13,7 @@ const repairRequestSchema = new mongoose.Schema({
   estimatedPrice: { type: Number, default: 0 },
   status: {
   type: String,
-  enum: ['pending', 'assigned', 'diagnosing', 'quoted', 'accepted', 'repairing', 'ready', 'completed', 'paid', 'cancelled'],
+  enum: ['pending', 'assigned', 'diagnosing', 'quoted', 'accepted', 'repairing', 'ready', 'completed', 'paid', 'soldee', 'cancelled'],
   default: 'pending'
 },
   assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'Employee', default: null },
@@ -31,7 +31,7 @@ const repairRequestSchema = new mongoose.Schema({
   vipBilling: {
     status: {
       type: String,
-      enum: ['not_applicable', 'pending', 'billable', 'invoiced', 'paid'],
+      enum: ['not_applicable', 'pending', 'billable', 'invoiced', 'paid', 'soldee'],
       default: 'not_applicable'
     },
     invoiceId: { type: mongoose.Schema.Types.ObjectId, ref: 'VIPInvoice', default: null },

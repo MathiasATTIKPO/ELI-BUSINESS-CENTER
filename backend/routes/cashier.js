@@ -236,6 +236,7 @@ router.get('/vip/repairs/billable', vipController.getBillableVIPRepairs)
 router.post('/vip/invoices/generate-manual', vipController.generateManualInvoice)
 router.get('/vip/invoices', vipController.getVIPInvoices)
 router.put('/vip/invoices/:id/pay', vipController.recordVIPInvoicePayment)
+router.post('/vip/invoices/:id/send-receipt', vipController.sendVIPReceiptToClient)
 router.get('/vip/clients/:clientId/history', vipController.getVIPClientHistory)
 
 // ===== RESELLER CONTRACT CASH COLLECTION =====

@@ -98,6 +98,18 @@ export default function CashierSales() {
   const navigate = useNavigate()
   const isAdminView = location.pathname.startsWith('/admin/cashier')
 
+  const resolveStoredUrl = (value) => {
+    if (!value) return ''
+    return value.startsWith('http') ? value : `${API_BASE_URL}${value}`
+  }
+
+  const getLatestVipReceiptUrl = (invoice) => {
+    if (!invoice) return ''
+    const payments = Array.isArray(invoice.payments) ? invoice.payments : []
+    const latestPayment = payments.length ? payments[payments.length - 1] : null
+    return latestPayment?.receiptUrl || invoice.receiptPath || ''
+  }
+
   // ========== CHARGEMENT DES DONNÉES ==========
   const fetchAllData = useCallback(async () => {
     setLoading(true)
@@ -332,7 +344,7 @@ export default function CashierSales() {
     const normalized = String(status || '').toLowerCase()
     if (normalized === 'ready') return 'Terminée'
     if (normalized === 'completed') return 'Terminée'
-    if (normalized === 'paid') return 'Soldée'
+    if (normalized === 'paid' || normalized === 'soldee') return 'Soldée'
     return status || '-'
   }
 
@@ -340,7 +352,7 @@ export default function CashierSales() {
     const normalized = String(status || '').toLowerCase()
     if (normalized === 'billable' || normalized === 'pending') return 'Non facturée'
     if (normalized === 'invoiced') return 'Facturée'
-    if (normalized === 'paid') return 'Soldée'
+    if (normalized === 'paid' || normalized === 'soldee') return 'Soldée'
     return status || 'Non facturée'
   }
 
@@ -789,6 +801,24 @@ export default function CashierSales() {
     setVipInvoicePaymentData({ amount: '', paymentMethod: 'cash', paymentReference: '', paymentDate: new Date().toISOString().slice(0, 10), note: '' })
   }
 
+  const handleSendVipReceiptToClient = async (invoice = selectedVipInvoice) => {
+    if (!invoice?._id) return
+
+    try {
+      const vipBase = isAdminView ? '/api/admin/vip' : '/api/cashier/vip'
+      const res = await api.post(`${vipBase}/invoices/${invoice._id}/send-receipt`)
+      const whatsappUrl = res.data?.data?.whatsappUrl
+      if (whatsappUrl) {
+        window.open(whatsappUrl, '_blank', 'noopener,noreferrer')
+        setToast({ type: 'success', message: 'Lien du reçu prêt à être envoyé au client.' })
+        return
+      }
+      setToast({ type: 'error', message: 'Impossible de générer le lien du reçu.' })
+    } catch (e) {
+      setToast({ type: 'error', message: e.response?.data?.message || 'Impossible d\'envoyer le reçu VIP.' })
+    }
+  }
+
   const handleCollectVipInvoicePayment = async (e) => {
     e.preventDefault()
     if (!selectedVipInvoice) return
@@ -811,13 +841,14 @@ export default function CashierSales() {
       })
 
       if (res.data?.success) {
-        const receipt = res.data?.data?.receiptPath
+        const updatedInvoice = res.data?.data
+        const receipt = updatedInvoice?.receiptPath
         if (receipt) {
-          const link = receipt.startsWith('http') ? receipt : `${API_BASE_URL}${receipt}`
+          const link = resolveStoredUrl(receipt)
           setInvoiceLink(link)
         }
+        setSelectedVipInvoice(updatedInvoice || selectedVipInvoice)
         setToast({ type: 'success', message: 'Encaissement VIP enregistré.' })
-        closeVipInvoicePaymentModal()
         await fetchAllData()
       }
     } catch (e) {
@@ -1371,6 +1402,36 @@ export default function CashierSales() {
               <h3 className="text-xl font-bold">Encaisser facture VIP</h3>
               <p className="text-sm text-gray-500">{selectedVipInvoice.invoiceNumber || String(selectedVipInvoice._id).slice(-6).toUpperCase()}</p>
             </div>
+            {String(selectedVipInvoice.status || '').toLowerCase() === 'paid' ? (
+              <div className="p-6 space-y-4">
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
+                  Facture payée. La réparation VIP associée est désormais soldée.
+                </div>
+                <div className="space-y-2 text-sm text-gray-600">
+                  <p>Montant encaissé: <span className="font-semibold text-gray-900">{Number(selectedVipInvoice.paidAmount || selectedVipInvoice.total || 0).toLocaleString('fr-FR')} FCFA</span></p>
+                  <p>Statut facture: <span className="font-semibold text-gray-900">{formatInvoiceStatus(selectedVipInvoice.status)}</span></p>
+                </div>
+                <div className="flex justify-end gap-3 flex-wrap">
+                  <button type="button" onClick={closeVipInvoicePaymentModal} className="px-4 py-2.5 border rounded-xl">Fermer</button>
+                  {getLatestVipReceiptUrl(selectedVipInvoice) && (
+                    <button
+                      type="button"
+                      onClick={() => window.open(resolveStoredUrl(getLatestVipReceiptUrl(selectedVipInvoice)), '_blank', 'noopener,noreferrer')}
+                      className="px-4 py-2.5 bg-slate-700 text-white rounded-xl hover:bg-slate-800 flex items-center gap-2"
+                    >
+                      <Download size={16} /> Télécharger le reçu
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => handleSendVipReceiptToClient(selectedVipInvoice)}
+                    className="px-4 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 flex items-center gap-2"
+                  >
+                    <Send size={16} /> Envoyer le reçu
+                  </button>
+                </div>
+              </div>
+            ) : (
             <form onSubmit={handleCollectVipInvoicePayment} className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-semibold mb-1">Montant payé (solde à régler)</label>
@@ -1434,6 +1495,7 @@ export default function CashierSales() {
                 </button>
               </div>
             </form>
+            )}
           </div>
         </div>
       )}

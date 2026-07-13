@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const Product = require('./models/Product');
 const Employee = require('./models/Employee');
+const RepairRequest = require('./models/RepairRequest');
 const logger = require('./utils/logger');
 
 const normalizeMongoUri = (value) => {
@@ -173,6 +174,29 @@ const createDefaultProducts = async () => {
   }
 };
 
+const migrateVipSettledStatuses = async () => {
+  const [repairStatusResult, billingStatusResult] = await Promise.all([
+    RepairRequest.updateMany(
+      { isVip: true, status: 'paid' },
+      { $set: { status: 'soldee' } }
+    ),
+    RepairRequest.updateMany(
+      { isVip: true, 'vipBilling.status': 'paid' },
+      { $set: { 'vipBilling.status': 'soldee' } }
+    ),
+  ]);
+
+  const updatedRepairs = Number(repairStatusResult.modifiedCount || repairStatusResult.nModified || 0);
+  const updatedBilling = Number(billingStatusResult.modifiedCount || billingStatusResult.nModified || 0);
+
+  if (updatedRepairs || updatedBilling) {
+    logger.info('seed', 'VIP paid statuses migrated to soldee', {
+      updatedRepairs,
+      updatedBilling,
+    });
+  }
+};
+
 const ensureSeedData = async () => {
   if (state.seedDone) {
     logger.debug('seed', 'Seed already completed, skipping');
@@ -182,6 +206,7 @@ const ensureSeedData = async () => {
   logger.info('seed', 'Starting default data seed');
   await createDefaultEmployees();
   await createDefaultProducts();
+  await migrateVipSettledStatuses();
   state.seedDone = true;
   logger.info('seed', 'Default data seed completed');
 };

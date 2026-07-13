@@ -158,7 +158,7 @@ const createInvoiceForRepairs = async ({
   for (const repair of repairs) {
     repair.vipBilling = {
       ...(repair.vipBilling || {}),
-      status: createdInvoice.status === 'paid' ? 'paid' : 'invoiced',
+      status: createdInvoice.status === 'paid' ? 'soldee' : 'invoiced',
       invoiceId: createdInvoice._id,
       invoicedAt: now,
       paidAt: createdInvoice.status === 'paid' ? now : null,
@@ -175,6 +175,9 @@ const createInvoiceForRepairs = async ({
         now
       )
     };
+    if (createdInvoice.status === 'paid') {
+      repair.status = 'soldee';
+    }
     await repair.save({ session });
   }
 

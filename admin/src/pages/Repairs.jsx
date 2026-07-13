@@ -62,7 +62,7 @@ export default function Repairs() {
     const pending = repairs.filter(r => r.status === 'pending').length
     const inProgress = repairs.filter(r => r.status === 'repairing').length
     const ready = repairs.filter(r => r.status === 'ready').length
-    const completed = repairs.filter(r => r.status === 'completed' || r.status === 'paid').length
+    const completed = repairs.filter(r => r.status === 'completed' || r.status === 'paid' || r.status === 'soldee').length
     
     return { total, pending, inProgress, ready, completed }
   }, [repairs])
@@ -123,6 +123,7 @@ const filteredRepairs = useMemo(() => {
     ready: { label: 'Prêt', color: 'bg-emerald-100 text-emerald-800 border-emerald-200', icon: Wrench },
     completed: { label: 'Terminé', color: 'bg-green-100 text-green-800 border-green-200', icon: Wrench },
     paid: { label: 'Payé', color: 'bg-purple-100 text-purple-800 border-purple-200', icon: Wrench },
+    soldee: { label: 'Soldée', color: 'bg-purple-100 text-purple-800 border-purple-200', icon: Wrench },
   }
 
   const columns = [

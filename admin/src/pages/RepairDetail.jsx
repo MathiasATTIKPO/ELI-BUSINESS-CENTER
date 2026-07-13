@@ -48,7 +48,8 @@ export default function RepairDetail() {
       repairing: { label: 'En réparation', color: 'bg-blue-100 text-blue-800 border-blue-200', gradient: 'from-blue-400 to-cyan-400', icon: Wrench },
       ready: { label: 'Prêt', color: 'bg-emerald-100 text-emerald-800 border-emerald-200', gradient: 'from-emerald-400 to-green-400', icon: CheckCircle },
       completed: { label: 'Terminé', color: 'bg-green-100 text-green-800 border-green-200', gradient: 'from-green-400 to-teal-400', icon: CheckCircle },
-      paid: { label: 'Payé', color: 'bg-purple-100 text-purple-800 border-purple-200', gradient: 'from-purple-400 to-violet-400', icon: CheckCircle }
+      paid: { label: 'Payé', color: 'bg-purple-100 text-purple-800 border-purple-200', gradient: 'from-purple-400 to-violet-400', icon: CheckCircle },
+      soldee: { label: 'Soldée', color: 'bg-purple-100 text-purple-800 border-purple-200', gradient: 'from-purple-400 to-violet-400', icon: CheckCircle }
     }
     return configs[status] || configs.pending
   }
@@ -59,7 +60,8 @@ export default function RepairDetail() {
       repairing: 'En réparation',
       ready: 'Prêt',
       completed: 'Terminé',
-      paid: 'Payé'
+      paid: 'Payé',
+      soldee: 'Soldée'
     }
     return texts[status] || status
   }
@@ -259,7 +261,7 @@ export default function RepairDetail() {
 
   const statusConfig = getStatusConfig(repair.status)
   const StatusIcon = statusConfig.icon
-  const isPaid = repair.status === 'paid'
+  const isPaid = repair.status === 'paid' || repair.status === 'soldee'
   const isVipRepair = Boolean(repair.isVip)
   const effectiveStatusFlow = isVipRepair ? statusFlow.filter((s) => s !== 'paid') : statusFlow
 
@@ -278,8 +280,8 @@ export default function RepairDetail() {
         <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center gap-3">
           <CheckCircle className="text-emerald-600" size={20} />
           <div>
-            <p className="font-semibold text-emerald-800">Réparation payée</p>
-            <p className="text-sm text-emerald-600">Cette réparation a été payée. Aucune modification n'est possible.</p>
+            <p className="font-semibold text-emerald-800">Réparation soldée</p>
+            <p className="text-sm text-emerald-600">Cette réparation est soldée. Aucune modification n'est possible.</p>
           </div>
         </div>
       )}
