@@ -123,7 +123,7 @@ const invoiceRoutes = require('./routes/invoice');
 const technicianRoutes = require('./routes/technician');
 const adminController = require('./controllers/adminController');
 const clientRoutes = require('./routes/clientRoutes');
-const { getDatabaseStatus } = require('./bootstrap');
+const { getDatabaseStatus, connectDatabase } = require('./bootstrap');
 
 const app = express();
 
@@ -216,30 +216,61 @@ app.get('/favicon.png', (req, res) => {
 });
 
 app.get('/api/health', (req, res) => {
-  const db = getDatabaseStatus();
+  connectDatabase()
+    .then(() => {
+      const db = getDatabaseStatus();
+      logger.info('health', 'Health check requested', { databaseConnected: db.connected, readyState: db.readyState });
 
-  logger.info('health', 'Health check requested', { databaseConnected: db.connected, readyState: db.readyState });
+      res.json({
+        success: true,
+        data: {
+          api: 'running',
+          database: db,
+        },
+        message: db.connected ? 'API and MongoDB are running' : 'API is running but MongoDB is not connected',
+      });
+    })
+    .catch((error) => {
+      const db = getDatabaseStatus();
+      logger.error('health', 'Health check failed while connecting to MongoDB', { message: error.message });
 
-  res.json({
-    success: true,
-    data: {
-      api: 'running',
-      database: db,
-    },
-    message: db.connected ? 'API and MongoDB are running' : 'API is running but MongoDB is not connected',
-  });
+      res.status(503).json({
+        success: false,
+        data: {
+          api: 'running',
+          database: db,
+          error: error.message,
+        },
+        message: error.message,
+      });
+    });
 });
 
 app.get('/api/db-status', (req, res) => {
-  const db = getDatabaseStatus();
+  connectDatabase()
+    .then(() => {
+      const db = getDatabaseStatus();
+      logger.info('db', 'Database status requested', { connected: db.connected, readyState: db.readyState, host: db.host, name: db.name });
 
-  logger.info('db', 'Database status requested', { connected: db.connected, readyState: db.readyState, host: db.host, name: db.name });
+      res.status(db.connected ? 200 : 503).json({
+        success: db.connected,
+        data: db,
+        message: db.connected ? 'MongoDB connected' : 'MongoDB disconnected',
+      });
+    })
+    .catch((error) => {
+      const db = getDatabaseStatus();
+      logger.error('db', 'Database status request failed while connecting to MongoDB', { message: error.message });
 
-  res.status(db.connected ? 200 : 503).json({
-    success: db.connected,
-    data: db,
-    message: db.connected ? 'MongoDB connected' : 'MongoDB disconnected',
-  });
+      res.status(503).json({
+        success: false,
+        data: {
+          ...db,
+          error: error.message,
+        },
+        message: error.message,
+      });
+    });
 });
 
 const adminDistPath = path.join(__dirname, '..', 'admin', 'dist');
