@@ -1,13 +1,12 @@
 {
-  "name": "eli-business-center",
+  "name": "eli-business-center-client",
   "private": true,
   "version": "1.0.0",
   "description": "Site vitrine React Vite pour ELI'S BUSINESS CENTER",
   "type": "module",
-  "workspaces": ["admin", "client", "backend"],
   "scripts": {
     "dev": "vite",
-    "build": "npm run build -w admin && npm run build -w client",
+    "build": "vite build",
     "preview": "vite preview"
   },
   "dependencies": {
