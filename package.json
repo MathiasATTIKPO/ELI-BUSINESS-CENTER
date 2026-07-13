@@ -11,6 +11,7 @@
     "build": "npm run build:admin && npm run build:client",
     "build:admin": "npm --prefix admin install && npm --prefix admin run build",
     "build:client": "npm --prefix client install && npm --prefix client run build",
+    "build:vercel": "node scripts/build-vercel.js",
     "start": "cd backend && npm start"
   },
   "keywords": [

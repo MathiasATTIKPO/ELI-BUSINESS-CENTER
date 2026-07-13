@@ -1,8 +1,16 @@
 {
   "version": 2,
-  "buildCommand": "npm run build:client",
+  "buildCommand": "npm run build:vercel",
   "outputDirectory": "client/dist",
   "rewrites": [
+    {
+      "source": "/admin",
+      "destination": "/admin/index.html"
+    },
+    {
+      "source": "/admin/(.*)",
+      "destination": "/admin/index.html"
+    },
     {
       "source": "/(.*)",
       "destination": "/index.html"
