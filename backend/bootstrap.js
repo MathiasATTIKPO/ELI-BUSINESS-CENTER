@@ -3,6 +3,9 @@ const bcrypt = require('bcryptjs');
 const Product = require('./models/Product');
 const Employee = require('./models/Employee');
 const RepairRequest = require('./models/RepairRequest');
+const TradeinRequest = require('./models/TradeinRequest');
+const ResellerContract = require('./models/ResellerContract');
+const notificationService = require('./services/notificationService');
 const logger = require('./utils/logger');
 
 const normalizeMongoUri = (value) => {
@@ -197,6 +200,62 @@ const migrateVipSettledStatuses = async () => {
   }
 };
 
+const backfillAdminPendingNotifications = async () => {
+  const [pendingRepairs, pendingTradeins, pendingContracts] = await Promise.all([
+    RepairRequest.find({ status: 'pending' }).select('_id clientName deviceModel').limit(100),
+    TradeinRequest.find({ status: 'pending' }).select('_id clientName deviceModel').limit(100),
+    ResellerContract.find({ status: { $in: ['pending', 'approved'] } }).select('_id number').limit(100),
+  ]);
+
+  let created = 0;
+
+  for (const repair of pendingRepairs) {
+    const result = await notificationService.createNotification({
+      recipientId: 'role:admin',
+      recipientRole: 'admin',
+      type: 'repair_pending',
+      title: 'Nouvelle demande de réparation',
+      message: `Nouvelle demande de réparation pour ${repair.deviceModel || 'appareil'} par ${repair.clientName || 'Client'}`,
+      requestId: repair._id,
+      clientName: repair.clientName || 'Client',
+      reference: repair._id.toString().slice(-6),
+    });
+    if (result) created += 1;
+  }
+
+  for (const tradein of pendingTradeins) {
+    const result = await notificationService.createNotification({
+      recipientId: 'role:admin',
+      recipientRole: 'admin',
+      type: 'tradein_pending',
+      title: 'Nouvelle demande d\'échange',
+      message: `Nouvelle demande d'échange pour ${tradein.deviceModel || 'appareil'} par ${tradein.clientName || 'Client'}`,
+      requestId: tradein._id,
+      clientName: tradein.clientName || 'Client',
+      reference: tradein._id.toString().slice(-6),
+    });
+    if (result) created += 1;
+  }
+
+  for (const contract of pendingContracts) {
+    const result = await notificationService.createNotification({
+      recipientId: 'role:admin',
+      recipientRole: 'admin',
+      type: 'contract_created',
+      title: 'Nouveau contrat revendeur',
+      message: `Contrat ${contract.number || contract._id.toString().slice(-6)} créé`,
+      requestId: contract._id,
+      clientName: '',
+      reference: contract.number || contract._id.toString().slice(-6),
+    });
+    if (result) created += 1;
+  }
+
+  if (created > 0) {
+    logger.info('seed', 'Admin pending notifications backfilled', { created });
+  }
+};
+
 const ensureSeedData = async () => {
   if (state.seedDone) {
     logger.debug('seed', 'Seed already completed, skipping');
@@ -207,6 +266,7 @@ const ensureSeedData = async () => {
   await createDefaultEmployees();
   await createDefaultProducts();
   await migrateVipSettledStatuses();
+  await backfillAdminPendingNotifications();
   state.seedDone = true;
   logger.info('seed', 'Default data seed completed');
 };

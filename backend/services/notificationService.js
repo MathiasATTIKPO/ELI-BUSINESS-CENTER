@@ -78,8 +78,13 @@ const notifyRole = async ({ role, ...payload }) => {
     if (['admin', 'cashier', 'technician'].includes(role)) {
       const users = await Employee.find({ role, isActive: true });
       if (!users.length) {
-        console.info(`[notifications] no active user for role:${role}`);
-        return [];
+        // Fallback for env-based logins (ex: admin_id) when no employee account exists.
+        const broadcast = await createNotification({
+          ...payload,
+          recipientId: `role:${role}`,
+          recipientRole: role
+        });
+        return broadcast ? [broadcast] : [];
       }
       return notifyUsers({ recipients: users, recipientRole: role, ...payload });
     }

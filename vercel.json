@@ -7,6 +7,51 @@
       "source": "/admin",
       "destination": "/",
       "permanent": false
+    },
+    {
+      "source": "/admin/",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/cashier",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/cashier/",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/technician",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/technician/",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/vip",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/vip/",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/reseller",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/reseller/",
+      "destination": "/",
+      "permanent": false
     }
   ],
   "rewrites": [

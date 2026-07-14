@@ -81,12 +81,103 @@ const normalizeNotificationRole = (role) => {
   return role;
 };
 
+const ensureAdminBroadcastNotifications = async () => {
+  const [pendingRepairs, pendingTradeins, pendingContracts] = await Promise.all([
+    RepairRequest.find({ status: 'pending' })
+      .sort({ createdAt: -1 })
+      .limit(50)
+      .select('_id clientName deviceModel'),
+    TradeinRequest.find({ status: 'pending' })
+      .sort({ createdAt: -1 })
+      .limit(50)
+      .select('_id clientName deviceModel'),
+    ResellerContract.find({ status: { $in: ['pending', 'approved'] } })
+      .sort({ createdAt: -1 })
+      .limit(50)
+      .select('_id number')
+  ]);
+
+  const [repairNotifs, tradeinNotifs, contractNotifs] = await Promise.all([
+    Notification.find({
+      recipientRole: 'admin',
+      type: 'repair_pending',
+      requestId: { $in: pendingRepairs.map((item) => item._id) }
+    }).select('requestId'),
+    Notification.find({
+      recipientRole: 'admin',
+      type: 'tradein_pending',
+      requestId: { $in: pendingTradeins.map((item) => item._id) }
+    }).select('requestId'),
+    Notification.find({
+      recipientRole: 'admin',
+      type: 'contract_created',
+      requestId: { $in: pendingContracts.map((item) => item._id) }
+    }).select('requestId')
+  ]);
+
+  const repairSet = new Set(repairNotifs.map((item) => String(item.requestId)));
+  const tradeinSet = new Set(tradeinNotifs.map((item) => String(item.requestId)));
+  const contractSet = new Set(contractNotifs.map((item) => String(item.requestId)));
+
+  for (const repair of pendingRepairs) {
+    if (repairSet.has(String(repair._id))) continue;
+    await createNotification(
+      'role:admin',
+      'admin',
+      'repair_pending',
+      'Nouvelle demande de réparation',
+      `Nouvelle demande de réparation pour ${repair.deviceModel || 'appareil'} par ${repair.clientName || 'Client'}`,
+      repair._id,
+      repair.clientName || 'Client',
+      repair._id.toString().slice(-6)
+    );
+  }
+
+  for (const tradein of pendingTradeins) {
+    if (tradeinSet.has(String(tradein._id))) continue;
+    await createNotification(
+      'role:admin',
+      'admin',
+      'tradein_pending',
+      'Nouvelle demande d\'échange',
+      `Nouvelle demande d'échange pour ${tradein.deviceModel || 'appareil'} par ${tradein.clientName || 'Client'}`,
+      tradein._id,
+      tradein.clientName || 'Client',
+      tradein._id.toString().slice(-6)
+    );
+  }
+
+  for (const contract of pendingContracts) {
+    if (contractSet.has(String(contract._id))) continue;
+    await createNotification(
+      'role:admin',
+      'admin',
+      'contract_created',
+      'Nouveau contrat revendeur',
+      `Contrat ${contract.number || contract._id.toString().slice(-6)} créé`,
+      contract._id,
+      '',
+      contract.number || contract._id.toString().slice(-6)
+    );
+  }
+};
+
 const buildNotificationFilter = (user) => {
   const normalizedRole = normalizeNotificationRole(user?.role);
 
   // Environment admin token does not map to a real employee _id.
   if (normalizedRole === 'admin' && String(user?.id) === 'admin_id') {
     return { recipientRole: 'admin' };
+  }
+
+  if (normalizedRole === 'admin') {
+    return {
+      recipientRole: 'admin',
+      $or: [
+        { recipientId: user?.id },
+        { recipientId: 'role:admin' }
+      ]
+    };
   }
 
   return {
@@ -100,6 +191,11 @@ exports.getNotifications = async (req, res) => {
     if (!req.user?.id || !req.user?.role) {
       return res.status(401).json({ success: false, message: 'Authentification requise.' });
     }
+
+    if (normalizeNotificationRole(req.user.role) === 'admin') {
+      await ensureAdminBroadcastNotifications();
+    }
+
     const notifications = await Notification.find(buildNotificationFilter(req.user)).sort({ createdAt: -1 });
     res.json({ success: true, data: notifications, message: 'Notifications récupérées.' });
   } catch (error) {
