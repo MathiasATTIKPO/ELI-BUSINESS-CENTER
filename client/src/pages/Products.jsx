@@ -136,7 +136,7 @@ function Products({ phoneNumber }) {
           <div className="grid gap-6 px-8 py-8 lg:grid-cols-[1.2fr_0.8fr] lg:px-10 lg:py-12">
             <div className="space-y-5">
               <span className="inline-flex rounded-full bg-slate-100/80 backdrop-blur-sm px-4 py-2 text-sm font-semibold text-slate-700">
-                Catalogue Vente
+                Catalogue Achat & Reconditionné
               </span>
               <h1 className="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
                 Téléphones pour vos présentations commerciales

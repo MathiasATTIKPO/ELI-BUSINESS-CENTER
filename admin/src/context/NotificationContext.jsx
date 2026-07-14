@@ -72,10 +72,23 @@ export const NotificationProvider = ({ children }) => {
   useEffect(() => {
     if (activeRole && isAuthenticated(activeRole)) {
       fetchNotifications()
+
+      const onFocusOrVisible = () => {
+        if (document.visibilityState === 'visible') {
+          fetchNotifications()
+        }
+      }
+
+      window.addEventListener('focus', onFocusOrVisible)
+      document.addEventListener('visibilitychange', onFocusOrVisible)
       
-      // Polling toutes les 30 secondes
-      const interval = setInterval(fetchNotifications, 30000)
-      return () => clearInterval(interval)
+      // Polling plus fréquent pour remonter plus vite les nouvelles demandes.
+      const interval = setInterval(fetchNotifications, 10000)
+      return () => {
+        clearInterval(interval)
+        window.removeEventListener('focus', onFocusOrVisible)
+        document.removeEventListener('visibilitychange', onFocusOrVisible)
+      }
     }
   }, [activeRole])
 

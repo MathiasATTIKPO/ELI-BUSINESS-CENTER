@@ -1,5 +1,6 @@
 const TradeinRequest = require('../models/TradeinRequest');
 const { uploadImages } = require('../services/cloudinary');
+const notificationService = require('../services/notificationService');
 
 const formatReference = (id) => {
   if (!id) return 'N/A';
@@ -24,6 +25,15 @@ exports.createTradein = async (req, res) => {
       targetProduct: targetProduct || '',
       photos,
       status: 'pending'
+    });
+
+    await notificationService.notifyAdmins({
+      type: 'tradein_pending',
+      title: 'Nouvelle demande d\'échange',
+      message: `Nouvelle demande d'échange pour ${deviceModel || 'appareil'} par ${clientName || 'Client'}`,
+      requestId: tradein._id,
+      clientName: clientName || 'Client',
+      reference: tradein._id.toString().slice(-6)
     });
 
     res.status(201).json({

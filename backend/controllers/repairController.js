@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const RepairRequest = require('../models/RepairRequest');
 const { uploadImages } = require('../services/cloudinary');
+const notificationService = require('../services/notificationService');
 
 const formatReference = (id) => {
   if (!id) return 'N/A';
@@ -24,6 +25,15 @@ exports.createRepair = async (req, res) => {
       issueDescription,
       photos,
       status: 'pending'
+    });
+
+    await notificationService.notifyAdmins({
+      type: 'repair_pending',
+      title: 'Nouvelle demande de réparation',
+      message: `Nouvelle demande de réparation pour ${deviceModel || 'appareil'} par ${clientName || 'Client'}`,
+      requestId: repair._id,
+      clientName: clientName || 'Client',
+      reference: repair._id.toString().slice(-6)
     });
 
     res.status(201).json({

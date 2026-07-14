@@ -2,11 +2,14 @@
   "version": 2,
   "buildCommand": "npm run build:vercel",
   "outputDirectory": "client/dist",
-  "rewrites": [
+  "redirects": [
     {
       "source": "/admin",
-      "destination": "/admin/index.html"
-    },
+      "destination": "/",
+      "permanent": false
+    }
+  ],
+  "rewrites": [
     {
       "source": "/admin/(.*)",
       "destination": "/admin/index.html"

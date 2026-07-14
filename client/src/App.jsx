@@ -13,7 +13,7 @@ import VIPDashboard from './pages/vip/Dashboard';
 
 function App() {
   const phoneNumber = '+22890178475';
-  const whatsappText = "Bonjour ELI'S";
+  const whatsappText = "Bonjour ELI'S Business Center, je souhaite obtenir des informations sur vos services.   Merci ! ";
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#eef2ff] via-[#f7f8ff] to-[#f8f9ff] text-slate-900">
@@ -21,7 +21,7 @@ function App() {
       <main className="pt-24">
         <Routes>
           <Route path="/" element={<Home phoneNumber={phoneNumber} />} />
-          <Route path="/vente" element={<Products phoneNumber={phoneNumber} />} />
+          <Route path="/achat" element={<Products phoneNumber={phoneNumber} />} />
           <Route path="/reparation" element={<Repair phoneNumber={phoneNumber} />} />
           <Route path="/echange" element={<TradeIn phoneNumber={phoneNumber} />} />
           <Route path="/suivi" element={<Tracking phoneNumber={phoneNumber} />} />

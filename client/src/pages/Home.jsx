@@ -25,10 +25,10 @@ const Icons = {
 
 const services = [
   {
-    title: 'Vente',
+    title: 'Achat',
     description: 'Smartphones et tablettes Apple neufs ou reconditionnés avec garantie locale.',
     icon: <Icons.Phone />,
-    link: '/vente'
+    link: '/achat'
   },
   {
     title: 'Réparation',
@@ -68,7 +68,7 @@ function Home({ phoneNumber = '+22800000000' }) {
               ELI'S BUSINESS CENTER
             </span>
             <h1 className="text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
-              Spécialiste Apple pour vente, réparation et échange
+              Spécialiste Apple pour achat, réparation et échange
             </h1>
             <p className="max-w-2xl text-base leading-8 text-slate-700">
               Nous aidons les clients à trouver, réparer ou échanger leur téléphone Apple avec rapidité, transparence et suivi direct via WhatsApp.
@@ -84,12 +84,12 @@ function Home({ phoneNumber = '+22800000000' }) {
                 Contactez-nous sur WhatsApp
               </a>
               <Link
-                to="/vente"
+                to="/achat"
                 className="inline-flex items-center justify-center rounded-full border border-white/60 bg-white/80 backdrop-blur-md px-6 py-3 text-sm font-semibold text-slate-800 transition-all duration-300 hover:bg-white hover:shadow-md focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2"
               >
                 Voir le catalogue
               </Link>
-            </div>
+            </div>  
 
             {/* Mini cartes mission / assistance – vitrées */}
             <div className="grid gap-4 sm:grid-cols-2">
@@ -128,7 +128,7 @@ function Home({ phoneNumber = '+22800000000' }) {
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-gold" aria-hidden="true" />
-                    Accompagnement simple pour vente, réparation et échange.
+                    Accompagnement simple pour achat, réparation et échange.
                   </li>
                 </ul>
               </div>

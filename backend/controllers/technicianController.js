@@ -28,6 +28,17 @@ const notifyAdmins = async (type, title, message, requestId, clientName, referen
   });
 };
 
+const notifyCashiers = async (type, title, message, requestId, clientName, reference) => {
+  return notificationService.notifyCashiers({
+    type,
+    title,
+    message,
+    requestId,
+    clientName,
+    reference
+  });
+};
+
 // ===== FONCTIONS POUR LES TECHNICIENS =====
 // Obtenir les réparations assignées au technicien
 exports.getMyRepairs = async (req, res) => {
@@ -113,23 +124,26 @@ exports.updateRepairStatus = async (req, res) => {
     const updatedRepair = await RepairRequest.findByIdAndUpdate(req.params.id, updateData, { new: true })
       .populate('assignedTo', 'name email');
 
-    // Notifier les admins et caissiers des changements de statut importants
+    // Notifier les admins et les caissiers quand la réparation est prête/terminée.
     if (status === 'completed' || status === 'ready') {
-      const Notification = require('../models/Notification');
-      const Employee = require('../models/Employee');
-      const admins = await Employee.find({ role: 'admin', isActive: true });
-      for (const admin of admins) {
-        await Notification.create({
-          recipientId: admin._id,
-          recipientRole: 'admin',
-          type: 'repair_completed',
-          title: 'Réparation terminée',
-          message: `Réparation pour ${updatedRepair.deviceModel || 'appareil'} marquée comme ${status === 'completed' ? 'complétée' : 'prête'}`,
-          requestId: updatedRepair._id,
-          clientName: updatedRepair.clientName,
-          reference: updatedRepair._id.toString().slice(-6)
-        });
-      }
+      const reference = updatedRepair._id.toString().slice(-6);
+      await notifyAdmins(
+        'repair_completed',
+        'Réparation terminée',
+        `Réparation pour ${updatedRepair.deviceModel || 'appareil'} marquée comme ${status === 'completed' ? 'complétée' : 'prête'}`,
+        updatedRepair._id,
+        updatedRepair.clientName,
+        reference
+      );
+
+      await notifyCashiers(
+        'repair_ready_for_payment',
+        'Réparation prête pour encaissement',
+        `Réparation #${reference} (${updatedRepair.clientName || 'Client'}) marquée ${status === 'completed' ? 'terminée' : 'prête'}`,
+        updatedRepair._id,
+        updatedRepair.clientName,
+        reference
+      );
     }
 
     res.json({ success: true, data: updatedRepair, message: 'Statut de réparation mis à jour.' });
@@ -265,39 +279,36 @@ exports.updateTradeinStatus = async (req, res) => {
     const updatedTradein = await TradeinRequest.findByIdAndUpdate(req.params.id, updateData, { new: true })
       .populate('assignedTo', 'name email');
 
-    // Notifier les admins des changements de statut importants par le technicien
+    // Notifier admin/caisse quand un échange est prêt pour traitement financier.
     if (status === 'accepted') {
-      const Notification = require('../models/Notification');
-      const Employee = require('../models/Employee');
-      const admins = await Employee.find({ role: 'admin', isActive: true });
-      for (const admin of admins) {
-        await Notification.create({
-          recipientId: admin._id,
-          recipientRole: 'admin',
-          type: 'tradein_accepted_by_technician', // Nouveau type de notification
-          title: 'Échange accepté par technicien',
-          message: `Le technicien ${req.user.name} a accepté l'échange pour ${updatedTradein.deviceModel || 'appareil'} (${updatedTradein.clientName}).`,
-          requestId: updatedTradein._id,
-          clientName: updatedTradein.clientName,
-          reference: updatedTradein._id.toString().slice(-6)
-        });
-      }
+      const reference = updatedTradein._id.toString().slice(-6);
+      await notifyAdmins(
+        'tradein_accepted_by_technician',
+        'Échange accepté par technicien',
+        `Le technicien ${req.user.name} a accepté l'échange pour ${updatedTradein.deviceModel || 'appareil'} (${updatedTradein.clientName}).`,
+        updatedTradein._id,
+        updatedTradein.clientName,
+        reference
+      );
+
+      await notifyCashiers(
+        'tradein_ready_for_payment',
+        'Échange prêt pour paiement',
+        `Échange #${reference} (${updatedTradein.clientName || 'Client'}) accepté par le technicien ${req.user.name}`,
+        updatedTradein._id,
+        updatedTradein.clientName,
+        reference
+      );
     } else if (status === 'refused') {
-      const Notification = require('../models/Notification');
-      const Employee = require('../models/Employee');
-      const admins = await Employee.find({ role: 'admin', isActive: true });
-      for (const admin of admins) {
-        await Notification.create({
-          recipientId: admin._id,
-          recipientRole: 'admin',
-          type: 'tradein_refused_by_technician', // Nouveau type de notification
-          title: 'Échange refusé par technicien',
-          message: `Le technicien ${req.user.name} a refusé l'échange pour ${updatedTradein.deviceModel || 'appareil'} (${updatedTradein.clientName}).`,
-          requestId: updatedTradein._id,
-          clientName: updatedTradein.clientName,
-          reference: updatedTradein._id.toString().slice(-6)
-        });
-      }
+      const reference = updatedTradein._id.toString().slice(-6);
+      await notifyAdmins(
+        'tradein_refused_by_technician',
+        'Échange refusé par technicien',
+        `Le technicien ${req.user.name} a refusé l'échange pour ${updatedTradein.deviceModel || 'appareil'} (${updatedTradein.clientName}).`,
+        updatedTradein._id,
+        updatedTradein.clientName,
+        reference
+      );
     }
 
     res.json({ success: true, data: updatedTradein, message: 'Statut de l\'échange mis à jour.' });
