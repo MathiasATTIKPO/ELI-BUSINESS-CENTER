@@ -2,61 +2,45 @@
   "version": 2,
   "buildCommand": "npm run build:vercel",
   "outputDirectory": "client/dist",
-  "redirects": [
+  "rewrites": [
     {
       "source": "/admin",
-      "destination": "/",
-      "permanent": false
+      "destination": "/admin/index.html"
     },
     {
-      "source": "/admin/",
-      "destination": "/",
-      "permanent": false
+      "source": "/admin/(.*)",
+      "destination": "/admin/index.html"
     },
     {
       "source": "/cashier",
-      "destination": "/",
-      "permanent": false
+      "destination": "/admin/index.html"
     },
     {
-      "source": "/cashier/",
-      "destination": "/",
-      "permanent": false
+      "source": "/cashier/(.*)",
+      "destination": "/admin/index.html"
     },
     {
       "source": "/technician",
-      "destination": "/",
-      "permanent": false
+      "destination": "/admin/index.html"
     },
     {
-      "source": "/technician/",
-      "destination": "/",
-      "permanent": false
+      "source": "/technician/(.*)",
+      "destination": "/admin/index.html"
     },
     {
       "source": "/vip",
-      "destination": "/",
-      "permanent": false
+      "destination": "/admin/index.html"
     },
     {
-      "source": "/vip/",
-      "destination": "/",
-      "permanent": false
+      "source": "/vip/(.*)",
+      "destination": "/admin/index.html"
     },
     {
       "source": "/reseller",
-      "destination": "/",
-      "permanent": false
+      "destination": "/admin/index.html"
     },
     {
-      "source": "/reseller/",
-      "destination": "/",
-      "permanent": false
-    }
-  ],
-  "rewrites": [
-    {
-      "source": "/admin/(.*)",
+      "source": "/reseller/(.*)",
       "destination": "/admin/index.html"
     },
     {
