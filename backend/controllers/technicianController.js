@@ -124,18 +124,9 @@ exports.updateRepairStatus = async (req, res) => {
     const updatedRepair = await RepairRequest.findByIdAndUpdate(req.params.id, updateData, { new: true })
       .populate('assignedTo', 'name email');
 
-    // Notifier les admins et les caissiers quand la réparation est prête/terminée.
+    // Notifier la caisse quand la réparation est prête/terminée pour encaissement.
     if (status === 'completed' || status === 'ready') {
       const reference = updatedRepair._id.toString().slice(-6);
-      await notifyAdmins(
-        'repair_completed',
-        'Réparation terminée',
-        `Réparation pour ${updatedRepair.deviceModel || 'appareil'} marquée comme ${status === 'completed' ? 'complétée' : 'prête'}`,
-        updatedRepair._id,
-        updatedRepair.clientName,
-        reference
-      );
-
       await notifyCashiers(
         'repair_ready_for_payment',
         'Réparation prête pour encaissement',
@@ -279,18 +270,9 @@ exports.updateTradeinStatus = async (req, res) => {
     const updatedTradein = await TradeinRequest.findByIdAndUpdate(req.params.id, updateData, { new: true })
       .populate('assignedTo', 'name email');
 
-    // Notifier admin/caisse quand un échange est prêt pour traitement financier.
+    // Notifier la caisse quand un échange est prêt pour traitement financier.
     if (status === 'accepted') {
       const reference = updatedTradein._id.toString().slice(-6);
-      await notifyAdmins(
-        'tradein_accepted_by_technician',
-        'Échange accepté par technicien',
-        `Le technicien ${req.user.name} a accepté l'échange pour ${updatedTradein.deviceModel || 'appareil'} (${updatedTradein.clientName}).`,
-        updatedTradein._id,
-        updatedTradein.clientName,
-        reference
-      );
-
       await notifyCashiers(
         'tradein_ready_for_payment',
         'Échange prêt pour paiement',

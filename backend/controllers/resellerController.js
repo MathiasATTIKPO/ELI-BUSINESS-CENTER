@@ -169,6 +169,19 @@ const createContractPdf = async (contract) => {
     y
   );
 
+  y += 38;
+  doc.font('Helvetica-Bold').fontSize(12).fillColor('#0F172A').text('5. Retard et pénalités', 40, y);
+  y += 20;
+  doc.font('Helvetica').fontSize(10).fillColor('#111827').text(
+    '- Tout retard de régularisation après l\'échéance est considéré comme un manquement contractuel.\n' +
+    '- Une pénalité forfaitaire de 10% du montant attendu peut être appliquée après 24h de retard.\n' +
+    '- Au-delà de 72h de retard, Eli Business Center peut suspendre les nouvelles mises à disposition de produits et exiger la restitution immédiate des appareils non réglés.\n' +
+    '- Toute dérogation (encaissement hors délai) doit être validée par un manager et tracée dans le système.',
+    40,
+    y,
+    { width: doc.page.width - 80, lineGap: 4 }
+  );
+
   const signatureY = 670;
   doc.moveTo(60, signatureY).lineTo(260, signatureY).strokeColor('#9CA3AF').stroke();
   doc.moveTo(340, signatureY).lineTo(540, signatureY).strokeColor('#9CA3AF').stroke();

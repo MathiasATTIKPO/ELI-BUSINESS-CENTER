@@ -586,18 +586,75 @@ const generateReceiptPdf = async ({ invoice, payment, vipClient }) => {
   const chunks = [];
   doc.on('data', (chunk) => chunks.push(chunk));
 
-  doc.fontSize(20).text('Reçu de paiement VIP', { align: 'center' });
-  doc.moveDown(1.2);
-  doc.fontSize(11).text(`Facture: ${invoice.invoiceNumber || invoice._id}`);
-  doc.text(`Client VIP: ${vipClient?.name || '-'}`);
-  doc.text(`Date paiement: ${new Date(payment.paidAt).toLocaleString('fr-FR')}`);
-  doc.text(`Montant reçu: ${Number(payment.amount || 0).toLocaleString('fr-FR')} FCFA`);
-  doc.text(`Méthode: ${payment.method}`);
-  if (payment.reference) doc.text(`Référence: ${payment.reference}`);
-  if (payment.note) doc.text(`Note: ${payment.note}`);
-  doc.moveDown();
-  doc.text(`Encaisse par: ${payment.receivedByName || payment.receivedByRole || '-'}`);
-  doc.text(`Solde facture après paiement: ${Number(invoice.balance || 0).toLocaleString('fr-FR')} FCFA`);
+  const invoiceRef = invoice.invoiceNumber || String(invoice._id || '').slice(-8).toUpperCase();
+  const paidAt = new Date(payment.paidAt || Date.now());
+  const paidAmount = Number(payment.amount || 0);
+  const invoiceTotal = Number(invoice.total || 0);
+  const invoiceBalance = Number(invoice.balance || 0);
+  const collector = payment.receivedByName || payment.receivedByRole || '-';
+
+  doc.rect(0, 0, doc.page.width, 120).fill('#0B132B');
+  doc.font('Helvetica-Bold').fontSize(22).fillColor('#FFFFFF').text('RECU DE PAIEMENT VIP', 50, 42);
+  doc.font('Helvetica').fontSize(10).fillColor('#D1D5DB').text('Eli Business Center', 50, 72);
+  doc.text(`Emission: ${new Date().toLocaleDateString('fr-FR')}`, 50, 88);
+  doc.font('Helvetica-Bold').fontSize(11).fillColor('#FFFFFF').text(`Recu #${invoiceRef}`, 420, 72, { width: 120, align: 'right' });
+
+  let y = 145;
+  doc.roundedRect(50, y, doc.page.width - 100, 95, 8).fill('#F8FAFC');
+  doc.font('Helvetica-Bold').fontSize(11).fillColor('#0F172A').text('Informations client', 65, y + 14);
+  doc.font('Helvetica').fontSize(10).fillColor('#111827')
+    .text(`Client VIP: ${vipClient?.name || '-'}`, 65, y + 36)
+    .text(`Telephone: ${vipClient?.phone || vipClient?.whatsapp || '-'}`, 65, y + 54)
+    .text(`Facture: ${invoice.invoiceNumber || invoice._id}`, 320, y + 36)
+    .text(`Date paiement: ${paidAt.toLocaleString('fr-FR')}`, 320, y + 54);
+
+  y += 125;
+  doc.font('Helvetica-Bold').fontSize(12).fillColor('#0F172A').text('Details de paiement', 50, y);
+  y += 18;
+
+  doc.rect(50, y, doc.page.width - 100, 28).fill('#E2E8F0');
+  doc.font('Helvetica-Bold').fontSize(10).fillColor('#1E293B')
+    .text('Designation', 60, y + 9)
+    .text('Montant', 430, y + 9, { width: 100, align: 'right' });
+
+  y += 28;
+  doc.rect(50, y, doc.page.width - 100, 34).fill('#FFFFFF').strokeColor('#CBD5E1').stroke();
+  doc.font('Helvetica').fontSize(10).fillColor('#111827')
+    .text(`Reglement facture VIP ${invoiceRef}`, 60, y + 11)
+    .text(formatFcfa(paidAmount), 430, y + 11, { width: 100, align: 'right' });
+
+  y += 52;
+  doc.font('Helvetica').fontSize(10).fillColor('#111827')
+    .text(`Mode de paiement: ${payment.method || '-'}`, 50, y)
+    .text(`Encaisse par: ${collector}`, 50, y + 16);
+
+  if (payment.reference) {
+    doc.text(`Reference: ${payment.reference}`, 320, y);
+  }
+
+  y += 52;
+  doc.roundedRect(50, y, doc.page.width - 100, 82, 8).fill('#ECFDF5');
+  doc.font('Helvetica-Bold').fontSize(10).fillColor('#065F46')
+    .text('Resume financier', 65, y + 14)
+    .text(`Total facture: ${formatFcfa(invoiceTotal)}`, 65, y + 34)
+    .text(`Montant regle: ${formatFcfa(paidAmount)}`, 260, y + 34)
+    .text(`Solde restant: ${formatFcfa(invoiceBalance)}`, 430, y + 34, { width: 100, align: 'right' });
+
+  if (payment.note) {
+    y += 100;
+    doc.font('Helvetica-Bold').fontSize(10).fillColor('#0F172A').text('Note', 50, y);
+    doc.font('Helvetica').fontSize(9).fillColor('#334155').text(String(payment.note), 50, y + 14, {
+      width: doc.page.width - 100,
+      lineGap: 3
+    });
+  }
+
+  doc.font('Helvetica').fontSize(8).fillColor('#64748B').text(
+    'Document genere automatiquement par Eli Business Center. Merci pour votre confiance.',
+    50,
+    760,
+    { width: doc.page.width - 100, align: 'center' }
+  );
   doc.end();
 
   const pdfBuffer = await new Promise((resolve, reject) => {
