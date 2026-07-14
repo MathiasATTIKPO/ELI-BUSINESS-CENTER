@@ -18,7 +18,7 @@ function App() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#eef2ff] via-[#f7f8ff] to-[#f8f9ff] text-slate-900">
       <Navbar phoneNumber={phoneNumber} />
-      <main className="pt-24">
+      <main className="pt-20 sm:pt-24">
         <Routes>
           <Route path="/" element={<Home phoneNumber={phoneNumber} />} />
           <Route path="/achat" element={<Products phoneNumber={phoneNumber} />} />
