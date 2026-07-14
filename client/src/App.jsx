@@ -26,8 +26,8 @@ function App() {
           <Route path="/echange" element={<TradeIn phoneNumber={phoneNumber} />} />
           <Route path="/suivi" element={<Tracking phoneNumber={phoneNumber} />} />
           <Route path="/contact" element={<Contact phoneNumber={phoneNumber} />} />
-          <Route path="/reseller" element={<ResellerDashboard />} />
-          <Route path="/vip" element={<VIPDashboard />} />
+          {/* <Route path="/reseller" element={<ResellerDashboard />} />
+          <Route path="/vip" element={<VIPDashboard />} /> */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
