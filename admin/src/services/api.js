@@ -2,7 +2,11 @@
 import axios from 'axios'
 import TokenManager from './tokenManager'
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:4001').replace(/\/+$/, '')
+const configuredBaseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/+$/, '')
+const isVercelRuntime = typeof window !== 'undefined' && /\.vercel\.app$/i.test(window.location.hostname)
+const API_BASE_URL = isVercelRuntime
+  ? ''
+  : (configuredBaseUrl || 'http://localhost:4001')
 
 const resolveMediaUrl = (value) => {
   if (!value) return value

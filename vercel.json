@@ -4,6 +4,10 @@
   "outputDirectory": "client/dist",
   "rewrites": [
     {
+      "source": "/api/(.*)",
+      "destination": "https://eli-business-center.vercel.app/api/$1"
+    },
+    {
       "source": "/admin",
       "destination": "/admin/index.html"
     },
