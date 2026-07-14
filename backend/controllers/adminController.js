@@ -72,6 +72,16 @@ const notifyCashiers = async (type, title, message, requestId, clientName, refer
   });
 };
 
+const clearAdminTaskQueueNotifications = async ({ requestId, types = [] }) => {
+  if (!requestId || !Array.isArray(types) || types.length === 0) return;
+
+  await Notification.deleteMany({
+    recipientRole: 'admin',
+    requestId,
+    type: { $in: types }
+  });
+};
+
 // ==================== NOTIFICATIONS EXPORTS ====================
 
 const normalizeNotificationRole = (role) => {
@@ -655,15 +665,12 @@ exports.assignRepair = async (req, res) => {
       'Nouvelle réparation assignée', 
       `Réparation pour ${repair.deviceModel || 'appareil'} (${repair.clientName}) vous a été assignée`
     );
-    
-    await notifyAdmins(
-      'repair_assigned',
-      'Réparation assignée',
-      `La réparation ${repair._id.toString().slice(-6)} a été assignée à ${repair.assignedTo?.name || 'un technicien'}`,
-      repair._id,
-      repair.clientName,
-      repair._id.toString().slice(-6)
-    );
+
+    // Une tâche assignée ne doit plus rester dans la file admin.
+    await clearAdminTaskQueueNotifications({
+      requestId: repair._id,
+      types: ['repair_pending', 'repair_assigned']
+    });
     
     res.json({ success: true, data: repair });
   } catch (error) {
@@ -965,15 +972,12 @@ exports.assignTradein = async (req, res) => {
       'Nouvel échange assigné', 
       `Échange pour ${tradein.deviceModel || 'appareil'} (${tradein.clientName}) vous a été assigné`
     );
-    
-    await notifyAdmins(
-      'tradein_assigned',
-      'Échange assigné',
-      `L'échange ${tradein._id.toString().slice(-6)} a été assigné à ${tradein.assignedTo?.name || 'un technicien'}`,
-      tradein._id,
-      tradein.clientName,
-      tradein._id.toString().slice(-6)
-    );
+
+    // Une tâche assignée ne doit plus rester dans la file admin.
+    await clearAdminTaskQueueNotifications({
+      requestId: tradein._id,
+      types: ['tradein_pending', 'tradein_assigned']
+    });
     
     res.json({ success: true, data: tradein });
   } catch (error) {
