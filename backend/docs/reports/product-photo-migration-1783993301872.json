@@ -1,0 +1,88 @@
+{
+  "startedAt": "2026-07-14T01:41:39.528Z",
+  "dryRun": true,
+  "totalProductsScanned": 8,
+  "impactedProductIds": [
+    "6a33cc222d5174a35e47c60b",
+    "6a33cc222d5174a35e47c60e",
+    "6a33cc222d5174a35e47c611",
+    "6a33cc222d5174a35e47c614",
+    "6a33cc222d5174a35e47c617",
+    "6a33cc222d5174a35e47c61a",
+    "6a33cfc92d5174a35e47c68e",
+    "6a33cffb2d5174a35e47c694"
+  ],
+  "impactedCount": 8,
+  "migratedProducts": [
+    {
+      "productId": "6a33cc222d5174a35e47c60b",
+      "productName": "iPhone 14",
+      "replacedCount": 1,
+      "dryRun": true
+    },
+    {
+      "productId": "6a33cc222d5174a35e47c60e",
+      "productName": "iPhone 14 Pro",
+      "replacedCount": 1,
+      "dryRun": true
+    },
+    {
+      "productId": "6a33cc222d5174a35e47c611",
+      "productName": "iPhone 15",
+      "replacedCount": 1,
+      "dryRun": true
+    },
+    {
+      "productId": "6a33cc222d5174a35e47c614",
+      "productName": "Galaxy S23",
+      "replacedCount": 1,
+      "dryRun": true
+    },
+    {
+      "productId": "6a33cc222d5174a35e47c617",
+      "productName": "Galaxy S23 Ultra",
+      "replacedCount": 1,
+      "dryRun": true
+    },
+    {
+      "productId": "6a33cc222d5174a35e47c61a",
+      "productName": "Galaxy A54",
+      "replacedCount": 2,
+      "dryRun": true
+    },
+    {
+      "productId": "6a33cfc92d5174a35e47c68e",
+      "productName": "iPhone 16 e",
+      "replacedCount": 1,
+      "dryRun": true
+    },
+    {
+      "productId": "6a33cffb2d5174a35e47c694",
+      "productName": "iPhone 16 Pro",
+      "replacedCount": 1,
+      "dryRun": true
+    }
+  ],
+  "skippedProducts": [],
+  "failedPhotos": [],
+  "finalApiCheck": {
+    "ok": true,
+    "endpoint": "http://localhost:4001/api/products",
+    "productCount": 8,
+    "residualLegacyPhotoProductIds": [
+      "6a33cffb2d5174a35e47c694",
+      "6a33cfc92d5174a35e47c68e",
+      "6a33cc222d5174a35e47c61a",
+      "6a33cc222d5174a35e47c617",
+      "6a33cc222d5174a35e47c614",
+      "6a33cc222d5174a35e47c611",
+      "6a33cc222d5174a35e47c60e",
+      "6a33cc222d5174a35e47c60b"
+    ],
+    "residualCount": 8
+  },
+  "finishedAt": "2026-07-14T01:41:41.675Z",
+  "durationSeconds": 2,
+  "migratedCount": 8,
+  "failedPhotosCount": 0
+}
