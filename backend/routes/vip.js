@@ -34,6 +34,7 @@ router.get('/invoices', auth, authorizeRoles('admin', 'cashier', 'super_admin', 
 router.put('/invoices/:id/pay', auth, authorizeRoles('admin', 'cashier', 'super_admin', 'commercial_manager'), vipController.recordVIPInvoicePayment);
 router.post('/invoices/:id/send-receipt', auth, authorizeRoles('admin', 'cashier', 'super_admin', 'commercial_manager'), vipController.sendVIPReceiptToClient);
 router.get('/invoices/:id/pdf', auth, authorizeRoles('admin', 'cashier', 'super_admin', 'commercial_manager', 'vip'), vipController.downloadVIPInvoicePdf);
+router.get('/invoices/:id/receipt', auth, authorizeRoles('admin', 'cashier', 'super_admin', 'commercial_manager', 'vip'), vipController.downloadVIPReceiptPdf);
 router.get('/clients/:clientId/history', auth, authorizeRoles('admin', 'cashier', 'super_admin', 'commercial_manager'), vipController.getVIPClientHistory);
 
 // VIP portal endpoints

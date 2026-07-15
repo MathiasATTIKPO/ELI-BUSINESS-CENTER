@@ -18,6 +18,7 @@ const notificationService = require('../services/notificationService');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
+const { sendAttachment } = require('../utils/download');
 
 // ==================== NOTIFICATIONS ====================
 
@@ -1441,16 +1442,12 @@ exports.downloadSaleInvoice = async (req, res) => {
       amount: sale.totalAmount || sale.amount || 0
     });
     
-    if (isAbsoluteUrl(invoice.pdfUrl)) {
-      return res.redirect(invoice.pdfUrl);
-    }
-
     const filePath = path.join(__dirname, '..', 'uploads', 'invoices', path.basename(invoice.pdfUrl));
-    if (fs.existsSync(filePath)) {
-      return res.download(filePath, `facture_vente_${sale._id}.pdf`);
-    }
-
-    res.status(404).json({ success: false, message: 'Fichier facture introuvable.' });
+    return sendAttachment(
+      res,
+      isAbsoluteUrl(invoice.pdfUrl) ? invoice.pdfUrl : filePath,
+      `facture_vente_${sale._id}.pdf`
+    );
   } catch (error) {
     console.error('Erreur downloadSaleInvoice:', error);
     res.status(500).json({ success: false, message: error.message });
@@ -1475,16 +1472,12 @@ exports.downloadRepairInvoice = async (req, res) => {
       amount: amount
     });
     
-    if (isAbsoluteUrl(invoice.pdfUrl)) {
-      return res.redirect(invoice.pdfUrl);
-    }
-
     const filePath = path.join(__dirname, '..', 'uploads', 'invoices', path.basename(invoice.pdfUrl));
-    if (fs.existsSync(filePath)) {
-      return res.download(filePath, `facture_reparation_${repair._id}.pdf`);
-    }
-
-    res.status(404).json({ success: false, message: 'Fichier facture introuvable.' });
+    return sendAttachment(
+      res,
+      isAbsoluteUrl(invoice.pdfUrl) ? invoice.pdfUrl : filePath,
+      `facture_reparation_${repair._id}.pdf`
+    );
   } catch (error) {
     console.error('Erreur downloadRepairInvoice:', error);
     res.status(500).json({ success: false, message: error.message });
@@ -1509,16 +1502,12 @@ exports.downloadTradeinInvoice = async (req, res) => {
       amount: amount
     });
     
-    if (isAbsoluteUrl(invoice.pdfUrl)) {
-      return res.redirect(invoice.pdfUrl);
-    }
-
     const filePath = path.join(__dirname, '..', 'uploads', 'invoices', path.basename(invoice.pdfUrl));
-    if (fs.existsSync(filePath)) {
-      return res.download(filePath, `facture_echange_${tradein._id}.pdf`);
-    }
-
-    res.status(404).json({ success: false, message: 'Fichier facture introuvable.' });
+    return sendAttachment(
+      res,
+      isAbsoluteUrl(invoice.pdfUrl) ? invoice.pdfUrl : filePath,
+      `facture_echange_${tradein._id}.pdf`
+    );
   } catch (error) {
     console.error('Erreur downloadTradeinInvoice:', error);
     res.status(500).json({ success: false, message: error.message });

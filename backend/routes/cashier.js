@@ -94,6 +94,8 @@ router.get('/tradeins', adminController.getTradeins)
  */
 router.put('/tradeins/:id/pay', adminController.payTradein)
 router.put('/repairs/:id/pay', adminController.payRepair)
+router.get('/repairs/:id/invoice', adminController.downloadRepairInvoice)
+router.get('/tradeins/:id/invoice', adminController.downloadTradeinInvoice)
 
 // ===== ROUTES POUR L'INVENTAIRE (PIÈCES DÉTACHÉES) =====
 router.get('/inventory', adminController.getInventory)
@@ -237,6 +239,8 @@ router.post('/vip/invoices/generate-manual', vipController.generateManualInvoice
 router.get('/vip/invoices', vipController.getVIPInvoices)
 router.put('/vip/invoices/:id/pay', vipController.recordVIPInvoicePayment)
 router.post('/vip/invoices/:id/send-receipt', vipController.sendVIPReceiptToClient)
+router.get('/vip/invoices/:id/pdf', vipController.downloadVIPInvoicePdf)
+router.get('/vip/invoices/:id/receipt', vipController.downloadVIPReceiptPdf)
 router.get('/vip/clients/:clientId/history', vipController.getVIPClientHistory)
 
 // ===== RESELLER CONTRACT CASH COLLECTION =====

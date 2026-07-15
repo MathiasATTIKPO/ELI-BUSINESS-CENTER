@@ -208,7 +208,7 @@ const createContractPdf = async (contract) => {
     mimeType: 'application/pdf'
   });
 
-  return { pdfUrl: storedPdf.url, filePath: storedPdf.filePath };
+  return { pdfUrl: storedPdf.url, filePath: storedPdf.filePath, pdfBuffer };
 };
 
 const findPhoneByAnySource = async (productId) => {
@@ -832,21 +832,14 @@ exports.downloadContractPdf = async (req, res) => {
       return res.status(403).json({ success: false, message: 'Accès refusé à ce contrat' });
     }
 
-    let pdfUrl = contract.contractPdfUrl;
+    const regenerated = await createContractPdf(contract);
+    const pdfUrl = regenerated.pdfUrl;
+    contract.contractPdfUrl = pdfUrl;
+    await contract.save();
 
-    if (!pdfUrl) {
-      const generated = await createContractPdf(contract);
-      pdfUrl = generated.pdfUrl;
-      contract.contractPdfUrl = pdfUrl;
-      await contract.save();
-    }
-
-    if (isAbsoluteUrl(pdfUrl)) {
-      return res.redirect(pdfUrl);
-    }
-
-    const filePath = path.join(__dirname, '..', pdfUrl.replace(/^\/+/, '').replace(/\//g, path.sep));
-    return res.download(filePath, `contrat_revendeur_${contract.number}.pdf`);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="contrat_revendeur_${contract.number}.pdf"`);
+    return res.send(regenerated.pdfBuffer);
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }

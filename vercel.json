@@ -4,6 +4,10 @@
   "outputDirectory": "client/dist",
   "rewrites": [
     {
+      "source": "/uploads/(.*)",
+      "destination": "https://eli-business-center.vercel.app/uploads/$1"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "https://eli-business-center.vercel.app/api/$1"
     },

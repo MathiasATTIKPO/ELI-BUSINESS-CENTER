@@ -7,7 +7,7 @@ import {
   Zap, Shield, MapPin, Mail, DollarSign, Edit3, Eye,Search
 } from 'lucide-react'
 import { useTechnicianAuth } from '../../context/TechnicianAuthContext'
-import api from '../../services/api'
+import api, { API_BASE_URL, resolveMediaUrl } from '../../services/api'
 import Toast from '../../components/Toast'
 import { formatReference } from '../../utils/formatReference'
 
@@ -331,15 +331,15 @@ export default function TechnicianRepairDetail() {
                       {repair.deviceModel || 'Non spécifié'}
                     </p>
                   </div>
-                  {repair.estimatedPrice && (
-                    <div className="space-y-1">
-                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Devis estimé</p>
-                      <p className="font-bold text-emerald-600 flex items-center gap-2">
-                        <DollarSign size={16} />
-                        {repair.estimatedPrice.toLocaleString('fr-FR')} FCFA
-                      </p>
-                    </div>
-                  )}
+                {repair?.estimatedPrice != null && typeof repair.estimatedPrice === 'number' && (
+  <div className="space-y-1">
+    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Devis estimé</p>
+    <p className="font-bold text-emerald-600 flex items-center gap-2">
+      <DollarSign size={16} />
+      {repair.estimatedPrice.toLocaleString('fr-FR')} FCFA
+    </p>
+  </div>
+)}
                 </div>
               </div>
             </div>
@@ -444,7 +444,7 @@ export default function TechnicianRepairDetail() {
                         onClick={() => setShowFullImage(photo)}
                       >
                         <img
-                          src={photo && /^https?:\/\//i.test(photo) ? photo : `${(import.meta.env.VITE_API_BASE_URL || 'http://localhost:4001').replace(/\/+$/, '')}${photo}`}
+                          src={resolveMediaUrl(photo)}
                           alt={`Photo ${index + 1}`}
                           className="w-full h-32 object-cover rounded-xl border-2 border-gray-100 hover:border-blue-300 transition-all duration-200"
                         />
@@ -536,7 +536,7 @@ export default function TechnicianRepairDetail() {
           onClick={() => setShowFullImage(null)}
         >
           <img
-            src={showFullImage && /^https?:\/\//i.test(showFullImage) ? showFullImage : `${(import.meta.env.VITE_API_BASE_URL || 'http://localhost:4001').replace(/\/+$/, '')}${showFullImage}`}
+            src={resolveMediaUrl(showFullImage)}
             alt="Vue agrandie"
             className="max-w-full max-h-[90vh] object-contain rounded-lg"
           />

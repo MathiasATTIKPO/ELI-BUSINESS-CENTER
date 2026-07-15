@@ -8,7 +8,7 @@ import {
   ThumbsUp, ThumbsDown, ClipboardCheck, CreditCard, Download,
   Printer, Banknote, Wallet
 } from 'lucide-react'
-import api from '../../services/api'
+import api, { API_BASE_URL, resolveMediaUrl } from '../../services/api'
 import Toast from '../../components/Toast'
 import Modal from '../../components/Modal'
 import { formatReference } from '../../utils/formatReference'
@@ -23,13 +23,6 @@ export default function TechnicianTradeInDetail() {
   const [technicianReport, setTechnicianReport] = useState('')
   const [updating, setUpdating] = useState(false)
   const [showFullImage, setShowFullImage] = useState(null)
-
-  const resolveMediaUrl = (value) => {
-    if (!value) return value
-    if (/^https?:\/\//i.test(value) || value.startsWith('data:')) return value
-    const base = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:4001').replace(/\/+$/, '')
-    return value.startsWith('/uploads') ? `${base}${value}` : value
-  }
 
   // ========== ÉTATS POUR LA VALIDATION DE PAIEMENT ==========
   const [showPaymentModal, setShowPaymentModal] = useState(false)
@@ -120,12 +113,7 @@ const handleUpdateStatus = async () => {
         amount: parseFloat(paymentData.amount)
       })
 
-      const invoiceUrl = invoiceResponse?.data?.data?.pdfUrl
-      const fullInvoiceUrl = invoiceUrl?.startsWith('http') 
-        ? invoiceUrl 
-        : `${API_BASE_URL}${invoiceUrl}`
-      
-      setInvoiceLink(fullInvoiceUrl)
+      setInvoiceLink(`${API_BASE_URL}/api/admin/tradeins/${id}/invoice`)
       setToast({ type: 'success', message: 'Paiement validé et facture générée avec succès !' })
       setShowPaymentModal(false)
       setPaymentData({ amount: '', paymentMethod: 'cash', notes: '' })

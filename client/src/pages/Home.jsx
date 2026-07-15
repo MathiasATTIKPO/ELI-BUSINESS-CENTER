@@ -51,7 +51,7 @@ const features = [
   { label: 'Prix', value: 'Offres honnêtes et sans surprise.', highlight: false }
 ];
 
-function Home({ phoneNumber = '+22800000000' }) {
+function Home({ phoneNumber = '+22890178475' }) {
   const cleanPhone = (phoneNumber || '').replace(/\D/g, '');
   const whatsappLink = cleanPhone
     ? `https://wa.me/${cleanPhone}?text=Bonjour%20ELI%27S%20BUSINESS%20CENTER%20-%20J%27ai%20une%20question`

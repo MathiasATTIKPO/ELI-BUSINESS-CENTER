@@ -8,7 +8,7 @@ import {
   Banknote, Send, FileText, Camera, TrendingUp, Award, ClipboardCheck,
   Search, Filter, ChevronRight
 } from 'lucide-react'
-import api, { API_BASE_URL } from '../services/api'
+import api, { resolveMediaUrl } from '../services/api'
 import Toast from '../components/Toast'
 import ImageGallery from '../components/ImageGallery'
 import Modal from '../components/Modal'
@@ -27,13 +27,6 @@ export default function TradeInDetail() {
   const [technicians, setTechnicians] = useState([])
   const [targetModal, setTargetModal] = useState({ isOpen: false, value: '' })
   const [showFullImage, setShowFullImage] = useState(null)
-
-  const resolveMediaUrl = (value) => {
-    if (!value) return value
-    if (/^https?:\/\//i.test(value) || value.startsWith('data:')) return value
-    const base = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:4001').replace(/\/+$/, '')
-    return value.startsWith('/uploads') ? `${base}${value}` : value
-  }
 
   // Validation de paiement
   const [showPaymentModal, setShowPaymentModal] = useState(false)
@@ -192,10 +185,7 @@ export default function TradeInDetail() {
         amount: parseFloat(paymentData.amount)
       })
 
-      const invoiceUrl = invoiceResponse?.data?.data?.pdfUrl
-      const fullInvoiceUrl = invoiceUrl?.startsWith('http') ? invoiceUrl : `${API_BASE_URL}${invoiceUrl}`
-      
-      setInvoiceLink(fullInvoiceUrl)
+      setInvoiceLink(`/api/admin/tradeins/${id}/invoice`)
       setToast({ type: 'success', message: 'Paiement validé et facture générée avec succès !' })
       setShowPaymentModal(false)
       setPaymentData({ amount: '', paymentMethod: 'cash', notes: '' })
@@ -224,9 +214,7 @@ export default function TradeInDetail() {
         amount: amount
       })
 
-      const invoiceUrl = response?.data?.data?.pdfUrl
-      const fullInvoiceUrl = invoiceUrl?.startsWith('http') ? invoiceUrl : `${API_BASE_URL}${invoiceUrl}`
-      setInvoiceLink(fullInvoiceUrl)
+      setInvoiceLink(`/api/admin/tradeins/${id}/invoice`)
       setToast({ type: 'success', message: 'Facture générée avec succès' })
       fetchTradein()
     } catch (error) {
@@ -247,6 +235,23 @@ export default function TradeInDetail() {
       fetchTradein()
     } catch (err) { 
       setToast({ type: 'error', message: 'Erreur lors de la sauvegarde' }) 
+    }
+  }
+
+  const handleDownloadInvoice = async () => {
+    try {
+      const endpoint = invoiceLink || `/api/admin/tradeins/${id}/invoice`
+      const response = await api.get(endpoint, { responseType: 'blob' })
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }))
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `facture_echange_${id}.pdf`)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+    } catch (error) {
+      setToast({ type: 'error', message: error.response?.data?.message || 'Erreur lors du téléchargement de la facture' })
     }
   }
 
@@ -410,7 +415,7 @@ export default function TradeInDetail() {
                 </div>
               </div>
               <div className="flex gap-3">
-                <button onClick={() => window.open(invoiceLink, '_blank')} className="px-5 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all font-medium shadow-sm flex items-center gap-2">
+                <button onClick={handleDownloadInvoice} className="px-5 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all font-medium shadow-sm flex items-center gap-2">
                   <Download size={16} /> Télécharger
                 </button>
                 <button onClick={() => {

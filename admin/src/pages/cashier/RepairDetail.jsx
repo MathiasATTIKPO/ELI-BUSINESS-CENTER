@@ -8,7 +8,7 @@ import {
   GoalIcon
 } from 'lucide-react'
 import { useCashierAuth } from '../../context/CashierAuthContext'
-import api from '../../services/api'
+import api, { resolveMediaUrl } from '../../services/api'
 import Toast from '../../components/Toast'
 import { formatReference } from '../../utils/formatReference'
 
@@ -30,13 +30,6 @@ export default function CashierRepairDetail() {
   const [invoiceLink, setInvoiceLink] = useState('')
   const [processing, setProcessing] = useState(false)
   const [showFullImage, setShowFullImage] = useState(null)
-
-  const resolveMediaUrl = (value) => {
-    if (!value) return value
-    if (/^https?:\/\//i.test(value) || value.startsWith('data:')) return value
-    const base = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:4001').replace(/\/+$/, '')
-    return value.startsWith('/uploads') ? `${base}${value}` : value
-  }
 
   const isAdminView = window.location.pathname.startsWith('/admin/cashier')
   const basePath = isAdminView ? '/admin/cashier' : '/cashier'
@@ -81,18 +74,7 @@ export default function CashierRepairDetail() {
         }
       })
 
-      // Générer facture
-      const invoiceResponse = await api.post('/api/invoice/generate', {
-        requestType: 'repair',
-        requestId: id,
-        clientName: repair.clientName,
-        clientWhatsapp: repair.clientWhatsapp,
-        amount: parseFloat(paymentData.amount)
-      })
-
-      const invoiceUrl = invoiceResponse?.data?.data?.pdfUrl
-      const fullInvoiceUrl = invoiceUrl?.startsWith('http') ? invoiceUrl : `${API_BASE_URL}${invoiceUrl}`
-      setInvoiceLink(fullInvoiceUrl)
+      setInvoiceLink(`${base}/repairs/${id}/invoice`)
       setToast({ type: 'success', message: 'Paiement validé et facture générée' })
       setShowPaymentModal(false)
       fetchRepair() // Recharger les données
@@ -132,6 +114,23 @@ export default function CashierRepairDetail() {
     return new Date(date).toLocaleDateString('fr-FR', {
       day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
     })
+  }
+
+  const handleDownloadInvoice = async () => {
+    try {
+      const endpoint = invoiceLink || `${isAdminView ? '/api/admin' : '/api/cashier'}/repairs/${id}/invoice`
+      const response = await api.get(endpoint, { responseType: 'blob' })
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }))
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `facture_reparation_${id}.pdf`)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+    } catch (error) {
+      setToast({ type: 'error', message: error.response?.data?.message || 'Erreur lors du téléchargement de la facture' })
+    }
   }
 
   if (loading) {
@@ -195,7 +194,7 @@ const isVipRepair = Boolean(repair.isVip)
             <p className="text-sm text-blue-700">Prête à être téléchargée</p>
           </div>
           <button
-            onClick={() => window.open(invoiceLink, '_blank')}
+            onClick={handleDownloadInvoice}
             className="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm flex items-center gap-2"
           >
             <Download size={14} /> Télécharger

@@ -9,7 +9,7 @@ const InventoryItem = require('../models/InventoryItem');
 const Product = require('../models/Product');
 const VIPInvoice = require('../models/VIPInvoice');
 const ResellerContract = require('../models/ResellerContract');
-const { storeFileBuffer, isAbsoluteUrl } = require('../services/cloudinary');
+const { storeFileBuffer, isAbsoluteUrl, hasCloudinaryConfig } = require('../services/cloudinary');
 
 const getRequestModel = (requestType) => {
   if (requestType === 'repair') return RepairRequest;
@@ -259,10 +259,15 @@ exports.createInvoicePdf = async ({
   const requestModel = getRequestModel(requestType);
   if (!requestModel) throw new Error('Type de demande invalide.');
 
+  let existingInvoice = null;
   if (!forceNew) {
-    const existingInvoice = await Invoice.findOne({ requestType, requestId });
+    existingInvoice = await Invoice.findOne({ requestType, requestId });
     if (existingInvoice) {
-      return existingInvoice;
+      const hasRemotePdf = isAbsoluteUrl(existingInvoice.pdfUrl);
+      // Keep existing invoices only when already remote, or when Cloudinary is unavailable.
+      if (hasRemotePdf || !hasCloudinaryConfig()) {
+        return existingInvoice;
+      }
     }
   }
 
@@ -309,15 +314,25 @@ exports.createInvoicePdf = async ({
   });
   const pdfUrl = storedPdf.url;
 
-  const invoice = await Invoice.create({
-    requestType,
-    requestId,
-    clientName: clientName || requestData.clientName || '',
-    clientWhatsapp: clientWhatsapp || requestData.clientWhatsapp || '',
-    amount: parseAmount(amount),
-    pdfUrl,
-    sentAt: new Date()
-  });
+  let invoice;
+  if (existingInvoice && !forceNew) {
+    existingInvoice.clientName = clientName || requestData.clientName || '';
+    existingInvoice.clientWhatsapp = clientWhatsapp || requestData.clientWhatsapp || '';
+    existingInvoice.amount = parseAmount(amount);
+    existingInvoice.pdfUrl = pdfUrl;
+    existingInvoice.sentAt = new Date();
+    invoice = await existingInvoice.save();
+  } else {
+    invoice = await Invoice.create({
+      requestType,
+      requestId,
+      clientName: clientName || requestData.clientName || '',
+      clientWhatsapp: clientWhatsapp || requestData.clientWhatsapp || '',
+      amount: parseAmount(amount),
+      pdfUrl,
+      sentAt: new Date()
+    });
+  }
 
   if (requestType === 'repair') {
     await RepairRequest.findByIdAndUpdate(requestId, { 'saleInfo.invoiceUrl': pdfUrl });

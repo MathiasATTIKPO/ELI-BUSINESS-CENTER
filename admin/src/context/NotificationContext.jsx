@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react'
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react'
 import api from '../services/api'
 import { useAuth } from './AuthContext'
 
@@ -11,15 +11,19 @@ export const NotificationProvider = ({ children }) => {
   const [unreadCount, setUnreadCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const { activeRole, isAuthenticated } = useAuth()
+  const isFetchingRef = useRef(false)
 
   const fetchNotifications = async () => {
+    if (isFetchingRef.current) return
+
     // Ne pas charger les notifications si pas authentifié
     if (!activeRole || !isAuthenticated(activeRole)) {
       console.log('[NotificationContext] Non authentifié, skip fetch')
       setLoading(false)
       return
     }
-    
+
+    isFetchingRef.current = true
     try {
       // Récupérer les notifications selon le rôle
       const endpoint = `/api/${activeRole}/notifications`
@@ -40,6 +44,7 @@ export const NotificationProvider = ({ children }) => {
       setUnreadCount(0)
     } finally {
       setLoading(false)
+      isFetchingRef.current = false
     }
   }
 
@@ -81,13 +86,15 @@ export const NotificationProvider = ({ children }) => {
 
       window.addEventListener('focus', onFocusOrVisible)
       document.addEventListener('visibilitychange', onFocusOrVisible)
+      window.addEventListener('online', fetchNotifications)
       
       // Polling plus fréquent pour remonter plus vite les nouvelles demandes.
-      const interval = setInterval(fetchNotifications, 10000)
+      const interval = setInterval(fetchNotifications, 7000)
       return () => {
         clearInterval(interval)
         window.removeEventListener('focus', onFocusOrVisible)
         document.removeEventListener('visibilitychange', onFocusOrVisible)
+        window.removeEventListener('online', fetchNotifications)
       }
     }
   }, [activeRole])

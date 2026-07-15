@@ -30,6 +30,7 @@ const getCloudinaryConfig = () => {
 };
 
 const hasCloudinaryConfig = () => Boolean(getCloudinaryConfig());
+const shouldRequireCloudinary = () => Boolean(process.env.VERCEL || process.env.NODE_ENV === 'production');
 
 const isAbsoluteUrl = (value) => /^https?:\/\//i.test(String(value || ''));
 
@@ -66,6 +67,21 @@ const uploadBuffer = (buffer, options = {}) => new Promise((resolve, reject) => 
   stream.end(buffer);
 });
 
+const uploadBufferWithRetry = async (buffer, options = {}, retries = 2) => {
+  let lastError = null;
+
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    try {
+      return await uploadBuffer(buffer, options);
+    } catch (error) {
+      lastError = error;
+      if (attempt === retries) break;
+    }
+  }
+
+  throw lastError || new Error('Cloudinary upload failed.');
+};
+
 const storeFileBuffer = async (buffer, {
   folder = 'uploads',
   fileName = `file_${Date.now()}`,
@@ -77,7 +93,7 @@ const storeFileBuffer = async (buffer, {
   if (hasCloudinaryConfig()) {
     const extension = path.extname(safeFileName).replace(/^\./, '');
     const publicId = `${folder}/${path.basename(safeFileName, path.extname(safeFileName))}_${Date.now()}`;
-    const result = await uploadBuffer(buffer, {
+    const result = await uploadBufferWithRetry(buffer, {
       folder,
       resource_type: resourceType,
       public_id: publicId,
@@ -94,6 +110,10 @@ const storeFileBuffer = async (buffer, {
       filePath: '',
       mimeType,
     };
+  }
+
+  if (shouldRequireCloudinary()) {
+    throw new Error('Cloudinary configuration missing in production/serverless environment.');
   }
 
   const outputDir = path.join(__dirname, '..', 'uploads', folder);

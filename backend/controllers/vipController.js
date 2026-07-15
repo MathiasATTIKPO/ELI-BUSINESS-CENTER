@@ -16,6 +16,7 @@ const path = require('path');
 const fs = require('fs');
 const PDFDocument = require('pdfkit');
 const { storeFileBuffer, isAbsoluteUrl } = require('../services/cloudinary');
+const { sendAttachment, downloadSourceExists } = require('../utils/download');
 
 // ============================================================
 //  UTILITAIRES
@@ -669,7 +670,7 @@ const generateReceiptPdf = async ({ invoice, payment, vipClient }) => {
     mimeType: 'application/pdf'
   });
 
-  return { filePath: storedReceipt.filePath, publicUrl: storedReceipt.url };
+  return { filePath: storedReceipt.filePath, publicUrl: storedReceipt.url, pdfBuffer };
 };
 
 /**
@@ -924,15 +925,63 @@ exports.downloadVIPInvoicePdf = async (req, res) => {
       return res.status(404).json({ success: false, message: 'PDF not available for this invoice' });
     }
 
-    if (isAbsoluteUrl(invoice.pdfPath)) {
-      return res.redirect(invoice.pdfPath);
-    }
-
     const normalized = String(invoice.pdfPath).replace(/^\/+/, '');
     const absolutePath = path.join(__dirname, '..', normalized);
-    return res.download(absolutePath);
+    return sendAttachment(
+      res,
+      isAbsoluteUrl(invoice.pdfPath) ? invoice.pdfPath : absolutePath,
+      `facture_vip_${invoice.invoiceNumber || invoice._id}.pdf`
+    );
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.downloadVIPReceiptPdf = async (req, res) => {
+  try {
+    const invoice = await VIPInvoice.findById(req.params.id).populate('vipClient');
+    if (!invoice) return res.status(404).json({ success: false, message: 'Facture VIP introuvable.' });
+
+    if (req.user?.role === 'vip' && String(invoice.vipClient?._id || invoice.vipClient) !== String(req.user.id)) {
+      return res.status(403).json({ success: false, message: 'Access denied' });
+    }
+
+    const latestPayment = Array.isArray(invoice.payments) && invoice.payments.length
+      ? invoice.payments[invoice.payments.length - 1]
+      : null;
+    if (!latestPayment && !invoice.receiptPath) {
+      return res.status(404).json({ success: false, message: 'Aucun reçu disponible pour cette facture.' });
+    }
+
+    const paymentForReceipt = latestPayment || {
+      amount: invoice.paidAmount || invoice.total || 0,
+      method: 'cash',
+      reference: '',
+      note: '',
+      paidAt: new Date(),
+      receivedById: null,
+      receivedByRole: 'system',
+      receivedByName: 'system'
+    };
+
+    const regenerated = await generateReceiptPdf({
+      invoice,
+      payment: paymentForReceipt,
+      vipClient: invoice.vipClient
+    });
+
+    const receiptUrl = regenerated.publicUrl;
+    invoice.receiptPath = regenerated.publicUrl;
+    if (latestPayment) {
+      invoice.payments[invoice.payments.length - 1].receiptUrl = regenerated.publicUrl;
+    }
+    await invoice.save();
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="recu_vip_${invoice.invoiceNumber || invoice._id}.pdf"`);
+    return res.send(regenerated.pdfBuffer);
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 

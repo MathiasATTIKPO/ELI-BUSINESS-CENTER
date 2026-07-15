@@ -23,7 +23,7 @@ import {
   ClipboardList,
   X
 } from 'lucide-react'
-import api, { API_BASE_URL } from '../services/api'
+import api from '../services/api'
 import Modal from '../components/Modal'
 import Toast from '../components/Toast'
 import ImageGallery from '../components/ImageGallery'
@@ -173,21 +173,17 @@ export default function RepairDetail() {
 
   const handleGenerateInvoice = async () => {
     try {
-      const amount = repair.saleInfo?.amountPaid || repair.saleInfo?.amount || repair.price || 0
-      const response = await api.post('/api/invoice/generate', {
-        requestType: 'repair',
-        requestId: id,
-        clientName: repair.clientName,
-        clientWhatsapp: repair.clientWhatsapp,
-        amount
-      })
-
-      const invoiceUrl = response.data.data?.pdfUrl
-      const invoiceObjectUrl = invoiceUrl?.startsWith('http') ? invoiceUrl : `${API_BASE_URL}${invoiceUrl}`
+      const response = await api.get(`/api/admin/repairs/${id}/invoice`, { responseType: 'blob' })
+      const blob = new Blob([response.data], { type: 'application/pdf' })
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `facture_reparation_${id}.pdf`)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
       setToast({ type: 'success', message: 'Facture générée avec succès' })
-      if (invoiceObjectUrl) {
-        window.open(invoiceObjectUrl, '_blank')
-      }
       fetchRepair()
     } catch (error) {
       if (error.response?.status === 401) {
@@ -305,12 +301,7 @@ export default function RepairDetail() {
           </button>
           {repair.saleInfo?.invoiceUrl && (
             <button
-              onClick={() => {
-                const url = repair.saleInfo.invoiceUrl.startsWith('http')
-                  ? repair.saleInfo.invoiceUrl
-                  : `${API_BASE_URL}${repair.saleInfo.invoiceUrl}`
-                window.open(url, '_blank')
-              }}
+              onClick={handleGenerateInvoice}
               className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200 shadow-sm"
             >
               <Download size={16} />

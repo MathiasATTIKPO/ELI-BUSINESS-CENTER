@@ -4,7 +4,7 @@ import logo from '../assets/logo.svg';
 
 const navItems = [
   { label: 'Accueil', to: '/' },
-  { label: 'Vente', to: '/vente' },
+  { label: 'Achat', to: '/achat' },
   { label: 'Réparation', to: '/reparation' },
   { label: 'Échange', to: '/echange' },
   { label: 'Suivi', to: '/suivi' },

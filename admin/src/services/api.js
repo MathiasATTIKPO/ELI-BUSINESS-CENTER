@@ -3,16 +3,34 @@ import axios from 'axios'
 import TokenManager from './tokenManager'
 
 const configuredBaseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/+$/, '')
+const configuredMediaBaseUrl = (import.meta.env.VITE_MEDIA_BASE_URL || '').replace(/\/+$/, '')
 const isVercelRuntime = typeof window !== 'undefined' && /\.vercel\.app$/i.test(window.location.hostname)
 const API_BASE_URL = isVercelRuntime
   ? ''
   : (configuredBaseUrl || 'http://localhost:4001')
+const MEDIA_BASE_URL = configuredMediaBaseUrl || configuredBaseUrl || API_BASE_URL
 
 const resolveMediaUrl = (value) => {
   if (!value) return value
-  if (/^https?:\/\//i.test(value) || value.startsWith('data:')) return value
-  if (value.startsWith('/uploads')) return `${API_BASE_URL}${value}`
-  return value
+  const raw = String(value).trim()
+  if (!raw) return raw
+
+  if (/^https?:\/\//i.test(raw) || raw.startsWith('data:') || raw.startsWith('blob:')) return raw
+
+  // Some bad payloads lose one slash in protocol (e.g. "https:/res.cloudinary...").
+  if (/^https?:\/(?!\/)/i.test(raw)) {
+    return raw.replace(/^https?:\//i, (prefix) => `${prefix}/`)
+  }
+
+  const normalized = raw.replace(/\\/g, '/')
+  const uploadPath = normalized.startsWith('uploads/') ? `/${normalized}` : normalized
+
+  if (uploadPath.startsWith('/uploads')) {
+    const base = (MEDIA_BASE_URL || '').replace(/\/+$/, '')
+    return base ? `${base}${uploadPath}` : uploadPath
+  }
+
+  return normalized
 }
 
 const api = axios.create({
@@ -82,4 +100,5 @@ api.interceptors.response.use(
 
 export default api
 export { API_BASE_URL }
+export { MEDIA_BASE_URL }
 export { resolveMediaUrl }
