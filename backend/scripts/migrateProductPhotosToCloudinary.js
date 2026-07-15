@@ -223,5 +223,5 @@ run()
       await mongoose.connection.close();
     } catch (error) {
       // Ignore close errors.
-    }
+    } 
   });

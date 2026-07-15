@@ -1,0 +1,628 @@
+{
+  "startedAt": "2026-07-15T14:55:03.457Z",
+  "dryRun": false,
+  "migratedDocuments": [
+    "RepairRequest:6a33d18e2d5174a35e47c6d3",
+    "RepairRequest:6a38f8f62a001dbdae522c28",
+    "RepairRequest:6a4802ef3be727d69643df85",
+    "RepairRequest:6a4bc5bc48aa10afe0e6fa92",
+    "TradeinRequest:6a33d2b02d5174a35e47c754",
+    "TradeinRequest:6a3907492296e606c01d40a0",
+    "TradeinRequest:6a4bc8fa9c755ca01b693ed6",
+    "Invoice:6a33d25d2d5174a35e47c734",
+    "Invoice:6a33d3532d5174a35e47c7ae",
+    "Invoice:6a33f4392d5174a35e47c8e7",
+    "Invoice:6a3424b82d5174a35e47ca45",
+    "Invoice:6a48032b3be727d69643dfb1",
+    "Invoice:6a4bbed53be727d69643e149",
+    "Invoice:6a4bbee83be727d69643e167",
+    "Invoice:6a4bc8bb9c755ca01b693ea6",
+    "Invoice:6a4e416958aaf7ab6b484bea",
+    "Invoice:6a4e41f358aaf7ab6b484c32",
+    "Invoice:6a4fe97c723eb3e7753b8482",
+    "Invoice:6a4fec0f1c13097f4fb34c76",
+    "Invoice:6a4feef10d84238c2a0e9918",
+    "Invoice:6a4ff6085875244a089be704",
+    "Invoice:6a503b8d5875244a089bebc2",
+    "Invoice:6a52db3b309b16bdb3530acd",
+    "ResellerContract:6a4fc2f17e5b84c75c860397",
+    "ResellerContract:6a4fe7b0723eb3e7753b8433",
+    "ResellerContract:6a50394c5875244a089be9b6"
+  ],
+  "skippedDocuments": [
+    "Product:6a33cc222d5174a35e47c60b",
+    "Product:6a33cc222d5174a35e47c60e",
+    "Product:6a33cc222d5174a35e47c611",
+    "Product:6a33cc222d5174a35e47c614",
+    "Product:6a33cc222d5174a35e47c617",
+    "Product:6a33cc222d5174a35e47c61a",
+    "Product:6a33cfc92d5174a35e47c68e",
+    "Product:6a33cffb2d5174a35e47c694",
+    "Product:6a5798b9edd1f678324cf2c0",
+    "RepairRequest:6a4ff65f5875244a089be743",
+    "RepairRequest:6a503d375875244a089bec4c",
+    "RepairRequest:6a5242d96435a21bd5b9afdf",
+    "RepairRequest:6a5243596435a21bd5b9b0a0",
+    "RepairRequest:6a52438f6435a21bd5b9b0b3",
+    "RepairRequest:6a52d40f9556549541ae68b3",
+    "RepairRequest:6a52d42c9556549541ae68ce",
+    "RepairRequest:6a52d4439556549541ae68e5",
+    "RepairRequest:6a5516433cbc6eda31611fa6",
+    "RepairRequest:6a55175b3cbc6eda31611fbc",
+    "RepairRequest:6a561a775715eb1d76080580",
+    "RepairRequest:6a56277f07607bc135f3bcfa",
+    "TradeinRequest:6a561adcc695af5cdfc4a94c",
+    "ResellerContract:6a56286a127c6ab4178c498c"
+  ],
+  "failedItems": [],
+  "scannedModels": [
+    {
+      "model": "Product",
+      "count": 9
+    },
+    {
+      "model": "InventoryItem",
+      "count": 0
+    },
+    {
+      "model": "RepairRequest",
+      "count": 16
+    },
+    {
+      "model": "TradeinRequest",
+      "count": 4
+    },
+    {
+      "model": "Sale",
+      "count": 0
+    },
+    {
+      "model": "Invoice",
+      "count": 16
+    },
+    {
+      "model": "ResellerContract",
+      "count": 4
+    },
+    {
+      "model": "VIPInvoice",
+      "count": 0
+    }
+  ],
+  "orphanUploadsMigrated": [
+    {
+      "relativePath": "uploads/1776777132003-e9f9509a-f150-440a-8afa-574ca66f30b7.png",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/image/upload/v1784127341/1776777132003-e9f9509a-f150-440a-8afa-574ca66f30b7.png/1776777132003-e9f9509a-f150-440a-8afa-574ca66f30b7.png/1776777132003-e9f9509a-f150-440a-8afa-574ca66f30b7_1784127341479.png"
+    },
+    {
+      "relativePath": "uploads/1776848089385-t--l--chargement.jpg",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/image/upload/v1784127342/1776848089385-t--l--chargement.jpg/1776848089385-t--l--chargement.jpg/1776848089385-t--l--chargement_1784127342704.jpg"
+    },
+    {
+      "relativePath": "uploads/1776854713695-t--l--chargement.jpg",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/image/upload/v1784127343/1776854713695-t--l--chargement.jpg/1776854713695-t--l--chargement.jpg/1776854713695-t--l--chargement_1784127343888.jpg"
+    },
+    {
+      "relativePath": "uploads/1776867732678-t--l--chargement.jpg",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/image/upload/v1784127345/1776867732678-t--l--chargement.jpg/1776867732678-t--l--chargement.jpg/1776867732678-t--l--chargement_1784127344959.jpg"
+    },
+    {
+      "relativePath": "uploads/1776868198794-t--l--chargement.jpg",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/image/upload/v1784127346/1776868198794-t--l--chargement.jpg/1776868198794-t--l--chargement.jpg/1776868198794-t--l--chargement_1784127346461.jpg"
+    },
+    {
+      "relativePath": "uploads/1776868230583-t--l--chargement.jpg",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/image/upload/v1784127348/1776868230583-t--l--chargement.jpg/1776868230583-t--l--chargement.jpg/1776868230583-t--l--chargement_1784127348385.jpg"
+    },
+    {
+      "relativePath": "uploads/1776869625206-t--l--chargement.jpg",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/image/upload/v1784127349/1776869625206-t--l--chargement.jpg/1776869625206-t--l--chargement.jpg/1776869625206-t--l--chargement_1784127349776.jpg"
+    },
+    {
+      "relativePath": "uploads/1779106446048-t--l--chargement.jpg",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/image/upload/v1784127351/1779106446048-t--l--chargement.jpg/1779106446048-t--l--chargement.jpg/1779106446048-t--l--chargement_1784127351146.jpg"
+    },
+    {
+      "relativePath": "uploads/1779107718425-t--l--chargement.jpg",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/image/upload/v1784127352/1779107718425-t--l--chargement.jpg/1779107718425-t--l--chargement.jpg/1779107718425-t--l--chargement_1784127352081.jpg"
+    },
+    {
+      "relativePath": "uploads/1779183896673-iphone-17.jpg",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/image/upload/v1784127353/1779183896673-iphone-17.jpg/1779183896673-iphone-17.jpg/1779183896673-iphone-17_1784127353505.jpg"
+    },
+    {
+      "relativePath": "uploads/1779183974052-iphone-17.jpg",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/image/upload/v1784127355/1779183974052-iphone-17.jpg/1779183974052-iphone-17.jpg/1779183974052-iphone-17_1784127355566.jpg"
+    },
+    {
+      "relativePath": "uploads/1779183997722-galaxy-a54.jpg",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/image/upload/v1784127356/1779183997722-galaxy-a54.jpg/1779183997722-galaxy-a54.jpg/1779183997722-galaxy-a54_1784127356572.jpg"
+    },
+    {
+      "relativePath": "uploads/1779184021136-galaxy-s23-ultra.jpg",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/image/upload/v1784127358/1779184021136-galaxy-s23-ultra.jpg/1779184021136-galaxy-s23-ultra.jpg/1779184021136-galaxy-s23-ultra_1784127358384.jpg"
+    },
+    {
+      "relativePath": "uploads/1779184075281-galaxy-s23.jpg",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/image/upload/v1784127359/1779184075281-galaxy-s23.jpg/1779184075281-galaxy-s23.jpg/1779184075281-galaxy-s23_1784127360101.jpg"
+    },
+    {
+      "relativePath": "uploads/1779184182348-iphone-15.jpg",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/image/upload/v1784127360/1779184182348-iphone-15.jpg/1779184182348-iphone-15.jpg/1779184182348-iphone-15_1784127361017.jpg"
+    },
+    {
+      "relativePath": "uploads/1779184259308-iphone-14-pro.jpg",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/image/upload/v1784127362/1779184259308-iphone-14-pro.jpg/1779184259308-iphone-14-pro.jpg/1779184259308-iphone-14-pro_1784127362338.jpg"
+    },
+    {
+      "relativePath": "uploads/1779184329972-iphone-14.jpg",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/image/upload/v1784127363/1779184329972-iphone-14.jpg/1779184329972-iphone-14.jpg/1779184329972-iphone-14_1784127363299.jpg"
+    },
+    {
+      "relativePath": "uploads/1779185531122-iphone-15.jpg",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/image/upload/v1784127364/1779185531122-iphone-15.jpg/1779185531122-iphone-15.jpg/1779185531122-iphone-15_1784127364372.jpg"
+    },
+    {
+      "relativePath": "uploads/1779217832388-iphone-14.jpg",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/image/upload/v1784127365/1779217832388-iphone-14.jpg/1779217832388-iphone-14.jpg/1779217832388-iphone-14_1784127365731.jpg"
+    },
+    {
+      "relativePath": "uploads/1780420346321-galaxy-a54.jpg",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/image/upload/v1784127366/1780420346321-galaxy-a54.jpg/1780420346321-galaxy-a54.jpg/1780420346321-galaxy-a54_1784127366737.jpg"
+    },
+    {
+      "relativePath": "uploads/1780420372506-galaxy-s23.jpg",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/image/upload/v1784127367/1780420372506-galaxy-s23.jpg/1780420372506-galaxy-s23.jpg/1780420372506-galaxy-s23_1784127368040.jpg"
+    },
+    {
+      "relativePath": "uploads/1780420395881-galaxy-s23-ultra.jpg",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/image/upload/v1784127368/1780420395881-galaxy-s23-ultra.jpg/1780420395881-galaxy-s23-ultra.jpg/1780420395881-galaxy-s23-ultra_1784127368835.jpg"
+    },
+    {
+      "relativePath": "uploads/1780420431453-iphone-14.jpg",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/image/upload/v1784127369/1780420431453-iphone-14.jpg/1780420431453-iphone-14.jpg/1780420431453-iphone-14_1784127369891.jpg"
+    },
+    {
+      "relativePath": "uploads/1780420457070-iphone-14-pro.jpg",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/image/upload/v1784127372/1780420457070-iphone-14-pro.jpg/1780420457070-iphone-14-pro.jpg/1780420457070-iphone-14-pro_1784127372407.jpg"
+    },
+    {
+      "relativePath": "uploads/1780420523351-iphone-15.jpg",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/image/upload/v1784127373/1780420523351-iphone-15.jpg/1780420523351-iphone-15.jpg/1780420523351-iphone-15_1784127373449.jpg"
+    },
+    {
+      "relativePath": "uploads/1780420561358-iphone-17.jpg",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/image/upload/v1784127374/1780420561358-iphone-17.jpg/1780420561358-iphone-17.jpg/1780420561358-iphone-17_1784127374397.jpg"
+    },
+    {
+      "relativePath": "uploads/1780421092821-iphone-16-e.jpg",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/image/upload/v1784127376/1780421092821-iphone-16-e.jpg/1780421092821-iphone-16-e.jpg/1780421092821-iphone-16-e_1784127376261.jpg"
+    },
+    {
+      "relativePath": "uploads/1780421172421-iphone-16-pro-max.jpg",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/image/upload/v1784127377/1780421172421-iphone-16-pro-max.jpg/1780421172421-iphone-16-pro-max.jpg/1780421172421-iphone-16-pro-max_1784127377954.jpg"
+    },
+    {
+      "relativePath": "uploads/1781780025420-galaxy-a54-2.jpg",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/image/upload/v1784127378/1781780025420-galaxy-a54-2.jpg/1781780025420-galaxy-a54-2.jpg/1781780025420-galaxy-a54-2_1784127378998.jpg"
+    },
+    {
+      "relativePath": "uploads/1781780050833-galaxy-a54.jpg",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/image/upload/v1784127380/1781780050833-galaxy-a54.jpg/1781780050833-galaxy-a54.jpg/1781780050833-galaxy-a54_1784127380353.jpg"
+    },
+    {
+      "relativePath": "uploads/1781780150891-galaxy-s23.jpg",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/image/upload/v1784127381/1781780150891-galaxy-s23.jpg/1781780150891-galaxy-s23.jpg/1781780150891-galaxy-s23_1784127381323.jpg"
+    },
+    {
+      "relativePath": "uploads/1781780176158-galaxy-s23-ultra.jpg",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/image/upload/v1784127383/1781780176158-galaxy-s23-ultra.jpg/1781780176158-galaxy-s23-ultra.jpg/1781780176158-galaxy-s23-ultra_1784127383609.jpg"
+    },
+    {
+      "relativePath": "uploads/1781780206709-iphone-15.jpg",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/image/upload/v1784127384/1781780206709-iphone-15.jpg/1781780206709-iphone-15.jpg/1781780206709-iphone-15_1784127384620.jpg"
+    },
+    {
+      "relativePath": "uploads/1781780245690-iphone-14.jpg",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/image/upload/v1784127386/1781780245690-iphone-14.jpg/1781780245690-iphone-14.jpg/1781780245690-iphone-14_1784127386386.jpg"
+    },
+    {
+      "relativePath": "uploads/1781780258812-iphone-14-pro.jpg",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/image/upload/v1784127387/1781780258812-iphone-14-pro.jpg/1781780258812-iphone-14-pro.jpg/1781780258812-iphone-14-pro_1784127387457.jpg"
+    },
+    {
+      "relativePath": "uploads/1781780425133-iphone-16-e.jpg",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/image/upload/v1784127388/1781780425133-iphone-16-e.jpg/1781780425133-iphone-16-e.jpg/1781780425133-iphone-16-e_1784127388722.jpg"
+    },
+    {
+      "relativePath": "uploads/1781780475903-iphone-16-pro-max.jpg",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/image/upload/v1784127389/1781780475903-iphone-16-pro-max.jpg/1781780475903-iphone-16-pro-max.jpg/1781780475903-iphone-16-pro-max_1784127390024.jpg"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1779104072746.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127390/invoices/invoices/invoice_1779104072746_1784127390902.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1779184843288.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127391/invoices/invoices/invoice_1779184843288_1784127391656.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1779184996980.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127392/invoices/invoices/invoice_1779184996980_1784127392642.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1779185707491.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127393/invoices/invoices/invoice_1779185707491_1784127393611.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1779218003139.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127394/invoices/invoices/invoice_1779218003139_1784127394367.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1779270326752.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127395/invoices/invoices/invoice_1779270326752_1784127395242.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1779270389201.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127396/invoices/invoices/invoice_1779270389201_1784127396563.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1779270585156.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127397/invoices/invoices/invoice_1779270585156_1784127397426.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1779878109416.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127398/invoices/invoices/invoice_1779878109416_1784127398366.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1779878112374.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127399/invoices/invoices/invoice_1779878112374_1784127399073.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1779878125424.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127401/invoices/invoices/invoice_1779878125424_1784127401378.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1779878125612.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127402/invoices/invoices/invoice_1779878125612_1784127402170.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1779878129752.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127402/invoices/invoices/invoice_1779878129752_1784127402900.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1779878130341.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127403/invoices/invoices/invoice_1779878130341_1784127403700.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1779878130938.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127404/invoices/invoices/invoice_1779878130938_1784127404486.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1779878130983.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127405/invoices/invoices/invoice_1779878130983_1784127405222.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1779878131264.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127405/invoices/invoices/invoice_1779878131264_1784127405980.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1779878294389.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127406/invoices/invoices/invoice_1779878294389_1784127406742.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1779878639963.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127407/invoices/invoices/invoice_1779878639963_1784127407945.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1779879303397.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127409/invoices/invoices/invoice_1779879303397_1784127409149.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1779879315990.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127409/invoices/invoices/invoice_1779879315990_1784127409943.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1779880028832.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127410/invoices/invoices/invoice_1779880028832_1784127410572.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1779881622471.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127413/invoices/invoices/invoice_1779881622471_1784127413247.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1779881624306.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127414/invoices/invoices/invoice_1779881624306_1784127414175.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1779882474220.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127414/invoices/invoices/invoice_1779882474220_1784127414812.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1779882795003.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127415/invoices/invoices/invoice_1779882795003_1784127415453.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1779882971933.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127416/invoices/invoices/invoice_1779882971933_1784127416232.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1779882975193.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127416/invoices/invoices/invoice_1779882975193_1784127417042.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1779882975435.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127417/invoices/invoices/invoice_1779882975435_1784127417667.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1780421570483.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127418/invoices/invoices/invoice_1780421570483_1784127418356.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1780421574892.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127418/invoices/invoices/invoice_1780421574892_1784127418904.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1780594623298.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127419/invoices/invoices/invoice_1780594623298_1784127419646.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1780594626004.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127420/invoices/invoices/invoice_1780594626004_1784127420448.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1780594631910.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127421/invoices/invoices/invoice_1780594631910_1784127421415.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1780594884453.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127421/invoices/invoices/invoice_1780594884453_1784127422045.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1780594886391.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127422/invoices/invoices/invoice_1780594886391_1784127422908.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1780594904739.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127423/invoices/invoices/invoice_1780594904739_1784127423577.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1780595066411.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127424/invoices/invoices/invoice_1780595066411_1784127424381.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1780674497497.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127425/invoices/invoices/invoice_1780674497497_1784127425320.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1780913678907.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127426/invoices/invoices/invoice_1780913678907_1784127426202.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1780913694167.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127426/invoices/invoices/invoice_1780913694167_1784127426873.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1780914006044.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127427/invoices/invoices/invoice_1780914006044_1784127427950.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1780914086919.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127428/invoices/invoices/invoice_1780914086919_1784127428906.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1780914392120.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127429/invoices/invoices/invoice_1780914392120_1784127429812.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1780916768879.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127430/invoices/invoices/invoice_1780916768879_1784127430501.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1780917104487.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127431/invoices/invoices/invoice_1780917104487_1784127431352.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1780939056709.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127432/invoices/invoices/invoice_1780939056709_1784127432391.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1780940199018.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127433/invoices/invoices/invoice_1780940199018_1784127433201.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1781002792761.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127434/invoices/invoices/invoice_1781002792761_1784127434218.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1781022543980.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127434/invoices/invoices/invoice_1781022543980_1784127434981.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1781095188383.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127435/invoices/invoices/invoice_1781095188383_1784127435735.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1781258666237.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127436/invoices/invoices/invoice_1781258666237_1784127436626.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1781265843324.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127437/invoices/invoices/invoice_1781265843324_1784127437256.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1781268542387.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127438/invoices/invoices/invoice_1781268542387_1784127438137.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1781268560987.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127438/invoices/invoices/invoice_1781268560987_1784127438929.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1783775049224.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127439/invoices/invoices/invoice_1783775049224_1784127439669.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1783775110227.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127440/invoices/invoices/invoice_1783775110227_1784127440766.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1783776244485.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127441/invoices/invoices/invoice_1783776244485_1784127441937.pdf"
+    },
+    {
+      "relativePath": "uploads/invoices/invoice_1783814547017.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127442/invoices/invoices/invoice_1783814547017_1784127442700.pdf"
+    },
+    {
+      "relativePath": "uploads/receipts/receipt_vip_VIP-202607-168CED-M10220_1783811625764.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127443/receipts/receipts/receipt_vip_VIP-202607-168CED-M10220_1783811625764_1784127443482.pdf"
+    },
+    {
+      "relativePath": "uploads/receipts/receipt_vip_VIP-202607-168CED-M44468_1783793188654.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127445/receipts/receipts/receipt_vip_VIP-202607-168CED-M44468_1783793188654_1784127445192.pdf"
+    },
+    {
+      "relativePath": "uploads/receipts/receipt_vip_VIP-202607-168CED-M46988_1783814676748.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127445/receipts/receipts/receipt_vip_VIP-202607-168CED-M46988_1783814676748_1784127445850.pdf"
+    },
+    {
+      "relativePath": "uploads/receipts/receipt_vip_VIP-202607-168CED-M49210_1783812010228.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127446/receipts/receipts/receipt_vip_VIP-202607-168CED-M49210_1783812010228_1784127446520.pdf"
+    },
+    {
+      "relativePath": "uploads/vip_invoices/VIP_VIP-202607-168CED-M46988_1783814547149.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/tlvoywq0/raw/upload/v1784127447/vip_invoices/vip_invoices/VIP_VIP-202607-168CED-M46988_1783814547149_1784127447512.pdf"
+    }
+  ],
+  "orphanUploadsFailed": [],
+  "localUploadsDiscovered": [
+    "uploads/1776777132003-e9f9509a-f150-440a-8afa-574ca66f30b7.png",
+    "uploads/1776848089385-t--l--chargement.jpg",
+    "uploads/1776854713695-t--l--chargement.jpg",
+    "uploads/1776867732678-t--l--chargement.jpg",
+    "uploads/1776868198794-t--l--chargement.jpg",
+    "uploads/1776868230583-t--l--chargement.jpg",
+    "uploads/1776869625206-t--l--chargement.jpg",
+    "uploads/1779106446048-t--l--chargement.jpg",
+    "uploads/1779107718425-t--l--chargement.jpg",
+    "uploads/1779183896673-iphone-17.jpg",
+    "uploads/1779183974052-iphone-17.jpg",
+    "uploads/1779183997722-galaxy-a54.jpg",
+    "uploads/1779184021136-galaxy-s23-ultra.jpg",
+    "uploads/1779184075281-galaxy-s23.jpg",
+    "uploads/1779184182348-iphone-15.jpg",
+    "uploads/1779184259308-iphone-14-pro.jpg",
+    "uploads/1779184329972-iphone-14.jpg",
+    "uploads/1779185531122-iphone-15.jpg",
+    "uploads/1779217832388-iphone-14.jpg",
+    "uploads/1780420346321-galaxy-a54.jpg",
+    "uploads/1780420372506-galaxy-s23.jpg",
+    "uploads/1780420395881-galaxy-s23-ultra.jpg",
+    "uploads/1780420431453-iphone-14.jpg",
+    "uploads/1780420457070-iphone-14-pro.jpg",
+    "uploads/1780420523351-iphone-15.jpg",
+    "uploads/1780420561358-iphone-17.jpg",
+    "uploads/1780421092821-iphone-16-e.jpg",
+    "uploads/1780421172421-iphone-16-pro-max.jpg",
+    "uploads/1781780025420-galaxy-a54-2.jpg",
+    "uploads/1781780050833-galaxy-a54.jpg",
+    "uploads/1781780150891-galaxy-s23.jpg",
+    "uploads/1781780176158-galaxy-s23-ultra.jpg",
+    "uploads/1781780206709-iphone-15.jpg",
+    "uploads/1781780245690-iphone-14.jpg",
+    "uploads/1781780258812-iphone-14-pro.jpg",
+    "uploads/1781780425133-iphone-16-e.jpg",
+    "uploads/1781780475903-iphone-16-pro-max.jpg",
+    "uploads/1781781168982-iphone-14.jpg",
+    "uploads/contracts/contrat_CTR-2026-03CFA8_1783642537297.pdf",
+    "uploads/contracts/contrat_CTR-2026-429A73_1783621433472.pdf",
+    "uploads/contracts/contrat_CTR-2026-9C89E4_1783621557729.pdf",
+    "uploads/invoices/invoice_1779104072746.pdf",
+    "uploads/invoices/invoice_1779184843288.pdf",
+    "uploads/invoices/invoice_1779184996980.pdf",
+    "uploads/invoices/invoice_1779185707491.pdf",
+    "uploads/invoices/invoice_1779218003139.pdf",
+    "uploads/invoices/invoice_1779270326752.pdf",
+    "uploads/invoices/invoice_1779270389201.pdf",
+    "uploads/invoices/invoice_1779270585156.pdf",
+    "uploads/invoices/invoice_1779878109416.pdf",
+    "uploads/invoices/invoice_1779878112374.pdf",
+    "uploads/invoices/invoice_1779878125424.pdf",
+    "uploads/invoices/invoice_1779878125612.pdf",
+    "uploads/invoices/invoice_1779878129752.pdf",
+    "uploads/invoices/invoice_1779878130341.pdf",
+    "uploads/invoices/invoice_1779878130938.pdf",
+    "uploads/invoices/invoice_1779878130983.pdf",
+    "uploads/invoices/invoice_1779878131264.pdf",
+    "uploads/invoices/invoice_1779878294389.pdf",
+    "uploads/invoices/invoice_1779878639963.pdf",
+    "uploads/invoices/invoice_1779879303397.pdf",
+    "uploads/invoices/invoice_1779879315990.pdf",
+    "uploads/invoices/invoice_1779880028832.pdf",
+    "uploads/invoices/invoice_1779881622471.pdf",
+    "uploads/invoices/invoice_1779881624306.pdf",
+    "uploads/invoices/invoice_1779882474220.pdf",
+    "uploads/invoices/invoice_1779882795003.pdf",
+    "uploads/invoices/invoice_1779882971933.pdf",
+    "uploads/invoices/invoice_1779882975193.pdf",
+    "uploads/invoices/invoice_1779882975435.pdf",
+    "uploads/invoices/invoice_1780421570483.pdf",
+    "uploads/invoices/invoice_1780421574892.pdf",
+    "uploads/invoices/invoice_1780594623298.pdf",
+    "uploads/invoices/invoice_1780594626004.pdf",
+    "uploads/invoices/invoice_1780594631910.pdf",
+    "uploads/invoices/invoice_1780594884453.pdf",
+    "uploads/invoices/invoice_1780594886391.pdf",
+    "uploads/invoices/invoice_1780594904739.pdf",
+    "uploads/invoices/invoice_1780595066411.pdf",
+    "uploads/invoices/invoice_1780674497497.pdf",
+    "uploads/invoices/invoice_1780913678907.pdf",
+    "uploads/invoices/invoice_1780913694167.pdf",
+    "uploads/invoices/invoice_1780914006044.pdf",
+    "uploads/invoices/invoice_1780914086919.pdf",
+    "uploads/invoices/invoice_1780914392120.pdf",
+    "uploads/invoices/invoice_1780916768879.pdf",
+    "uploads/invoices/invoice_1780917104487.pdf",
+    "uploads/invoices/invoice_1780939056709.pdf",
+    "uploads/invoices/invoice_1780940199018.pdf",
+    "uploads/invoices/invoice_1781002792761.pdf",
+    "uploads/invoices/invoice_1781022543980.pdf",
+    "uploads/invoices/invoice_1781095188383.pdf",
+    "uploads/invoices/invoice_1781258666237.pdf",
+    "uploads/invoices/invoice_1781265843324.pdf",
+    "uploads/invoices/invoice_1781268542387.pdf",
+    "uploads/invoices/invoice_1781268560987.pdf",
+    "uploads/invoices/invoice_1781781085652.pdf",
+    "uploads/invoices/invoice_1781781331004.pdf",
+    "uploads/invoices/invoice_1781789753006.pdf",
+    "uploads/invoices/invoice_1781802168246.pdf",
+    "uploads/invoices/invoice_1783104299161.pdf",
+    "uploads/invoices/invoice_1783348949154.pdf",
+    "uploads/invoices/invoice_1783348968288.pdf",
+    "uploads/invoices/invoice_1783351483232.pdf",
+    "uploads/invoices/invoice_1783513449599.pdf",
+    "uploads/invoices/invoice_1783513587703.pdf",
+    "uploads/invoices/invoice_1783622012501.pdf",
+    "uploads/invoices/invoice_1783622671282.pdf",
+    "uploads/invoices/invoice_1783623409202.pdf",
+    "uploads/invoices/invoice_1783625224043.pdf",
+    "uploads/invoices/invoice_1783643021352.pdf",
+    "uploads/invoices/invoice_1783775049224.pdf",
+    "uploads/invoices/invoice_1783775110227.pdf",
+    "uploads/invoices/invoice_1783776244485.pdf",
+    "uploads/invoices/invoice_1783814547017.pdf",
+    "uploads/invoices/invoice_1783814971194.pdf",
+    "uploads/receipts/receipt_vip_VIP-202607-168CED-M10220_1783811625764.pdf",
+    "uploads/receipts/receipt_vip_VIP-202607-168CED-M44468_1783793188654.pdf",
+    "uploads/receipts/receipt_vip_VIP-202607-168CED-M46988_1783814676748.pdf",
+    "uploads/receipts/receipt_vip_VIP-202607-168CED-M49210_1783812010228.pdf",
+    "uploads/vip_invoices/VIP_VIP-202607-168CED-M46988_1783814547149.pdf"
+  ],
+  "finishedAt": "2026-07-15T14:57:28.367Z",
+  "durationSeconds": 145,
+  "migratedCount": 26,
+  "failedItemsCount": 0,
+  "orphanUploadsMigratedCount": 101,
+  "orphanUploadsFailedCount": 0
+}
