@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react'
 import api from '../services/api'
 import { useAuth } from './AuthContext'
+import { isPushSupported, subscribeUserToPush } from '../services/pushNotifications'
 
 const NotificationContext = createContext()
 
@@ -10,8 +11,14 @@ export const NotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [loading, setLoading] = useState(true)
-  const { activeRole, isAuthenticated } = useAuth()
+  const [pushEnabled, setPushEnabled] = useState(false)
+  const { activeRole, isAuthenticated, getToken } = useAuth()
   const isFetchingRef = useRef(false)
+
+  const getRoleAuthHeaders = () => {
+    const token = activeRole ? getToken(activeRole) : null
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
 
   const fetchNotifications = async () => {
     if (isFetchingRef.current) return
@@ -25,20 +32,16 @@ export const NotificationProvider = ({ children }) => {
 
     isFetchingRef.current = true
     try {
-      // Récupérer les notifications selon le rôle
-      const endpoint = `/api/${activeRole}/notifications`
-      console.log(`[NotificationContext] Fetching from ${endpoint}`)
-      
-      const response = await api.get(endpoint)
+      const response = await api.get('/api/notifications', { headers: getRoleAuthHeaders() })
       setNotifications(response.data.data || [])
       
       const unread = (response.data.data || []).filter(n => !n.read).length
       setUnreadCount(unread)
     } catch (error) {
       console.error('Erreur chargement notifications:', error)
-      // Ne pas afficher d'erreur si c'est juste un 500 (endpoint peut ne pas exister)
       if (error.response?.status !== 500) {
-        console.error('Détail erreur:', error.response?.data)
+        const details = error.response?.data || error.message || 'Erreur réseau ou backend indisponible'
+        console.error('Détail erreur:', details)
       }
       setNotifications([])
       setUnreadCount(0)
@@ -50,7 +53,7 @@ export const NotificationProvider = ({ children }) => {
 
   const markAsRead = async (notificationId) => {
     try {
-      await api.put(`/api/${activeRole}/notifications/${notificationId}/read`)
+      await api.put(`/api/notifications/${notificationId}/read`, {}, { headers: getRoleAuthHeaders() })
       setNotifications(prev =>
         prev.map(n =>
           n._id === notificationId ? { ...n, read: true } : n
@@ -64,7 +67,7 @@ export const NotificationProvider = ({ children }) => {
 
   const markAllAsRead = async () => {
     try {
-      await api.put(`/api/${activeRole}/notifications/read-all`)
+      await api.put('/api/notifications/read-all', {}, { headers: getRoleAuthHeaders() })
       setNotifications(prev =>
         prev.map(n => ({ ...n, read: true }))
       )
@@ -74,9 +77,28 @@ export const NotificationProvider = ({ children }) => {
     }
   }
 
+  const enablePush = async () => {
+    try {
+      const token = activeRole ? getToken(activeRole) : null
+      const result = await subscribeUserToPush(token)
+      setPushEnabled(!!result?.success)
+      if (!result?.success && !['push_not_configured', 'permission_denied', 'unsupported'].includes(result?.reason)) {
+        console.warn('Activation push non aboutie:', result)
+      }
+      return result
+    } catch (error) {
+      console.error('Erreur activation push:', error)
+      setPushEnabled(false)
+      return { success: false }
+    }
+  }
+
   useEffect(() => {
     if (activeRole && isAuthenticated(activeRole)) {
       fetchNotifications()
+      if (isPushSupported()) {
+        enablePush()
+      }
 
       const onFocusOrVisible = () => {
         if (document.visibilityState === 'visible') {
@@ -87,6 +109,13 @@ export const NotificationProvider = ({ children }) => {
       window.addEventListener('focus', onFocusOrVisible)
       document.addEventListener('visibilitychange', onFocusOrVisible)
       window.addEventListener('online', fetchNotifications)
+
+      const onServiceWorkerMessage = (event) => {
+        if (event?.data?.type === 'REFRESH_NOTIFICATIONS') {
+          fetchNotifications()
+        }
+      }
+      navigator?.serviceWorker?.addEventListener?.('message', onServiceWorkerMessage)
       
       // Polling plus fréquent pour remonter plus vite les nouvelles demandes.
       const interval = setInterval(fetchNotifications, 7000)
@@ -95,6 +124,7 @@ export const NotificationProvider = ({ children }) => {
         window.removeEventListener('focus', onFocusOrVisible)
         document.removeEventListener('visibilitychange', onFocusOrVisible)
         window.removeEventListener('online', fetchNotifications)
+        navigator?.serviceWorker?.removeEventListener?.('message', onServiceWorkerMessage)
       }
     }
   }, [activeRole])
@@ -104,6 +134,8 @@ export const NotificationProvider = ({ children }) => {
       notifications,
       unreadCount,
       loading,
+      pushEnabled,
+      enablePush,
       fetchNotifications,
       markAsRead,
       markAllAsRead

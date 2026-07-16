@@ -67,7 +67,14 @@ api.interceptors.request.use((config) => {
   }
   // If no specific role, try generic token
   if (!config.headers.Authorization) {
-    const generic = TokenManager.getTokenByRole('admin') || TokenManager.getTokenByRole('cashier') || TokenManager.getTokenByRole('technician')
+    const activeRole = localStorage.getItem('active_role')
+    const activeToken = activeRole ? TokenManager.getTokenByRole(activeRole) : null
+    const generic = activeToken
+      || TokenManager.getTokenByRole('admin')
+      || TokenManager.getTokenByRole('cashier')
+      || TokenManager.getTokenByRole('technician')
+      || TokenManager.getTokenByRole('reseller')
+      || TokenManager.getTokenByRole('vip')
     if (generic) config.headers.Authorization = `Bearer ${generic}`
   }
   return config
@@ -84,6 +91,8 @@ api.interceptors.response.use(
       if (url.includes('/admin/')) role = 'admin'
       else if (url.includes('/cashier/')) role = 'cashier'
       else if (url.includes('/technician/')) role = 'technician'
+      else if (url.includes('/reseller/')) role = 'reseller'
+      else if (url.includes('/vip/')) role = 'vip'
       
       if (role) {
         TokenManager.clearRole(role)

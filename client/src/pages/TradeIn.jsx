@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { formatReference } from '../utils/formatReference';
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000').replace(/\/+$/, '');
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:4001').replace(/\/+$/, '');
 
 const conditionOptions = [
   'Très bon état',

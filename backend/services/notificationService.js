@@ -2,6 +2,7 @@ const Notification = require('../models/Notification');
 const Employee = require('../models/Employee');
 const Reseller = require('../models/Reseller');
 const VIPClient = require('../models/VIPClient');
+const { sendPushToUser } = require('./pushNotificationService');
 
 const VALID_PRIORITIES = ['low', 'medium', 'high', 'urgent'];
 const DEFAULT_PRIORITY = 'medium';
@@ -41,6 +42,24 @@ const createNotification = async (payload) => {
     }
 
     const created = await Notification.create(normalized);
+
+    const pushResult = await sendPushToUser({
+      userId: normalized.recipientId,
+      title: normalized.title,
+      body: normalized.message,
+      data: {
+        notificationId: created._id,
+        role: normalized.recipientRole,
+        type: normalized.type,
+        requestId: normalized.requestId,
+      }
+    });
+
+    if (pushResult?.sent > 0) {
+      created.pushSent = true;
+      await created.save();
+    }
+
     console.info(`[notifications] created:${normalized.type}:${normalized.recipientRole}:${normalized.recipientId}`);
     return created;
   } catch (error) {

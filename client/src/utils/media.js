@@ -1,4 +1,4 @@
-export const resolveMediaUrl = (value, baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000') => {
+export const resolveMediaUrl = (value, baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4001') => {
   if (!value) return value
   if (/^https?:\/\//i.test(value) || value.startsWith('data:')) return value
   const normalizedBase = String(baseUrl || '').replace(/\/+$/, '')

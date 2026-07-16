@@ -4,7 +4,7 @@ import { useNotifications } from '../context/NotificationContext'
 import { useAuth } from '../context/AuthContext'
 
 export default function NotificationBell() {
-  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications()
+  const { notifications, unreadCount, markAsRead, markAllAsRead, pushEnabled, enablePush } = useNotifications()
   const { activeRole, isAuthenticated } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
 
@@ -33,15 +33,25 @@ export default function NotificationBell() {
           <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-gray-200 z-50">
             <div className="flex items-center justify-between p-4 border-b border-gray-100">
               <h3 className="font-semibold text-gray-900">Notifications</h3>
-              {unreadCount > 0 && (
-                <button
-                  onClick={markAllAsRead}
-                  className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1"
-                >
-                  <CheckCheck size={14} />
-                  Tout marquer
-                </button>
-              )}
+              <div className="flex items-center gap-3">
+                {!pushEnabled && (
+                  <button
+                    onClick={enablePush}
+                    className="text-xs text-emerald-600 hover:text-emerald-700"
+                  >
+                    Activer push
+                  </button>
+                )}
+                {unreadCount > 0 && (
+                  <button
+                    onClick={markAllAsRead}
+                    className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                  >
+                    <CheckCheck size={14} />
+                    Tout marquer
+                  </button>
+                )}
+              </div>
             </div>
             <div className="max-h-96 overflow-y-auto">
               {notifications.length === 0 ? (

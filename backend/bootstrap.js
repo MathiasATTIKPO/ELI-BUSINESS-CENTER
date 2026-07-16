@@ -1,12 +1,11 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
-const Product = require('./models/Product');
-const Employee = require('./models/Employee');
 const RepairRequest = require('./models/RepairRequest');
 const TradeinRequest = require('./models/TradeinRequest');
 const ResellerContract = require('./models/ResellerContract');
 const notificationService = require('./services/notificationService');
 const logger = require('./utils/logger');
+
+const shouldRunMaintenanceSeed = () => process.env.ENABLE_MAINTENANCE_SEED === 'true';
 
 const normalizeMongoUri = (value) => {
   if (!value) return value;
@@ -124,59 +123,6 @@ const connectDatabase = async () => {
   return connectPromise;
 };
 
-const createDefaultEmployees = async () => {
-  const existingTechnician = await Employee.findOne({ role: 'technician' });
-  if (!existingTechnician) {
-    const defaultTechnician = {
-      name: 'Technicien Par Defaut',
-      phone: '+2280102030405',
-      email: 'tech@elis.com',
-      password: bcrypt.hashSync('tech123', 10),
-      role: 'technician',
-      skills: ['ecran', 'batterie', 'carte mere'],
-      isActive: true,
-    };
-
-    await Employee.create(defaultTechnician);
-    logger.info('seed', 'Default technician created', { email: defaultTechnician.email, role: defaultTechnician.role });
-  }
-
-  const existingCashier = await Employee.findOne({ role: 'cashier' });
-  if (!existingCashier) {
-    const defaultCashier = {
-      name: 'Caissier Par Defaut',
-      phone: '+2280506070809',
-      email: 'cashier@elis.com',
-      password: bcrypt.hashSync('cashier123', 10),
-      role: 'cashier',
-      skills: [],
-      isActive: true,
-    };
-
-    await Employee.create(defaultCashier);
-    logger.info('seed', 'Default cashier created', { email: defaultCashier.email, role: defaultCashier.role });
-  }
-};
-
-const createDefaultProducts = async () => {
-  const defaultProducts = [
-    { name: 'iPhone 14', brand: 'Apple', price: 740000, stock: 12, active: true },
-    { name: 'iPhone 14 Pro', brand: 'Apple', price: 980000, stock: 10, active: true },
-    { name: 'iPhone 15', brand: 'Apple', price: 1120000, stock: 8, active: true },
-    { name: 'Galaxy S23', brand: 'Samsung', price: 650000, stock: 14, active: true },
-    { name: 'Galaxy S23 Ultra', brand: 'Samsung', price: 980000, stock: 9, active: true },
-    { name: 'Galaxy A54', brand: 'Samsung', price: 330000, stock: 16, active: true },
-  ];
-
-  for (const productData of defaultProducts) {
-    const existing = await Product.findOne({ name: productData.name, brand: productData.brand });
-    if (!existing) {
-      await Product.create(productData);
-      logger.info('seed', 'Default product created', { brand: productData.brand, name: productData.name, price: productData.price });
-    }
-  }
-};
-
 const migrateVipSettledStatuses = async () => {
   const [repairStatusResult, billingStatusResult] = await Promise.all([
     RepairRequest.updateMany(
@@ -262,13 +208,17 @@ const ensureSeedData = async () => {
     return;
   }
 
-  logger.info('seed', 'Starting default data seed');
-  await createDefaultEmployees();
-  await createDefaultProducts();
+  if (!shouldRunMaintenanceSeed()) {
+    logger.info('seed', 'Maintenance seed disabled (set ENABLE_MAINTENANCE_SEED=true to enable)');
+    state.seedDone = true;
+    return;
+  }
+
+  logger.info('seed', 'Starting maintenance seed');
   await migrateVipSettledStatuses();
   await backfillAdminPendingNotifications();
   state.seedDone = true;
-  logger.info('seed', 'Default data seed completed');
+  logger.info('seed', 'Maintenance seed completed');
 };
 
 const startBackgroundJobs = () => {
