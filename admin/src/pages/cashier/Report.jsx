@@ -277,10 +277,10 @@ export default function CashierReport() {
     }
 
     const endpoint =
-      item.transactionType === 'repair' ? `/api/admin/repairs/${item._id}/invoice` :
-      item.transactionType === 'tradein' ? `/api/admin/tradeins/${item._id}/invoice` :
-      item.transactionType === 'phone' ? `/api/admin/sales/${item._id}/invoice` :
-      item.transactionType === 'reseller_contract' ? `/api/admin/reseller-contracts/${item._id}/invoice` :
+      item.transactionType === 'repair' ? `/api/invoices/repairs/${item._id}` :
+      item.transactionType === 'tradein' ? `/api/invoices/tradeins/${item._id}` :
+      item.transactionType === 'phone' ? `/api/invoices/sales/${item._id}` :
+      item.transactionType === 'reseller_contract' ? `/api/invoices/contracts/${item._id}` :
       ''
 
     if (!endpoint) {

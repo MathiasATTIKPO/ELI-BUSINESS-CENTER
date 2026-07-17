@@ -1450,8 +1450,7 @@ export default function CashierSales() {
                     <button
                       type="button"
                       onClick={() => {
-                        const vipBase = isAdminView ? '/api/admin/vip' : '/api/cashier/vip'
-                        window.open(`${API_BASE_URL}${vipBase}/invoices/${selectedVipInvoice._id}/receipt`, '_blank', 'noopener,noreferrer')
+                        window.open(`${API_BASE_URL}/api/invoices/receipts/vip/${selectedVipInvoice._id}`, '_blank', 'noopener,noreferrer')
                       }}
                       className="px-4 py-2.5 bg-slate-700 text-white rounded-xl hover:bg-slate-800 flex items-center gap-2"
                     >

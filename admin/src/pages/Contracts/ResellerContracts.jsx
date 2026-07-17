@@ -370,7 +370,7 @@ export default function ResellerContracts() {
   const downloadContractPdf = async (contract) => {
     try {
       setDownloadingContractId(contract._id)
-      const response = await api.get(`/api/admin/resellers/contracts/${contract._id}/pdf`, {
+      const response = await api.get(`/api/invoices/contracts/${contract._id}`, {
         responseType: 'blob'
       })
       const blobUrl = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }))

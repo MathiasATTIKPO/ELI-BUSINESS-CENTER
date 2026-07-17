@@ -1,6 +1,10 @@
 const express = require('express');
 const router = express.Router();
+const auth = require('../middleware/auth');
 const invoiceController = require('../controllers/invoiceController');
+const adminController = require('../controllers/adminController');
+const resellerController = require('../controllers/resellerController');
+const vipController = require('../controllers/vipController');
 
 /**
  * @openapi
@@ -31,7 +35,12 @@ const invoiceController = require('../controllers/invoiceController');
  *         description: Bad request
  */
 router.post('/generate', invoiceController.generateInvoice);
-router.get('/:id/pdf', invoiceController.downloadInvoicePdf);
+router.get('/:id/pdf', auth, invoiceController.downloadInvoicePdf);
+router.get('/sales/:id', auth, adminController.downloadSaleInvoice);
+router.get('/repairs/:id', auth, adminController.downloadRepairInvoice);
+router.get('/tradeins/:id', auth, adminController.downloadTradeinInvoice);
+router.get('/contracts/:id', auth, resellerController.downloadContractPdf);
+router.get('/receipts/vip/:id', auth, vipController.downloadVIPReceiptPdf);
 
 /**
  * @openapi

@@ -187,6 +187,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/technician', technicianRoutes);
 app.use('/api/cashier', cashierRoutes);
 app.use('/api/invoice', invoiceRoutes);
+app.use('/api/invoices', invoiceRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/reseller', resellerRoutes);
 app.use('/api/vip', vipRoutes);
