@@ -12,6 +12,7 @@ const ResellerContract = require('../models/ResellerContract');
 const VIPClient = require('../models/VIPClient');
 const VIPRepair = require('../models/VIPRepair');
 const VIPInvoice = require('../models/VIPInvoice');
+const Invoice = require('../models/Invoice');
 const invoiceController = require('./invoiceController');
 const Notification = require('../models/Notification');
 const notificationService = require('../services/notificationService');
@@ -1436,6 +1437,16 @@ exports.downloadSaleInvoice = async (req, res) => {
     }
 
     if (!sale) {
+      const existingInvoice = await Invoice.findOne({
+        requestType: 'product',
+        requestId: req.params.id
+      }).sort({ sentAt: -1, createdAt: -1 });
+
+      if (existingInvoice) {
+        const source = existingInvoice.pdfPath || existingInvoice.pdfUrl;
+        return sendAttachment(res, source, `facture_vente_${req.params.id}.pdf`);
+      }
+
       return res.status(404).json({ success: false, message: 'Vente introuvable.' });
     }
 
