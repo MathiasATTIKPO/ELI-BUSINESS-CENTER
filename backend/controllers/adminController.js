@@ -1433,14 +1433,28 @@ exports.downloadSaleInvoice = async (req, res) => {
     if (!sale) {
       return res.status(404).json({ success: false, message: 'Vente introuvable.' });
     }
+
+    if (!sale.productId) {
+      return res.status(400).json({ success: false, message: 'Vente sans produit source, facture indisponible.' });
+    }
     
     const invoice = await invoiceController.createInvoicePdf({
       requestType: 'product',
-      requestId: sale._id,
+      requestId: sale.productId,
       clientName: sale.clientName || 'Client',
       clientWhatsapp: sale.clientWhatsapp || '',
-      amount: sale.totalAmount || sale.amount || 0
+      amount: sale.totalAmount || sale.amount || 0,
+      quantity: sale.quantity || 1,
+      itemName: sale.productName || 'Téléphone',
+      paymentMethod: sale.saleInfo?.paymentMethod || 'cash',
+      forceNew: true
     });
+
+    sale.saleInfo = {
+      ...(sale.saleInfo || {}),
+      invoiceUrl: invoice.pdfUrl
+    };
+    await sale.save();
     
     const source = invoice.pdfPath || invoice.pdfUrl;
     return sendAttachment(
