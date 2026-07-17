@@ -18,7 +18,7 @@ const notificationService = require('../services/notificationService');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
-const { sendAttachment } = require('../utils/download');
+const { sendAttachment, downloadSourceExists } = require('../utils/download');
 
 // ==================== NOTIFICATIONS ====================
 
@@ -1429,9 +1429,29 @@ exports.getStats = async (req, res) => {
 // Facture pour une vente de téléphone
 exports.downloadSaleInvoice = async (req, res) => {
   try {
-    const sale = await SaleRequest.findById(req.params.id);
+    let sale = await SaleRequest.findById(req.params.id);
+    if (!sale) {
+      // Legacy callers may pass productId instead of saleId.
+      sale = await SaleRequest.findOne({ type: 'product', productId: req.params.id }).sort({ createdAt: -1 });
+    }
+
     if (!sale) {
       return res.status(404).json({ success: false, message: 'Vente introuvable.' });
+    }
+
+    const existingInvoiceUrl = sale.saleInfo?.invoiceUrl;
+    if (existingInvoiceUrl) {
+      const existingSource = isAbsoluteUrl(existingInvoiceUrl)
+        ? existingInvoiceUrl
+        : path.join(__dirname, '..', existingInvoiceUrl.replace(/^\/+/, ''));
+
+      if (await downloadSourceExists(existingSource)) {
+        return sendAttachment(
+          res,
+          existingSource,
+          `facture_vente_${sale._id}.pdf`
+        );
+      }
     }
 
     if (!sale.productId) {
