@@ -1442,10 +1442,10 @@ exports.downloadSaleInvoice = async (req, res) => {
       amount: sale.totalAmount || sale.amount || 0
     });
     
-    const filePath = path.join(__dirname, '..', 'uploads', 'invoices', path.basename(invoice.pdfUrl));
+    const source = invoice.pdfPath || invoice.pdfUrl;
     return sendAttachment(
       res,
-      isAbsoluteUrl(invoice.pdfUrl) ? invoice.pdfUrl : filePath,
+      source,
       `facture_vente_${sale._id}.pdf`
     );
   } catch (error) {
@@ -1472,10 +1472,10 @@ exports.downloadRepairInvoice = async (req, res) => {
       amount: amount
     });
     
-    const filePath = path.join(__dirname, '..', 'uploads', 'invoices', path.basename(invoice.pdfUrl));
+    const source = invoice.pdfPath || invoice.pdfUrl;
     return sendAttachment(
       res,
-      isAbsoluteUrl(invoice.pdfUrl) ? invoice.pdfUrl : filePath,
+      source,
       `facture_reparation_${repair._id}.pdf`
     );
   } catch (error) {
@@ -1502,10 +1502,10 @@ exports.downloadTradeinInvoice = async (req, res) => {
       amount: amount
     });
     
-    const filePath = path.join(__dirname, '..', 'uploads', 'invoices', path.basename(invoice.pdfUrl));
+    const source = invoice.pdfPath || invoice.pdfUrl;
     return sendAttachment(
       res,
-      isAbsoluteUrl(invoice.pdfUrl) ? invoice.pdfUrl : filePath,
+      source,
       `facture_echange_${tradein._id}.pdf`
     );
   } catch (error) {

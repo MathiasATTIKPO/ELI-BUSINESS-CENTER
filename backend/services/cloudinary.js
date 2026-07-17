@@ -104,10 +104,15 @@ const storeFileBuffer = async (buffer, {
       filename_override: safeFileName,
     });
 
+    const outputDir = path.join(__dirname, '..', 'uploads', folder);
+    ensureDir(outputDir);
+    const localFilePath = path.join(outputDir, safeFileName);
+    await fs.promises.writeFile(localFilePath, buffer);
+
     return {
       url: result.secure_url,
       publicId: result.public_id,
-      filePath: '',
+      filePath: localFilePath,
       mimeType,
     };
   }

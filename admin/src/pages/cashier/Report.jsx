@@ -270,13 +270,32 @@ export default function CashierReport() {
     return method || '-'
   }
 
-  const openInvoice = (invoiceUrl) => {
-    if (!invoiceUrl) {
+  const openInvoice = async (item) => {
+    if (!item?._id || !item?.transactionType) {
       setToast({ type: 'error', message: 'Aucune facture disponible pour cette transaction' })
       return
     }
-    const url = invoiceUrl.startsWith('http') ? invoiceUrl : `${API_BASE_URL}${invoiceUrl}`
-    window.open(url, '_blank')
+
+    const endpoint =
+      item.transactionType === 'repair' ? `/api/admin/repairs/${item._id}/invoice` :
+      item.transactionType === 'tradein' ? `/api/admin/tradeins/${item._id}/invoice` :
+      item.transactionType === 'phone' ? `/api/admin/sales/${item._id}/invoice` :
+      item.transactionType === 'reseller_contract' ? `/api/admin/reseller-contracts/${item._id}/invoice` :
+      ''
+
+    if (!endpoint) {
+      setToast({ type: 'error', message: 'Aucune facture disponible pour cette transaction' })
+      return
+    }
+
+    try {
+      const response = await api.get(endpoint, { responseType: 'blob' })
+      const blobUrl = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }))
+      window.open(blobUrl, '_blank', 'noopener,noreferrer')
+      setTimeout(() => window.URL.revokeObjectURL(blobUrl), 60000)
+    } catch (error) {
+      setToast({ type: 'error', message: error.response?.data?.message || 'Impossible d’ouvrir la facture' })
+    }
   }
 
   const exportReport = () => {
@@ -605,7 +624,7 @@ export default function CashierReport() {
                       <td className="px-6 py-4 text-center">
                         {hasInvoice ? (
                           <button
-                            onClick={() => openInvoice(item.saleInfo.invoiceUrl)}
+                            onClick={() => openInvoice(item)}
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg transition-colors text-sm font-medium border border-emerald-200"
                           >
                             <Eye size={14} />

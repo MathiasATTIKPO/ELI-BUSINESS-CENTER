@@ -156,6 +156,22 @@ const handleUpdateStatus = async () => {
     }
   }
 
+  const handleDownloadInvoice = async () => {
+    try {
+      const response = await api.get(`/api/admin/tradeins/${id}/invoice`, { responseType: 'blob' })
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }))
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `facture_echange_${id}.pdf`)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+    } catch (error) {
+      setToast({ type: 'error', message: error.response?.data?.message || 'Erreur lors du téléchargement de la facture' })
+    }
+  }
+
   const getStatusConfig = (status) => {
     const configs = {
       pending: { 
@@ -372,7 +388,7 @@ const handleUpdateStatus = async () => {
               </div>
               <div className="flex gap-3">
                 <button 
-                  onClick={() => window.open(invoiceLink, '_blank')}
+                  onClick={handleDownloadInvoice}
                   className="px-5 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all font-medium shadow-sm flex items-center gap-2"
                 >
                   <Download size={16} />
@@ -651,12 +667,7 @@ const handleUpdateStatus = async () => {
                   {/* Lien facture existante */}
                   {tradein.saleInfo?.invoiceUrl && (
                     <button
-                      onClick={() => {
-                        const url = tradein.saleInfo.invoiceUrl.startsWith('http')
-                          ? tradein.saleInfo.invoiceUrl
-                          : `${API_BASE_URL}${tradein.saleInfo.invoiceUrl}`
-                        window.open(url, '_blank')
-                      }}
+                      onClick={handleDownloadInvoice}
                       className="w-full p-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all duration-200 font-semibold flex items-center justify-center gap-2"
                     >
                       <Download size={20} />

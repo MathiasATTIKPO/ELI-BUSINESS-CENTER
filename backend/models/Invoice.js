@@ -7,6 +7,7 @@ const invoiceSchema = new mongoose.Schema({
   clientWhatsapp: { type: String, trim: true },
   amount: { type: Number, required: true },
   pdfUrl: { type: String, required: true },
+  pdfPath: { type: String, default: '' },
   sentAt: { type: Date, default: Date.now }
 });
 

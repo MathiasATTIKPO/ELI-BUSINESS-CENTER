@@ -30,6 +30,7 @@ export default function CashierSales() {
   const [loading, setLoading] = useState(true)
   const [toast, setToast] = useState(null)
   const [invoiceLink, setInvoiceLink] = useState('')
+  const [invoiceDownloadUrl, setInvoiceDownloadUrl] = useState('')
 
   // Gestion de la modale "Nouvelle vente"
   const [showNewSale, setShowNewSale] = useState(false)
@@ -101,6 +102,36 @@ export default function CashierSales() {
   const resolveStoredUrl = (value) => {
     if (!value) return ''
     return value.startsWith('http') ? value : `${API_BASE_URL}${value}`
+  }
+
+  const openPdfBlob = async (endpoint) => {
+    if (!endpoint) {
+      setToast({ type: 'error', message: 'Aucune facture disponible pour cette action.' })
+      return
+    }
+
+    const response = await api.get(endpoint, { responseType: 'blob' })
+    const blobUrl = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }))
+    window.open(blobUrl, '_blank', 'noopener,noreferrer')
+    setTimeout(() => window.URL.revokeObjectURL(blobUrl), 60000)
+  }
+
+  const downloadPdfBlob = async (endpoint, filename) => {
+    if (!endpoint) {
+      setToast({ type: 'error', message: 'Aucune facture disponible pour ce téléchargement.' })
+      return
+    }
+
+    const response = await api.get(endpoint, { responseType: 'blob' })
+    const blob = new Blob([response.data], { type: 'application/pdf' })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', filename)
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(url)
   }
 
   const getLatestVipReceiptUrl = (invoice) => {
@@ -375,8 +406,10 @@ export default function CashierSales() {
       console.log('📄 Réponse facture:', inv.data)
       
       const pdf = inv?.data?.data?.pdfUrl
+      const downloadUrl = inv?.data?.data?.downloadUrl
       if (pdf) {
         setInvoiceLink(pdf.startsWith('http') ? pdf : `${API_BASE_URL}${pdf}`)
+        setInvoiceDownloadUrl(downloadUrl || '')
         return true
       }
       return false
@@ -884,13 +917,13 @@ export default function CashierSales() {
             </div>
             <div className="flex items-center gap-2">
               <button
-                onClick={() => window.open(invoiceLink, '_blank')}
+                onClick={() => openPdfBlob(invoiceDownloadUrl)}
                 className="px-3 py-2 bg-gray-700 text-white rounded-xl text-sm hover:bg-gray-800 transition"
               >
                 Imprimer
               </button>
               <button
-                onClick={() => window.open(invoiceLink, '_blank')}
+                onClick={() => downloadPdfBlob(invoiceDownloadUrl, 'facture.pdf')}
                 className="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm hover:bg-blue-700 transition flex items-center gap-2"
               >
                 <Download size={16} />

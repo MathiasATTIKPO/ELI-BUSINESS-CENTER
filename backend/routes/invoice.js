@@ -31,6 +31,7 @@ const invoiceController = require('../controllers/invoiceController');
  *         description: Bad request
  */
 router.post('/generate', invoiceController.generateInvoice);
+router.get('/:id/pdf', invoiceController.downloadInvoicePdf);
 
 /**
  * @openapi

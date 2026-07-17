@@ -10,6 +10,10 @@ const Product = require('../models/Product');
 const VIPInvoice = require('../models/VIPInvoice');
 const ResellerContract = require('../models/ResellerContract');
 const { storeFileBuffer, isAbsoluteUrl, hasCloudinaryConfig } = require('../services/cloudinary');
+const { downloadSourceExists, sendAttachment } = require('../utils/download');
+
+// ====================== Fonctions utilitaires ======================
+
 
 const getRequestModel = (requestType) => {
   if (requestType === 'repair') return RepairRequest;
@@ -54,21 +58,16 @@ const getDescription = (requestType, requestData) => {
   return 'Service';
 };
 
-
 const parseAmount = (value) => {
   if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
-
   const cleaned = String(value ?? '')
     .replace(/\s/g, '')
     .replace(/\//g, '')
     .replace(/[^\d,.-]/g, '');
-
   if (!cleaned) return 0;
-
   const lastComma = cleaned.lastIndexOf(',');
   const lastDot = cleaned.lastIndexOf('.');
   const decimalIndex = Math.max(lastComma, lastDot);
-
   let normalized;
   if (decimalIndex === -1) {
     normalized = cleaned.replace(/[.,]/g, '');
@@ -77,28 +76,17 @@ const parseAmount = (value) => {
     const decPart = cleaned.slice(decimalIndex + 1).replace(/[.,]/g, '');
     normalized = `${intPart}.${decPart}`;
   }
-
   const parsed = Number(normalized);
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
 const formatFcfa = (value) => {
   const amount = Math.round(parseAmount(value));
-  
-  // Méthode 1: Regex avec espace
   const grouped = String(amount).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-  
-  // Méthode 2: Alternative avec toLocaleString (décommentez pour utiliser)
-  // const grouped = amount.toLocaleString('fr-FR');
-  
   return `${grouped} FCFA`;
 };
 
-/* // Tests
-console.log(formatFcfa(550000));     // "550 000 FCFA" ✅
-console.log(formatFcfa(1000));       // "1 000 FCFA" ✅
-console.log(formatFcfa(1500));       // "1 500 FCFA" ✅
-console.log(formatFcfa(174.5));      // "175 FCFA" ✅ */
+// ====================== Couleurs ======================
 
 const C = {
   text: '#1a1a1a',
@@ -108,51 +96,75 @@ const C = {
   white: '#ffffff'
 };
 
-const drawHeaderDevis = (doc, invoiceNumber, date = new Date()) => {
-  doc.font('Helvetica-Bold').fontSize(18).fillColor(C.text).text('Eli Business Center', 50, 30);
-  doc.font('Helvetica').fontSize(9).fillColor(C.muted).text('Lome, Togo', 50, 52);
-  doc.font('Helvetica').fontSize(9).fillColor(C.muted).text('+228 01 23 45 67 89', 50, 64);
+// ====================== Fonctions de dessin du PDF ======================
 
-  const rightX = doc.page.width - 200;
-  doc.font('Helvetica-Bold').fontSize(9).fillColor(C.text).text('Facture no', rightX, 30);
-  doc.font('Helvetica').fontSize(9).fillColor(C.text).text(invoiceNumber, rightX + 60, 30);
+/**
+ * drawHeaderDevis – modifié pour inclure le nom du caissier
+ */
 
-  doc.font('Helvetica-Bold').fontSize(9).fillColor(C.text).text('Date', rightX, 45);
+// ====================== En-tête ======================
+const MARGIN = 50;   // marge constante
+
+// ====================== En-tête ======================
+const drawHeaderDevis = (doc, invoiceNumber, date = new Date(), cashierName = '') => {
+  const rightEdge = doc.page.width - MARGIN;
+  const rightColX = rightEdge - 160;   // colonne de droite (libellés)
+  const rightValX = rightColX + 60;    // valeurs
+
+  doc.font('Helvetica-Bold').fontSize(18).fillColor(C.text).text('Eli Business Center', MARGIN, 30);
+  doc.font('Helvetica').fontSize(9).fillColor(C.muted).text('Lome, Togo', MARGIN, 52);
+  doc.font('Helvetica').fontSize(9).fillColor(C.muted).text('+228 90 17 84 75', MARGIN, 64);
+
+  doc.font('Helvetica-Bold').fontSize(9).fillColor(C.text).text('Facture no', rightColX, 30);
+  doc.font('Helvetica').fontSize(9).fillColor(C.text).text(invoiceNumber, rightValX, 30);
+
+  doc.font('Helvetica-Bold').fontSize(9).fillColor(C.text).text('Date', rightColX, 45);
   doc.font('Helvetica').fontSize(9).fillColor(C.text).text(
     date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }),
-    rightX + 60,
+    rightValX,
     45
   );
 
-  doc.font('Helvetica-Bold').fontSize(9).fillColor(C.text).text('Reference', rightX, 60);
-  doc.font('Helvetica').fontSize(9).fillColor(C.text).text(`CMD-${invoiceNumber}`, rightX + 60, 60);
+  doc.font('Helvetica-Bold').fontSize(9).fillColor(C.text).text('Reference', rightColX, 60);
+  doc.font('Helvetica').fontSize(9).fillColor(C.text).text(`CMD-${invoiceNumber}`, rightValX, 60);
 
-  doc.moveTo(50, 85).lineTo(doc.page.width - 50, 85).stroke(C.border);
+  if (cashierName) {
+    doc.font('Helvetica-Bold').fontSize(9).fillColor(C.text).text('Caissier', rightColX, 75);
+    doc.font('Helvetica').fontSize(9).fillColor(C.text).text(cashierName, rightValX, 75);
+  }
+
+  doc.moveTo(MARGIN, 85).lineTo(rightEdge, 85).stroke(C.border);
 };
 
+// ====================== Adresses ======================
 const drawAddresses = (doc, clientName, clientAddress, additionalAddress = '') => {
+  const rightEdge = doc.page.width - MARGIN;
   const yStart = 100;
+  const leftCol = MARGIN;
+  const rightCol = MARGIN + 200;
 
-  doc.font('Helvetica-Bold').fontSize(8).fillColor(C.muted).text('Facture a', 50, yStart);
+  doc.font('Helvetica-Bold').fontSize(8).fillColor(C.muted).text('Facture a', leftCol, yStart);
   doc.font('Helvetica').fontSize(9).fillColor(C.text);
-  doc.text(clientName || 'Client', 50, yStart + 14);
-  doc.text(clientAddress || 'Adresse non renseignee', 50, yStart + 28);
+  doc.text(clientName || 'Client', leftCol, yStart + 14);
+  doc.text(clientAddress || 'Adresse non renseignee', leftCol, yStart + 28);
 
-  doc.font('Helvetica-Bold').fontSize(8).fillColor(C.muted).text('Service rendu a', 250, yStart);
+  doc.font('Helvetica-Bold').fontSize(8).fillColor(C.muted).text('Service rendu a', rightCol, yStart);
   doc.font('Helvetica').fontSize(9).fillColor(C.text);
-  doc.text(clientName || 'Client', 250, yStart + 14);
-  doc.text(additionalAddress || 'Adresse non renseignee', 250, yStart + 28);
+  doc.text(clientName || 'Client', rightCol, yStart + 14);
+  doc.text(additionalAddress || 'Adresse non renseignee', rightCol, yStart + 28);
 
   const yEnd = yStart + 70;
-  doc.moveTo(50, yEnd).lineTo(doc.page.width - 50, yEnd).stroke(C.border);
+  doc.moveTo(MARGIN, yEnd).lineTo(rightEdge, yEnd).stroke(C.border);
 };
 
+// ====================== Tableau des articles ======================
 const drawItemsTableDevis = (doc, items, totalHT, tvaRate = 0, tvaAmount = 0, totalTTC = 0) => {
+  const rightEdge = doc.page.width - MARGIN;
   const yStart = 195;
-  const colQtyX = 50;
-  const colDescX = 100;
-  const colPriceX = 380;
-  const colTotalX = 460;
+  const colQtyX = MARGIN;
+  const colDescX = MARGIN + 50;
+  const colPriceX = rightEdge - 150;   // largeur réservée pour le prix unitaire
+  const colTotalX = rightEdge - 80;    // largeur réservée pour le montant
 
   doc.font('Helvetica-Bold').fontSize(9).fillColor(C.text);
   doc.text('Qte', colQtyX, yStart);
@@ -160,59 +172,62 @@ const drawItemsTableDevis = (doc, items, totalHT, tvaRate = 0, tvaAmount = 0, to
   doc.text('Prix unit.', colPriceX, yStart, { width: 70, align: 'right' });
   doc.text('Montant', colTotalX, yStart, { width: 70, align: 'right' });
 
-  doc.moveTo(50, yStart + 10).lineTo(doc.page.width - 50, yStart + 10).stroke(C.border);
+  doc.moveTo(MARGIN, yStart + 10).lineTo(rightEdge, yStart + 10).stroke(C.border);
 
   let currentY = yStart + 20;
   items.forEach((item, index) => {
     if (index > 0) {
-      doc.moveTo(50, currentY - 2).lineTo(doc.page.width - 50, currentY - 2).stroke(C.softBorder);
+      doc.moveTo(MARGIN, currentY - 2).lineTo(rightEdge, currentY - 2).stroke(C.softBorder);
     }
-
     doc.font('Helvetica').fontSize(9).fillColor(C.text);
     doc.text(String(item.quantity), colQtyX, currentY);
     doc.text(item.description, colDescX, currentY);
     doc.text(formatFcfa(item.unitPrice), colPriceX, currentY, { width: 70, align: 'right' });
     doc.text(formatFcfa(item.total), colTotalX, currentY, { width: 70, align: 'right' });
-
     currentY += 18;
   });
 
-  doc.moveTo(50, currentY + 5).lineTo(doc.page.width - 50, currentY + 5).stroke(C.border);
+  doc.moveTo(MARGIN, currentY + 5).lineTo(rightEdge, currentY + 5).stroke(C.border);
 
   const totalY = currentY + 15;
-  const totalColX = 380;
+  const labelX = rightEdge - 160;   // position des libellés (Total HT, TVA, Total)
+  const valueX = rightEdge - 80;    // position des montants
 
   doc.font('Helvetica').fontSize(9).fillColor(C.text);
-  doc.text('Total HT', totalColX, totalY);
-  doc.text(formatFcfa(totalHT), doc.page.width - 90, totalY, { width: 90, align: 'right' });
+  doc.text('Total HT', labelX, totalY);
+  doc.text(formatFcfa(totalHT), valueX, totalY, { width: 70, align: 'right' });
 
   const tvaY = totalY + 16;
-  doc.text(`TVA ${tvaRate.toFixed(1)}%`, totalColX, tvaY);
-  doc.text(formatFcfa(tvaAmount), doc.page.width - 90, tvaY, { width: 90, align: 'right' });
+  doc.text(`TVA ${tvaRate.toFixed(1)}%`, labelX, tvaY);
+  doc.text(formatFcfa(tvaAmount), valueX, tvaY, { width: 70, align: 'right' });
 
   const ttcY = tvaY + 18;
-  doc.moveTo(50, ttcY - 5).lineTo(doc.page.width - 50, ttcY - 5).stroke(C.border);
+  doc.moveTo(MARGIN, ttcY - 5).lineTo(rightEdge, ttcY - 5).stroke(C.border);
   doc.font('Helvetica-Bold').fontSize(10).fillColor(C.text);
-  doc.text('Total de la facture', totalColX, ttcY);
-  doc.text(formatFcfa(totalTTC), doc.page.width - 90, ttcY, { width: 90, align: 'right' });
+  doc.text('Total de la facture', labelX, ttcY);
+  doc.text(formatFcfa(totalTTC), valueX, ttcY, { width: 70, align: 'right' });
 };
 
+// ====================== Conditions de paiement ======================
 const drawPaymentTerms = (doc, paymentMethod) => {
   const yStart = 600;
-  doc.font('Helvetica-Bold').fontSize(9).fillColor(C.text).text('Conditions de paiement', 50, yStart);
-  doc.font('Helvetica').fontSize(8).fillColor(C.muted).text('Paiement a reception de facture', 50, yStart + 16);
+  doc.font('Helvetica-Bold').fontSize(9).fillColor(C.text).text('Conditions de paiement', MARGIN, yStart);
+  doc.font('Helvetica').fontSize(8).fillColor(C.muted).text('Paiement a reception de facture', MARGIN, yStart + 16);
   if (paymentMethod) {
-    doc.text(`Mode de reglement: ${getPaymentMethodLabel(paymentMethod)}`, 50, yStart + 30);
+    doc.text(`Mode de reglement: ${getPaymentMethodLabel(paymentMethod)}`, MARGIN, yStart + 30);
   }
 
   const footerY = doc.page.height - 40;
   doc.font('Helvetica').fontSize(7).fillColor('#999999');
-  doc.text('Facture valable sans signature - Merci de votre confiance', 50, footerY, {
-    width: doc.page.width - 100,
+  doc.text('Facture valable sans signature - Merci de votre confiance', MARGIN, footerY, {
+    width: doc.page.width - 2 * MARGIN,
     align: 'center'
   });
 };
 
+/**
+ * generateDevisPDF – modifiée pour accepter cashierName
+ */
 const generateDevisPDF = async ({
   invoiceNumber,
   clientName,
@@ -224,6 +239,7 @@ const generateDevisPDF = async ({
   totalTTC,
   paymentMethod,
   date,
+  cashierName = '', // ✨ nouveau paramètre
   outputPath
 }) => {
   const tvaAmount = totalTTC - totalHT;
@@ -232,7 +248,7 @@ const generateDevisPDF = async ({
   doc.on('data', (chunk) => chunks.push(chunk));
 
   doc.rect(0, 0, doc.page.width, doc.page.height).fill(C.white);
-  drawHeaderDevis(doc, invoiceNumber, date);
+  drawHeaderDevis(doc, invoiceNumber, date, cashierName); // ✨ on passe le nom
   drawAddresses(doc, clientName, clientAddress, shippingAddress);
   drawItemsTableDevis(doc, items, totalHT, tvaRate, tvaAmount, totalTTC);
   drawPaymentTerms(doc, paymentMethod);
@@ -245,6 +261,11 @@ const generateDevisPDF = async ({
   });
 };
 
+// ====================== Fonction principale de création de facture ======================
+
+/**
+ * createInvoicePdf – modifiée pour accepter cashier (objet ou id)
+ */
 exports.createInvoicePdf = async ({
   requestType,
   requestId,
@@ -254,6 +275,7 @@ exports.createInvoicePdf = async ({
   quantity = 1,
   itemName = '',
   paymentMethod = '',
+  cashier = null,          // ✨ peut être un objet User ou un ID
   forceNew = false
 }) => {
   const requestModel = getRequestModel(requestType);
@@ -264,8 +286,8 @@ exports.createInvoicePdf = async ({
     existingInvoice = await Invoice.findOne({ requestType, requestId });
     if (existingInvoice) {
       const hasRemotePdf = isAbsoluteUrl(existingInvoice.pdfUrl);
-      // Keep existing invoices only when already remote, or when Cloudinary is unavailable.
-      if (hasRemotePdf || !hasCloudinaryConfig()) {
+      const remoteIsReachable = hasRemotePdf ? await downloadSourceExists(existingInvoice.pdfUrl) : true;
+      if ((hasRemotePdf && remoteIsReachable) || !hasCloudinaryConfig()) {
         return existingInvoice;
       }
     }
@@ -286,6 +308,23 @@ exports.createInvoicePdf = async ({
   const totalTTC = totalHT;
   const unitPrice = safeQuantity > 0 ? totalHT / safeQuantity : totalHT;
 
+  // ✨ Récupération du nom du caissier
+  let cashierId = null;
+  let cashierName = '';
+  if (cashier) {
+    // Si cashier est un objet mongoose avec un champ 'name' ou 'username'
+    if (typeof cashier === 'object' && cashier._id) {
+      cashierId = cashier._id;
+      cashierName = cashier.name || cashier.username || 'Caissier';
+    } else if (typeof cashier === 'string') {
+      // On suppose que c'est un ID, on le stocke, mais on ne peut pas avoir le nom directement
+      cashierId = cashier;
+      // Option : on peut faire un populate ultérieur, mais ici on laisse vide ou on cherche
+      cashierName = 'Caissier'; // valeur par défaut
+    }
+  }
+
+  // Génération du PDF avec le nom du caissier
   const pdfBuffer = await generateDevisPDF({
     invoiceNumber,
     clientName: clientName || requestData.clientName || 'Client',
@@ -303,7 +342,8 @@ exports.createInvoicePdf = async ({
     tvaRate,
     totalTTC,
     paymentMethod,
-    date: new Date()
+    date: new Date(),
+    cashierName // ✨ on passe le nom
   });
 
   const storedPdf = await storeFileBuffer(pdfBuffer, {
@@ -313,6 +353,7 @@ exports.createInvoicePdf = async ({
     mimeType: 'application/pdf'
   });
   const pdfUrl = storedPdf.url;
+  const pdfPath = storedPdf.filePath || '';
 
   let invoice;
   if (existingInvoice && !forceNew) {
@@ -320,7 +361,11 @@ exports.createInvoicePdf = async ({
     existingInvoice.clientWhatsapp = clientWhatsapp || requestData.clientWhatsapp || '';
     existingInvoice.amount = parseAmount(amount);
     existingInvoice.pdfUrl = pdfUrl;
+    existingInvoice.pdfPath = pdfPath;
     existingInvoice.sentAt = new Date();
+    // ✨ Mise à jour du caissier
+    if (cashierId) existingInvoice.cashier = cashierId;
+    if (cashierName) existingInvoice.cashierName = cashierName;
     invoice = await existingInvoice.save();
   } else {
     invoice = await Invoice.create({
@@ -330,10 +375,14 @@ exports.createInvoicePdf = async ({
       clientWhatsapp: clientWhatsapp || requestData.clientWhatsapp || '',
       amount: parseAmount(amount),
       pdfUrl,
-      sentAt: new Date()
+      pdfPath,
+      sentAt: new Date(),
+      cashier: cashierId,      // ✨
+      cashierName             // ✨
     });
   }
 
+  // Mise à jour des références dans les modèles liés
   if (requestType === 'repair') {
     await RepairRequest.findByIdAndUpdate(requestId, { 'saleInfo.invoiceUrl': pdfUrl });
   } else if (requestType === 'tradein') {
@@ -342,7 +391,29 @@ exports.createInvoicePdf = async ({
     await ResellerContract.findByIdAndUpdate(requestId, { 'payment.invoiceUrl': pdfUrl });
   }
 
+  invoice.downloadUrl = `/api/invoice/${invoice._id}/pdf`;
   return invoice;
+};
+
+// ====================== Endpoints ======================
+
+exports.downloadInvoicePdf = async (req, res) => {
+  try {
+    const invoice = await Invoice.findById(req.params.id);
+    if (!invoice) {
+      return res.status(404).json({ success: false, message: 'Facture introuvable.' });
+    }
+
+    const source = invoice.pdfPath || invoice.pdfUrl;
+    if (!source) {
+      return res.status(404).json({ success: false, message: 'PDF introuvable.' });
+    }
+
+    const fileName = `facture_${invoice.requestType}_${invoice._id}.pdf`;
+    return sendAttachment(res, source, fileName);
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
 };
 
 exports.generateInvoice = async (req, res) => {
@@ -366,6 +437,9 @@ exports.generateInvoice = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Type de demande invalide.' });
     }
 
+    // ✨ Récupération du caissier depuis l'utilisateur authentifié (si disponible)
+    const cashier = req.user || null;  // suppose que req.user est peuplé par un middleware d'auth
+
     const invoice = await exports.createInvoicePdf({
       requestType,
       requestId,
@@ -375,6 +449,7 @@ exports.generateInvoice = async (req, res) => {
       quantity,
       itemName,
       paymentMethod,
+      cashier,               // ✨ on transmet le caissier
       forceNew: Boolean(req.body?.forceNew)
     });
 
@@ -426,8 +501,5 @@ exports.sendWhatsapp = async (req, res) => {
 
 exports.generateDevisPDF = generateDevisPDF;
 
-
-// Alias conserve pour compatibilite eventuelle.
+// Alias conservé
 exports.createInvoicePdfDevis = exports.createInvoicePdf;
-
-

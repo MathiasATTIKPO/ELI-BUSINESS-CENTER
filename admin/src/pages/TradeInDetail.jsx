@@ -638,10 +638,7 @@ export default function TradeInDetail() {
     )}
     
     {tradein.saleInfo?.invoiceUrl && (
-      <button onClick={() => {
-        const url = tradein.saleInfo.invoiceUrl.startsWith('http') ? tradein.saleInfo.invoiceUrl : `${API_BASE_URL}${tradein.saleInfo.invoiceUrl}`
-        window.open(url, '_blank')
-      }} className="w-full p-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all font-semibold flex items-center justify-center gap-2">
+        <button onClick={handleDownloadInvoice} className="w-full p-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all font-semibold flex items-center justify-center gap-2">
         <Download size={20} /> Télécharger la facture
       </button>
     )}
