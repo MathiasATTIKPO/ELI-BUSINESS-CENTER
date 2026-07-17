@@ -31,6 +31,7 @@ const getCloudinaryConfig = () => {
 
 const hasCloudinaryConfig = () => Boolean(getCloudinaryConfig());
 const shouldRequireCloudinary = () => Boolean(process.env.VERCEL || process.env.NODE_ENV === 'production');
+const shouldPersistLocalReplica = () => !process.env.VERCEL;
 
 const isAbsoluteUrl = (value) => /^https?:\/\//i.test(String(value || ''));
 
@@ -104,10 +105,18 @@ const storeFileBuffer = async (buffer, {
       filename_override: safeFileName,
     });
 
-    const outputDir = path.join(__dirname, '..', 'uploads', folder);
-    ensureDir(outputDir);
-    const localFilePath = path.join(outputDir, safeFileName);
-    await fs.promises.writeFile(localFilePath, buffer);
+    let localFilePath = '';
+    if (shouldPersistLocalReplica()) {
+      try {
+        const outputDir = path.join(__dirname, '..', 'uploads', folder);
+        ensureDir(outputDir);
+        localFilePath = path.join(outputDir, safeFileName);
+        await fs.promises.writeFile(localFilePath, buffer);
+      } catch (error) {
+        // Cloudinary upload already succeeded, so local replica failure must not break request flow.
+        localFilePath = '';
+      }
+    }
 
     return {
       url: result.secure_url,
