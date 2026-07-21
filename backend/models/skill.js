@@ -12,7 +12,7 @@ const skillSchema = new mongoose.Schema(
     category: {
       type: String,
       default: 'Général',
-      enum: ['Réparation', 'Diagnostic', 'Maintenance', 'Logiciel', 'Réseau', 'Général'],
+      enum: ['Réparation', 'Diagnostic', 'Maintenances', 'Logiciel', 'Réseau', 'Général'],
     },
   },
   { timestamps: true }
