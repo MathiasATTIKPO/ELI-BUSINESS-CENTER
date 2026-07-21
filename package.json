@@ -24,6 +24,7 @@
   "author": "ELI Business Center",
   "license": "MIT",
   "dependencies": {
-    "lucide-react": "^1.16.0"
+    "lucide-react": "^1.16.0",
+    "react-router-dom": "^7.18.1"
   }
 }
