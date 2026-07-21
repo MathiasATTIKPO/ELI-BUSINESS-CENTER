@@ -1,5 +1,5 @@
 const AppSettings = require('../models/AppSettings');
-const Skill = require('../models/Skill');
+const Skill = require('../models/Skills');
 
 // ========== PARAMÈTRES GÉNÉRAUX ==========
 
