@@ -6,7 +6,7 @@ import {
   Smartphone, Search, Filter, X, Calendar, Star, TrendingUp, History,
   Package, ArrowUpRight, Activity, BarChart3
 } from 'lucide-react'
-import { useTechnicianAuth } from '../../context/TechnicianAuthContext'
+import { useTechnicianAuth } from '../../hooks/useTechnicianAuth'
 import api from '../../services/api'
 import Toast from '../../components/Toast'
 

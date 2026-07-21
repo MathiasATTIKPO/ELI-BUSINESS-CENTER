@@ -1,9 +1,8 @@
-import React, { createContext, useContext, useState } from 'react'
+import React, { createContext, useState } from 'react'
 import TokenManager from '../services/tokenManager'
-import { useAuth } from './AuthContext'
+import { useAuth } from '../hooks/useAuth'
 
-const ResellerAuthContext = createContext()
-export const useResellerAuth = () => useContext(ResellerAuthContext)
+export const ResellerAuthContext = createContext(null)
 
 export const ResellerAuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => TokenManager.getUser('reseller'))

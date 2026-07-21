@@ -124,6 +124,8 @@ const technicianRoutes = require('./routes/technician');
 const notificationRoutes = require('./routes/notifications');
 const adminController = require('./controllers/adminController');
 const clientRoutes = require('./routes/clientRoutes');
+const skillRoutes = require('./routes/skill');
+const settingsRoutes = require('./routes/setting');
 const { getDatabaseStatus, connectDatabase } = require('./bootstrap');
 
 const app = express();
@@ -186,6 +188,8 @@ app.use('/api/upload', uploadRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/technician', technicianRoutes);
 app.use('/api/cashier', cashierRoutes);
+app.use('/api/setting', settingsRoutes);
+app.use('/api/settings', settingsRoutes);
 app.use('/api/invoice', invoiceRoutes);
 app.use('/api/invoices', invoiceRoutes);
 app.use('/api/notifications', notificationRoutes);
@@ -194,6 +198,8 @@ app.use('/api/vip', vipRoutes);
 app.post('/api/client/repairs', adminController.createRepairFromClient);
 app.post('/api/client/tradeins', adminController.createTradeinFromClient);
 app.use('/api/client', clientRoutes);
+app.use('/api/skills', skillRoutes);
+
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 

@@ -1,16 +1,8 @@
-import React, { createContext, useContext, useState } from 'react'
+import React, { createContext, useState } from 'react'
 import TokenManager from '../services/tokenManager'
-import { useAuth } from './AuthContext'
+import { useAuth } from '../hooks/useAuth'
 
-const VIPAuthContext = createContext()
-
-export const useVIPAuth = () => {
-  const context = useContext(VIPAuthContext)
-  if (!context) {
-    throw new Error('useVIPAuth must be used within a VIPAuthProvider')
-  }
-  return context
-}
+export const VIPAuthContext = createContext(null)
 
 export const VIPAuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => TokenManager.getUser('vip'))

@@ -6,7 +6,7 @@ import {
   Camera, Eye, DollarSign, CreditCard, Banknote, Package,
   Send, Download, Tag, Star, ThumbsUp, ThumbsDown, UserCheck
 } from 'lucide-react'
-import { useCashierAuth } from '../../context/CashierAuthContext'
+import { useCashierAuth } from '../../hooks/useCashierAuth'
 import api, { resolveMediaUrl } from '../../services/api'
 import Toast from '../../components/Toast'
 import { formatReference } from '../../utils/formatReference'

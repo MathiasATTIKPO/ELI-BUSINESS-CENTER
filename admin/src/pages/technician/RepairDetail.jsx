@@ -6,7 +6,7 @@ import {
   Camera, ChevronRight, Send, Save, RefreshCw, Package, Star,
   Zap, Shield, MapPin, Mail, DollarSign, Edit3, Eye,Search
 } from 'lucide-react'
-import { useTechnicianAuth } from '../../context/TechnicianAuthContext'
+import { useTechnicianAuth } from '../../hooks/useTechnicianAuth'
 import api, { API_BASE_URL, resolveMediaUrl } from '../../services/api'
 import Toast from '../../components/Toast'
 import { formatReference } from '../../utils/formatReference'

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useTechnicianAuth } from '../../context/TechnicianAuthContext'
+import { useTechnicianAuth } from '../../hooks/useTechnicianAuth'
 import {
   ListChecks, LogOut, FileText, Wrench, RefreshCw, Plus, AlertCircle,
   Smartphone, Phone, ChevronLeft, ChevronRight, Eye, Clock, CheckCircle,

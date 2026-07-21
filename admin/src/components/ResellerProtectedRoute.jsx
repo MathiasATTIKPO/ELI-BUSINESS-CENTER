@@ -1,5 +1,5 @@
 import { Navigate } from 'react-router-dom'
-import { useResellerAuth } from '../context/ResellerAuthContext'
+import { useResellerAuth } from '../hooks/useResellerAuth'  // ← chemin corrigé
 
 export default function ResellerProtectedRoute({ children }) {
   const { isAuthenticated, loading } = useResellerAuth()

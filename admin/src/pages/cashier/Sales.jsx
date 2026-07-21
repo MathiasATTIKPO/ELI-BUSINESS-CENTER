@@ -6,7 +6,7 @@ import {
 import {
   ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend
 } from 'recharts'
-import { useCashierAuth } from '../../context/CashierAuthContext'
+import { useCashierAuth } from '../../hooks/useCashierAuth'
 import api, { API_BASE_URL } from '../../services/api'
 import Toast from '../../components/Toast'
 import { useLocation, useNavigate, Link } from 'react-router-dom'

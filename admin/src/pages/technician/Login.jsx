@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useTechnicianAuth } from '../../context/TechnicianAuthContext'
+import { useTechnicianAuth } from '../../hooks/useTechnicianAuth'
 import { 
   Wrench, Mail, Lock, ArrowRight, Shield, CreditCard,
   Eye, EyeOff, Star, Zap

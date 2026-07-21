@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react'
-import { useVIPAuth } from '../../context/VIPAuthContext'
+import { useVIPAuth } from '../../hooks/useVIPAuth'
 import { useNavigate } from 'react-router-dom'
 import api from '../../services/api'
 import Toast from '../../components/Toast'

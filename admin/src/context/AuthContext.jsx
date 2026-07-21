@@ -1,9 +1,8 @@
-import React, { createContext, useState, useContext, useEffect } from 'react'
+import React, { createContext, useState, useEffect } from 'react'
 import api from '../services/api'
 
-const AuthContext = createContext()
-
-export const useAuth = () => useContext(AuthContext)
+// Export du Context pour les hooks
+export const AuthContext = createContext(null)
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
@@ -46,16 +45,12 @@ export const AuthProvider = ({ children }) => {
   const login = (userData, token, role) => {
     console.log(`[AuthContext] Login - rôle: ${role}`, userData)
     
-    // Stockage
     localStorage.setItem(`${role}_token`, token)
     localStorage.setItem(`${role}_user`, JSON.stringify(userData))
     localStorage.setItem('active_role', role)
     
-    // Mise à jour du state
     setUser(userData)
     setActiveRole(role)
-    
-    // Configuration de l'API
     api.defaults.headers.common['Authorization'] = `Bearer ${token}`
   }
 
@@ -63,13 +58,10 @@ export const AuthProvider = ({ children }) => {
     console.log(`[AuthContext] Logout demandé pour le rôle: ${role}`)
     
     if (role) {
-      // Supprimer uniquement le rôle spécifié
       localStorage.removeItem(`${role}_token`)
       localStorage.removeItem(`${role}_user`)
       
-      // Vérifier si c'était le rôle actif
       if (activeRole === role) {
-        // Chercher un autre rôle connecté
         const roles = ['admin', 'cashier', 'technician', 'reseller', 'vip']
         let found = false
         
@@ -94,7 +86,6 @@ export const AuthProvider = ({ children }) => {
         }
         
         if (!found) {
-          // Déconnexion totale
           setUser(null)
           setActiveRole(null)
           delete api.defaults.headers.common['Authorization']
@@ -103,7 +94,6 @@ export const AuthProvider = ({ children }) => {
         }
       }
     } else {
-      // Déconnexion totale
       localStorage.removeItem('admin_token')
       localStorage.removeItem('admin_user')
       localStorage.removeItem('cashier_token')

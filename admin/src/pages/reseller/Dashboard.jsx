@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react'
-import { useResellerAuth } from '../../context/ResellerAuthContext'
+import { useResellerAuth } from '../../hooks/useResellerAuth'
 import api from '../../services/api'
 import Toast from '../../components/Toast'
 import {

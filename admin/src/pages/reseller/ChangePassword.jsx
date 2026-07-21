@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../../services/api'
-import { useResellerAuth } from '../../context/ResellerAuthContext'
+import { useResellerAuth } from '../../hooks/useResellerAuth'
 import Toast from '../../components/Toast'
 
 export default function ResellerChangePassword() {

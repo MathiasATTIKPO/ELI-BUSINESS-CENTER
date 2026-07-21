@@ -16,7 +16,7 @@ const employeeSchema = new mongoose.Schema({
   resetPasswordToken: { type: String },
   resetPasswordExpires: { type: Date },
   role: { type: String, enum: ['super_admin', 'admin', 'commercial_manager', 'technician', 'cashier'], default: 'technician' },
-  skills: { type: [String], default: [] },
+  skills: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Skill' }],
   isActive: { type: Boolean, default: true },
   workingHours: { type: [workingHourSchema], default: [] },
   createdAt: { type: Date, default: Date.now }

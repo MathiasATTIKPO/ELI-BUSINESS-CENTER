@@ -16,10 +16,13 @@ const Invoice = require('../models/Invoice');
 const invoiceController = require('./invoiceController');
 const Notification = require('../models/Notification');
 const notificationService = require('../services/notificationService');
+const Skill = require('../models/Skill');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 const { sendAttachment, downloadSourceExists } = require('../utils/download');
+
+const getInvoiceApiPath = (invoiceId) => `/api/invoices/${invoiceId}/pdf`;
 
 // ==================== NOTIFICATIONS ====================
 
@@ -417,8 +420,8 @@ exports.sellProduct = async (req, res) => {
         forceNew: true
       });
 
-      if (invoice?.pdfUrl) {
-        sale.saleInfo = { ...(sale.saleInfo || {}), invoiceUrl: invoice.pdfUrl };
+      if (invoice?._id) {
+        sale.saleInfo = { ...(sale.saleInfo || {}), invoiceUrl: invoice.downloadUrl || getInvoiceApiPath(invoice._id) };
         await sale.save();
       }
     } catch (e) {}
@@ -990,8 +993,16 @@ exports.assignTradein = async (req, res) => {
 // ==================== EMPLOYÉS ====================
 exports.getEmployees = async (req, res) => {
   try {
-    const employees = await Employee.find().sort({ isActive: -1, name: 1 });
-    res.json({ success: true, data: employees.map(e => { const { password, ...rest } = e.toObject(); return rest; }) });
+    const employees = await Employee.find()
+      .populate('skills', 'name category') // peupler les compétences
+      .sort({ isActive: -1, name: 1 });
+    res.json({
+      success: true,
+      data: employees.map(e => {
+        const { password, ...rest } = e.toObject();
+        return rest;
+      })
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -1001,6 +1012,7 @@ exports.createEmployee = async (req, res) => {
   try {
     const { name, phone, email, password, role, skills } = req.body;
 
+    // Validation des champs obligatoires
     if (!name || !phone || !email) {
       return res.status(400).json({ success: false, message: 'Nom, téléphone et email sont requis.' });
     }
@@ -1013,9 +1025,23 @@ exports.createEmployee = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Rôle invalide.' });
     }
 
+    // --- Validation des compétences ---
+    let validatedSkills = [];
+    if (skills && Array.isArray(skills) && skills.length > 0) {
+      // Vérifier que tous les IDs existent dans la base
+      const existingSkills = await Skill.find({ _id: { $in: skills } });
+      if (existingSkills.length !== skills.length) {
+        return res.status(400).json({
+          success: false,
+          message: 'Certaines compétences sont invalides (ID inexistant).'
+        });
+      }
+      validatedSkills = skills;
+    }
+
+    // Génération du mot de passe si absent
     let rawPassword = password;
     let forcePasswordChange = false;
-
     if (!rawPassword) {
       rawPassword = crypto.randomBytes(4).toString('hex');
       forcePasswordChange = true;
@@ -1027,9 +1053,12 @@ exports.createEmployee = async (req, res) => {
       email,
       password: await bcrypt.hash(rawPassword, 12),
       role,
-      skills: skills || [],
+      skills: validatedSkills,   // ← on enregistre les IDs
       forcePasswordChange
     });
+
+    // Peupler pour le retour
+    await employee.populate('skills', 'name category');
 
     const { password: _p, ...result } = employee.toObject();
     res.status(201).json({
@@ -1044,10 +1073,44 @@ exports.createEmployee = async (req, res) => {
 
 exports.updateEmployee = async (req, res) => {
   try {
-    const { password, ...data } = req.body;
+    const { password, skills, ...data } = req.body;
+
+    // --- Validation des compétences si fournies ---
+    let validatedSkills = undefined;
+    if (skills !== undefined) {
+      if (!Array.isArray(skills)) {
+        return res.status(400).json({ success: false, message: 'Le champ skills doit être un tableau.' });
+      }
+      if (skills.length > 0) {
+        const existingSkills = await Skill.find({ _id: { $in: skills } });
+        if (existingSkills.length !== skills.length) {
+          return res.status(400).json({
+            success: false,
+            message: 'Certaines compétences sont invalides (ID inexistant).'
+          });
+        }
+      }
+      validatedSkills = skills;
+    }
+
+    // Hash du nouveau mot de passe si présent
     if (password) data.password = await bcrypt.hash(password, 12);
-    const employee = await Employee.findByIdAndUpdate(req.params.id, data, { new: true });
-    if (!employee) return res.status(404).json({ success: false, message: 'Employé introuvable.' });
+
+    // Construction de l'objet de mise à jour
+    const updateData = { ...data };
+    if (validatedSkills !== undefined) {
+      updateData.skills = validatedSkills;
+    }
+
+    const employee = await Employee.findByIdAndUpdate(req.params.id, updateData, {
+      new: true,
+      runValidators: true
+    }).populate('skills', 'name category');
+
+    if (!employee) {
+      return res.status(404).json({ success: false, message: 'Employé introuvable.' });
+    }
+
     const { password: _, ...result } = employee.toObject();
     res.json({ success: true, data: result });
   } catch (error) {
@@ -1452,11 +1515,24 @@ exports.downloadSaleInvoice = async (req, res) => {
 
     const existingInvoiceUrl = sale.saleInfo?.invoiceUrl;
     if (existingInvoiceUrl) {
-      const existingSource = isAbsoluteUrl(existingInvoiceUrl)
-        ? existingInvoiceUrl
-        : path.join(__dirname, '..', existingInvoiceUrl.replace(/^\/+/, ''));
+      let existingSource = '';
 
-      if (await downloadSourceExists(existingSource)) {
+      if (isAbsoluteUrl(existingInvoiceUrl)) {
+        existingSource = existingInvoiceUrl;
+      } else if (String(existingInvoiceUrl).startsWith('/api/invoices/')) {
+        const existingInvoice = await Invoice.findOne({
+          requestType: 'product',
+          requestId: sale.productId
+        }).sort({ sentAt: -1, createdAt: -1 });
+
+        if (existingInvoice) {
+          existingSource = existingInvoice.pdfPath || existingInvoice.pdfUrl;
+        }
+      } else {
+        existingSource = path.join(__dirname, '..', existingInvoiceUrl.replace(/^\/+/, ''));
+      }
+
+      if (existingSource && await downloadSourceExists(existingSource)) {
         return sendAttachment(
           res,
           existingSource,
@@ -1483,7 +1559,7 @@ exports.downloadSaleInvoice = async (req, res) => {
 
     sale.saleInfo = {
       ...(sale.saleInfo || {}),
-      invoiceUrl: invoice.pdfUrl
+      invoiceUrl: invoice.downloadUrl || getInvoiceApiPath(invoice._id)
     };
     await sale.save();
     

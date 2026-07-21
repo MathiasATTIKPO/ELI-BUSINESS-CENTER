@@ -1,16 +1,8 @@
-import React, { createContext, useContext, useState } from 'react'
+import React, { createContext, useState } from 'react'
 import TokenManager from '../services/tokenManager'
-import { useAuth } from './AuthContext'
+import { useAuth } from '../hooks/useAuth'
 
-const TechnicianAuthContext = createContext()
-
-export const useTechnicianAuth = () => {
-  const context = useContext(TechnicianAuthContext)
-  if (!context) {
-    throw new Error('useTechnicianAuth must be used within a TechnicianAuthProvider')
-  }
-  return context
-}
+export const TechnicianAuthContext = createContext(null)
 
 export const TechnicianAuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => TokenManager.getUser('technician'))

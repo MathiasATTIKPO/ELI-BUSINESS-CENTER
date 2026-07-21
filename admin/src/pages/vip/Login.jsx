@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useVIPAuth } from '../../context/VIPAuthContext'
+import { useVIPAuth } from '../../hooks/useVIPAuth'
 import {
   Award, Mail, Lock, ArrowRight, Shield, CreditCard,
   Eye, EyeOff, Star, Zap, Phone, Crown , Wrench 

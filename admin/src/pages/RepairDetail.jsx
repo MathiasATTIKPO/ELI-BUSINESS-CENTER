@@ -28,7 +28,7 @@ import Modal from '../components/Modal'
 import Toast from '../components/Toast'
 import ImageGallery from '../components/ImageGallery'
 import { formatReference } from '../utils/formatReference'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../hooks/useAuth'
 
 export default function RepairDetail() {
   const { id } = useParams()

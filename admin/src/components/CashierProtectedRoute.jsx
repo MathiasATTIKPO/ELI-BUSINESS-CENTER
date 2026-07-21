@@ -1,5 +1,5 @@
 import { Navigate } from 'react-router-dom'
-import { useCashierAuth } from '../context/CashierAuthContext'
+import { useCashierAuth } from '../hooks/useCashierAuth'  // ← chemin corrigé
 
 export default function CashierProtectedRoute({ children }) {
   const { isAuthenticated, loading } = useCashierAuth()

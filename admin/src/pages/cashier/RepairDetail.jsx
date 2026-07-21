@@ -7,7 +7,7 @@ import {
   Send, RefreshCw, Download, Star, ThumbsUp, ThumbsDown,
   GoalIcon
 } from 'lucide-react'
-import { useCashierAuth } from '../../context/CashierAuthContext'
+import { useCashierAuth } from '../../hooks/useCashierAuth'
 import api, { resolveMediaUrl } from '../../services/api'
 import Toast from '../../components/Toast'
 import { formatReference } from '../../utils/formatReference'

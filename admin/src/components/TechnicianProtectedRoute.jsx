@@ -1,10 +1,8 @@
 import { Navigate } from 'react-router-dom'
-import { useTechnicianAuth } from '../context/TechnicianAuthContext'
+import { useTechnicianAuth } from '../hooks/useTechnicianAuth'  // ← chemin corrigé
 
 export default function TechnicianProtectedRoute({ children }) {
   const { isAuthenticated, loading } = useTechnicianAuth()
-
-  console.log('TechnicianProtectedRoute - isAuthenticated:', isAuthenticated, 'loading:', loading)
 
   if (loading) {
     return (

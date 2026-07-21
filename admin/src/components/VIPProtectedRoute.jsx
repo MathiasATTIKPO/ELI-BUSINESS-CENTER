@@ -1,5 +1,5 @@
 import { Navigate } from 'react-router-dom'
-import { useVIPAuth } from '../context/VIPAuthContext'
+import { useVIPAuth } from '../hooks/useVIPAuth'  // ← chemin corrigé
 
 export default function VIPProtectedRoute({ children }) {
   const { isAuthenticated, loading } = useVIPAuth()

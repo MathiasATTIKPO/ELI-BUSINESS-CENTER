@@ -530,26 +530,26 @@ export default function Employees() {
                           {roleConfig.label}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="flex flex-wrap gap-1">
-                          {Array.isArray(employee.skills) && employee.skills.length > 0 ? (
-                            <>
-                              {employee.skills.slice(0, 2).map((skill, idx) => (
-                                <span key={idx} className="px-2 py-1 bg-blue-50 text-blue-700 rounded-lg text-xs font-medium border border-blue-100">
-                                  {skill}
-                                </span>
-                              ))}
-                              {employee.skills.length > 2 && (
-                                <span className="px-2 py-1 bg-gray-50 text-gray-600 rounded-lg text-xs font-medium border border-gray-200">
-                                  +{employee.skills.length - 2}
-                                </span>
-                              )}
-                            </>
-                          ) : (
-                            <span className="text-sm text-gray-400">-</span>
-                          )}
-                        </div>
-                      </td>
+                     <td className="px-6 py-4">
+  <div className="flex flex-wrap gap-1">
+    {Array.isArray(employee.skills) && employee.skills.length > 0 ? (
+      <>
+        {employee.skills.slice(0, 2).map((skill, idx) => (
+          <span key={idx} className="px-2 py-1 bg-blue-50 text-blue-700 rounded-lg text-xs font-medium border border-blue-100">
+            {typeof skill === 'object' ? skill.name : skill}
+          </span>
+        ))}
+        {employee.skills.length > 2 && (
+          <span className="px-2 py-1 bg-gray-50 text-gray-600 rounded-lg text-xs font-medium border border-gray-200">
+            +{employee.skills.length - 2}
+          </span>
+        )}
+      </>
+    ) : (
+      <span className="text-sm text-gray-400">-</span>
+    )}
+  </div>
+</td>
                       <td className="px-6 py-4">
                         <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border ${
                           employee.isActive 

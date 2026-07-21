@@ -22,7 +22,9 @@ import {
   AlertCircle,
   UserCheck,
   Calendar,
-  Clock
+  Clock,
+  Loader2,
+  Tag
 } from 'lucide-react'
 import Toast from '../components/Toast'
 import api from '../services/api'
@@ -33,6 +35,7 @@ export default function EmployeeForm() {
   const location = useLocation()
   const existingEmployee = location.state?.employee
 
+  // État principal du formulaire
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -40,14 +43,15 @@ export default function EmployeeForm() {
     password: '',
     role: 'technician',
     isActive: true,
-    skills: []
+    skills: [] // tableau d'ObjectId
   })
 
-  const [skillInput, setSkillInput] = useState('')
+  const [availableSkills, setAvailableSkills] = useState([]) // liste des compétences disponibles
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [loadingSkills, setLoadingSkills] = useState(true)
 
   const roles = [
     {
@@ -109,8 +113,30 @@ export default function EmployeeForm() {
 
   const isEditing = Boolean(id && existingEmployee)
 
+  // Chargement des compétences disponibles
   useEffect(() => {
-    if (isEditing) {
+    const fetchSkills = async () => {
+      try {
+        setLoadingSkills(true)
+        const res = await api.get('/api/skills')
+        if (res.data.success) {
+          setAvailableSkills(res.data.data)
+        } else {
+          console.error('Erreur chargement compétences:', res.data.message)
+        }
+      } catch (err) {
+        console.error('Erreur chargement compétences:', err)
+        setError('Impossible de charger les compétences.')
+      } finally {
+        setLoadingSkills(false)
+      }
+    }
+    fetchSkills()
+  }, [])
+
+  // Remplissage du formulaire en mode édition
+  useEffect(() => {
+    if (isEditing && existingEmployee) {
       setFormData({
         name: existingEmployee.name || '',
         email: existingEmployee.email || '',
@@ -118,37 +144,32 @@ export default function EmployeeForm() {
         password: '',
         role: existingEmployee.role || 'technician',
         isActive: existingEmployee.isActive !== false,
-        skills: existingEmployee.skills || []
+        skills: existingEmployee.skills?.map(s => s._id || s) || [] // on extrait les IDs
       })
     }
-  }, [id, existingEmployee])
+  }, [id, existingEmployee, isEditing])
 
   const handleChange = (e) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
   }
 
-  const handleAddSkill = () => {
-    if (skillInput.trim() && !formData.skills.includes(skillInput.trim())) {
-      setFormData(prev => ({
-        ...prev,
-        skills: [...prev.skills, skillInput.trim()]
-      }))
-      setSkillInput('')
-    }
-  }
-
-  const handleRemoveSkill = (skill) => {
-    setFormData(prev => ({
-      ...prev,
-      skills: prev.skills.filter(s => s !== skill)
-    }))
+  const handleSkillToggle = (skillId) => {
+    setFormData(prev => {
+      const currentSkills = prev.skills
+      if (currentSkills.includes(skillId)) {
+        return { ...prev, skills: currentSkills.filter(id => id !== skillId) }
+      } else {
+        return { ...prev, skills: [...currentSkills, skillId] }
+      }
+    })
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
 
+    // Validation de base
     if (!formData.name || !formData.email || !formData.phone) {
       setError('Les champs nom, email et téléphone sont obligatoires')
       return
@@ -165,7 +186,7 @@ export default function EmployeeForm() {
       if (!payload.password) delete payload.password
 
       let response
-      if (id) {
+      if (isEditing) {
         response = await api.put(`/api/admin/employees/${id}`, payload)
       } else {
         response = await api.post('/api/admin/employees', payload)
@@ -183,6 +204,12 @@ export default function EmployeeForm() {
   }
 
   const getSelectedRole = () => roles.find(r => r.value === formData.role) || roles[1]
+
+  // Fonction pour obtenir le nom d'une compétence à partir de son ID
+  const getSkillName = (skillId) => {
+    const skill = availableSkills.find(s => s._id === skillId)
+    return skill ? skill.name : skillId
+  }
 
   return (
     <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12 py-8 space-y-6">
@@ -389,7 +416,7 @@ export default function EmployeeForm() {
           </div>
         </div>
 
-        {/* Carte Compétences (pour technicien) */}
+        {/* Carte Compétences (uniquement pour technicien) */}
         {formData.role === 'technician' && (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow duration-200">
             <div className="px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-cyan-50 to-white">
@@ -405,62 +432,89 @@ export default function EmployeeForm() {
             </div>
             
             <div className="p-6">
-              <div className="space-y-4">
-                <div className="flex gap-3">
-                  <div className="relative flex-1">
-                    <input
-                      type="text"
-                      value={skillInput}
-                      onChange={(e) => setSkillInput(e.target.value)}
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault()
-                          handleAddSkill()
-                        }
-                      }}
-                      placeholder="Ex: Écran, Batterie, Carte mère..."
-                      className="w-full pl-4 pr-12 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-gray-300 transition-all duration-200"
-                    />
-                    <Zap size={18} className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleAddSkill}
-                    className="px-5 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-xl hover:from-blue-700 hover:to-cyan-700 transition-all duration-200 font-medium flex items-center gap-2 shadow-sm hover:shadow-md"
-                  >
-                    <Plus size={18} />
-                    Ajouter
-                  </button>
+              {loadingSkills ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="animate-spin text-blue-500" size={32} />
                 </div>
-
-                {formData.skills.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {formData.skills.map((skill, index) => (
-                      <span
-                        key={skill}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-50 to-cyan-50 text-blue-700 rounded-xl text-sm font-medium border border-blue-200 group hover:shadow-sm transition-all duration-200 animate-fadeIn"
-                        style={{ animationDelay: `${index * 50}ms` }}
-                      >
-                        <Star size={14} className="text-blue-500" />
-                        {skill}
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveSkill(skill)}
-                          className="ml-1 p-0.5 rounded-full hover:bg-red-100 hover:text-red-600 transition-colors"
+              ) : availableSkills.length === 0 ? (
+                <div className="text-center py-8 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+                  <Tag size={32} className="mx-auto text-gray-300 mb-2" />
+                  <p className="text-sm text-gray-500">Aucune compétence disponible</p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Veuillez créer des compétences dans la <button 
+                      onClick={() => navigate('/admin/skills')} 
+                      className="text-blue-600 hover:underline font-medium"
+                    >
+                      gestion des compétences
+                    </button>
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {availableSkills.map((skill) => {
+                      const isSelected = formData.skills.includes(skill._id)
+                      return (
+                        <div
+                          key={skill._id}
+                          onClick={() => handleSkillToggle(skill._id)}
+                          className={`cursor-pointer p-4 rounded-xl border-2 transition-all duration-200 ${
+                            isSelected
+                              ? 'border-blue-500 bg-blue-50 shadow-sm'
+                              : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                          }`}
                         >
-                          <X size={14} />
-                        </button>
-                      </span>
-                    ))}
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="font-medium text-gray-900">{skill.name}</div>
+                              <div className="text-xs text-gray-500 mt-0.5">{skill.category || 'Général'}</div>
+                              {skill.description && (
+                                <div className="text-xs text-gray-400 mt-1 truncate">{skill.description}</div>
+                              )}
+                            </div>
+                            {isSelected && (
+                              <CheckCircle size={18} className="text-blue-600 flex-shrink-0 mt-0.5" />
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })}
                   </div>
-                ) : (
-                  <div className="text-center py-8 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
-                    <Award size={32} className="mx-auto text-gray-300 mb-2" />
-                    <p className="text-sm text-gray-500">Aucune compétence ajoutée</p>
-                    <p className="text-xs text-gray-400 mt-1">Ajoutez des compétences pour ce technicien</p>
-                  </div>
-                )}
-              </div>
+
+                  {/* Affichage des compétences sélectionnées sous forme de tags */}
+                  {formData.skills.length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-gray-100">
+                      <p className="text-sm font-medium text-gray-700 mb-2">
+                        {formData.skills.length} compétence{formData.skills.length > 1 ? 's' : ''} sélectionnée{formData.skills.length > 1 ? 's' : ''} :
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {formData.skills.map((skillId) => {
+                          const skill = availableSkills.find(s => s._id === skillId)
+                          return skill ? (
+                            <span
+                              key={skill._id}
+                              className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-50 to-cyan-50 text-blue-700 rounded-xl text-sm font-medium border border-blue-200"
+                            >
+                              <Star size={14} className="text-blue-500" />
+                              {skill.name}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleSkillToggle(skill._id)
+                                }}
+                                className="ml-1 p-0.5 rounded-full hover:bg-red-100 hover:text-red-600 transition-colors"
+                              >
+                                <X size={14} />
+                              </button>
+                            </span>
+                          ) : null
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         )}

@@ -286,8 +286,8 @@ export default function ResellerContracts() {
 
     const unpaid = contracts.filter((c) => {
       if (c.status !== 'sold') return false
-      const isPaidByCashier = 
-        c.payment?.status === 'paid' && 
+      const isPaidByCashier =
+        c.payment?.status === 'paid' &&
         c.payment?.paidByRole === 'cashier'
       if (isPaidByCashier) return false
       const hasCashCollection = (c.history || []).some(
@@ -310,8 +310,8 @@ export default function ResellerContracts() {
     if (statusFilter === 'unpaid') {
       items = items.filter((c) => {
         if (c.status !== 'sold') return false
-        const isPaidByCashier = 
-          c.payment?.status === 'paid' && 
+        const isPaidByCashier =
+          c.payment?.status === 'paid' &&
           c.payment?.paidByRole === 'cashier'
         if (isPaidByCashier) return false
         const hasCashCollection = (c.history || []).some(
@@ -497,8 +497,7 @@ export default function ResellerContracts() {
                 <th className="py-3 pr-3">N° contrat</th>
                 <th className="py-3 pr-3">Revendeur</th>
                 <th className="py-3 pr-3">Téléphone</th>
-{/*                 <th className="py-3 pr-3">Prix final</th>
- */}                <th className="py-3 pr-3">Échéance</th>
+                <th className="py-3 pr-3">Échéance</th>
                 <th className="py-3 pr-3">Statut</th>
                 <th className="py-3 pr-3">Actions</th>
               </tr>
@@ -747,7 +746,7 @@ export default function ResellerContracts() {
                   onChange={(e) => setContractForm((prev) => ({ ...prev, negotiatedPrice: e.target.value }))}
                   className="px-3 py-2 border border-gray-200 rounded-lg"
                 />
-               {/*  <input
+                {/*  <input
                   type="number"
                   placeholder="Prix final attendu"
                   value={contractForm.expectedSalePrice}

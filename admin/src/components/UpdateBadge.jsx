@@ -1,6 +1,6 @@
 import React from 'react'
-import { useNotifications } from '../context/NotificationContext'
-import { useAuth } from '../context/AuthContext'
+import { useNotifications } from '../hooks/useNotifications'
+import { useAuth } from '../hooks/useAuth'
 
 export default function UpdateBadge() {
   const { unreadCount } = useNotifications()

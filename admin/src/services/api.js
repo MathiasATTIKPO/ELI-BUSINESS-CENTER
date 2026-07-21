@@ -38,7 +38,7 @@ const api = axios.create({
   timeout: 30000,
 })
 
-// Intercepteur pour ajouter le token selon le rôle de l'URL
+// Intercepteur de requête : ajout du token selon le rôle de l'URL
 api.interceptors.request.use((config) => {
   let role = null
   const url = config.url || ''
@@ -65,7 +65,7 @@ api.interceptors.request.use((config) => {
       console.warn(`[API] Aucun token trouvé pour le rôle ${role}`)
     }
   }
-  // If no specific role, try generic token
+  // Si aucun rôle spécifique, essayer un token générique
   if (!config.headers.Authorization) {
     const activeRole = localStorage.getItem('active_role')
     const activeToken = activeRole ? TokenManager.getTokenByRole(activeRole) : null
@@ -80,26 +80,42 @@ api.interceptors.request.use((config) => {
   return config
 })
 
-// Intercepteur pour les erreurs
+// Intercepteur de réponse : gestion des erreurs
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    if (error.response) {
+      const status = error.response.status
       const url = error.config?.url || ''
-      let role = null
       
-      if (url.includes('/admin/')) role = 'admin'
-      else if (url.includes('/cashier/')) role = 'cashier'
-      else if (url.includes('/technician/')) role = 'technician'
-      else if (url.includes('/reseller/')) role = 'reseller'
-      else if (url.includes('/vip/')) role = 'vip'
-      
-      if (role) {
-        TokenManager.clearRole(role)
+      // 🔹 Redirection vers les pages d'erreur 404 et 500 (sauf pour les endpoints d'authentification)
+      const isAuthEndpoint = /\/login|\/forgot|\/reset|\/admin\/login|\/technician\/login|\/cashier\/login|\/reseller\/login|\/vip\/login/.test(url)
+      if (!isAuthEndpoint && typeof window !== 'undefined') {
+        if (status === 404) {
+          window.location.href = '/404?from=' + encodeURIComponent(window.location.pathname)
+          return Promise.reject(error)
+        }
+        if (status === 500) {
+          window.location.href = '/500'
+          return Promise.reject(error)
+        }
+      }
+
+      // 🔹 Gestion 401 : déconnexion du rôle concerné
+      if (status === 401) {
+        let role = null
+        if (url.includes('/admin/')) role = 'admin'
+        else if (url.includes('/cashier/')) role = 'cashier'
+        else if (url.includes('/technician/')) role = 'technician'
+        else if (url.includes('/reseller/')) role = 'reseller'
+        else if (url.includes('/vip/')) role = 'vip'
         
-        const currentPath = window.location.pathname
-        if (currentPath.includes(`/${role}/`) && !currentPath.includes('/login')) {
-          window.location.href = `/${role}/login`
+        if (role) {
+          TokenManager.clearRole(role)
+          const currentPath = window.location.pathname
+          if (currentPath.includes(`/${role}/`) && !currentPath.includes('/login')) {
+            window.location.href = `/${role}/login`
+          }
         }
       }
     }

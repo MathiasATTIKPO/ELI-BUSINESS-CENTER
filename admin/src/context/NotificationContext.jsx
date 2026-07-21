@@ -1,11 +1,9 @@
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react'
+import React, { createContext, useState, useEffect, useRef } from 'react'
 import api from '../services/api'
-import { useAuth } from './AuthContext'
+import { useAuth } from '../hooks/useAuth'
 import { isPushSupported, subscribeUserToPush } from '../services/pushNotifications'
 
-const NotificationContext = createContext()
-
-export const useNotifications = () => useContext(NotificationContext)
+export const NotificationContext = createContext(null)
 
 export const NotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([])
@@ -22,8 +20,6 @@ export const NotificationProvider = ({ children }) => {
 
   const fetchNotifications = async () => {
     if (isFetchingRef.current) return
-
-    // Ne pas charger les notifications si pas authentifié
     if (!activeRole || !isAuthenticated(activeRole)) {
       console.log('[NotificationContext] Non authentifié, skip fetch')
       setLoading(false)
@@ -34,15 +30,10 @@ export const NotificationProvider = ({ children }) => {
     try {
       const response = await api.get('/api/notifications', { headers: getRoleAuthHeaders() })
       setNotifications(response.data.data || [])
-      
       const unread = (response.data.data || []).filter(n => !n.read).length
       setUnreadCount(unread)
     } catch (error) {
       console.error('Erreur chargement notifications:', error)
-      if (error.response?.status !== 500) {
-        const details = error.response?.data || error.message || 'Erreur réseau ou backend indisponible'
-        console.error('Détail erreur:', details)
-      }
       setNotifications([])
       setUnreadCount(0)
     } finally {
@@ -55,9 +46,7 @@ export const NotificationProvider = ({ children }) => {
     try {
       await api.put(`/api/notifications/${notificationId}/read`, {}, { headers: getRoleAuthHeaders() })
       setNotifications(prev =>
-        prev.map(n =>
-          n._id === notificationId ? { ...n, read: true } : n
-        )
+        prev.map(n => n._id === notificationId ? { ...n, read: true } : n)
       )
       setUnreadCount(prev => Math.max(0, prev - 1))
     } catch (error) {
@@ -68,9 +57,7 @@ export const NotificationProvider = ({ children }) => {
   const markAllAsRead = async () => {
     try {
       await api.put('/api/notifications/read-all', {}, { headers: getRoleAuthHeaders() })
-      setNotifications(prev =>
-        prev.map(n => ({ ...n, read: true }))
-      )
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })))
       setUnreadCount(0)
     } catch (error) {
       console.error('Erreur marquage toutes notifications:', error)
@@ -82,9 +69,6 @@ export const NotificationProvider = ({ children }) => {
       const token = activeRole ? getToken(activeRole) : null
       const result = await subscribeUserToPush(token)
       setPushEnabled(!!result?.success)
-      if (!result?.success && !['push_not_configured', 'permission_denied', 'unsupported'].includes(result?.reason)) {
-        console.warn('Activation push non aboutie:', result)
-      }
       return result
     } catch (error) {
       console.error('Erreur activation push:', error)
@@ -117,7 +101,6 @@ export const NotificationProvider = ({ children }) => {
       }
       navigator?.serviceWorker?.addEventListener?.('message', onServiceWorkerMessage)
       
-      // Polling plus fréquent pour remonter plus vite les nouvelles demandes.
       const interval = setInterval(fetchNotifications, 7000)
       return () => {
         clearInterval(interval)

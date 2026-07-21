@@ -12,6 +12,8 @@ const ResellerContract = require('../models/ResellerContract');
 const { storeFileBuffer, isAbsoluteUrl, hasCloudinaryConfig } = require('../services/cloudinary');
 const { downloadSourceExists, sendAttachment } = require('../utils/download');
 
+const getInvoiceApiPath = (invoiceId) => `/api/invoices/${invoiceId}/pdf`;
+
 // ====================== Fonctions utilitaires ======================
 
 
@@ -383,15 +385,17 @@ exports.createInvoicePdf = async ({
   }
 
   // Mise à jour des références dans les modèles liés
+  const canonicalInvoiceUrl = getInvoiceApiPath(invoice._id);
+
   if (requestType === 'repair') {
-    await RepairRequest.findByIdAndUpdate(requestId, { 'saleInfo.invoiceUrl': pdfUrl });
+    await RepairRequest.findByIdAndUpdate(requestId, { 'saleInfo.invoiceUrl': canonicalInvoiceUrl });
   } else if (requestType === 'tradein') {
-    await TradeinRequest.findByIdAndUpdate(requestId, { 'saleInfo.invoiceUrl': pdfUrl });
+    await TradeinRequest.findByIdAndUpdate(requestId, { 'saleInfo.invoiceUrl': canonicalInvoiceUrl });
   } else if (requestType === 'reseller_contract') {
-    await ResellerContract.findByIdAndUpdate(requestId, { 'payment.invoiceUrl': pdfUrl });
+    await ResellerContract.findByIdAndUpdate(requestId, { 'payment.invoiceUrl': canonicalInvoiceUrl });
   }
 
-  invoice.downloadUrl = `/api/invoice/${invoice._id}/pdf`;
+  invoice.downloadUrl = canonicalInvoiceUrl;
   return invoice;
 };
 
@@ -476,7 +480,7 @@ exports.sendWhatsapp = async (req, res) => {
     }
 
     const baseUrl = process.env.BASE_URL || 'http://localhost:4001';
-    const pdfLink = isAbsoluteUrl(invoice.pdfUrl) ? invoice.pdfUrl : `${baseUrl}${invoice.pdfUrl}`;
+    const pdfLink = `${baseUrl}${getInvoiceApiPath(invoice._id)}`;
 
     const defaultMsg =
       `Bonjour ${invoice.clientName || ''},\n\n` +

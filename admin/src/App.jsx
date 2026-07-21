@@ -1,12 +1,21 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate, Link, useLocation, Outlet, useNavigate } from 'react-router-dom'
-import { LogOut, LayoutDashboard, Smartphone, Package, Users, ShoppingCart, History, FileText, Wrench, RefreshCw, Bell, CheckCheck, BarChart3, ListChecks } from 'lucide-react'
-import { AuthProvider, useAuth } from './context/AuthContext'
-import { TechnicianAuthProvider, useTechnicianAuth } from './context/TechnicianAuthContext'
-import { CashierAuthProvider, useCashierAuth } from './context/CashierAuthContext'
-import { NotificationProvider, useNotifications } from './context/NotificationContext'
+import {
+  LogOut, LayoutDashboard, Smartphone, Package, Users,
+  ShoppingCart, History, FileText, Wrench, RefreshCw,
+  Bell, CheckCheck, BarChart3, ListChecks, Settings as SettingsIcon
+} from 'lucide-react'
+import { AuthProvider } from './context/AuthContext'
+import { TechnicianAuthProvider } from './context/TechnicianAuthContext'
+import { CashierAuthProvider } from './context/CashierAuthContext'
 import { ResellerAuthProvider } from './context/ResellerAuthContext'
 import { VIPAuthProvider } from './context/VIPAuthContext'
+import { NotificationProvider } from './context/NotificationContext'
+import { useAuth } from './hooks/useAuth'
+import { useTechnicianAuth } from './hooks/useTechnicianAuth'
+import { useCashierAuth } from './hooks/useCashierAuth'
+import { useResellerAuth } from './hooks/useResellerAuth'
+import { useVIPAuth } from './hooks/useVIPAuth'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import TechnicianProtectedRoute from './components/TechnicianProtectedRoute'
 import CashierProtectedRoute from './components/CashierProtectedRoute'
@@ -55,13 +64,15 @@ import VIPChangePassword from './pages/vip/ChangePassword'
 import VIPDashboard from './pages/vip/Dashboard'
 import ResellerProtectedRoute from './components/ResellerProtectedRoute'
 import VIPProtectedRoute from './components/VIPProtectedRoute'
-
+import Settings from './pages/Settings/Setting'
+import ErrorPage from './pages/ErrorPage'
+import ErrorBoundary from './components/ErrorBoundary'
 
 // ========== COMPOSANT ADMIN ==========
 function AdminNav() {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const { logout } = useAuth();
+  const location = useLocation()
+  const navigate = useNavigate()
+  const { logout } = useAuth()
 
   const navItems = [
     { path: '/admin/dashboard', label: 'Tableau de bord', icon: <LayoutDashboard size={18} /> },
@@ -72,6 +83,7 @@ function AdminNav() {
     { path: '/admin/contracts', label: 'Contrats', icon: <FileText size={18} /> },
     { path: '/admin/accounts', label: 'Comptes', icon: <Users size={18} /> },
     { path: '/admin/history', label: 'Historique', icon: <History size={18} /> },
+    { path: '/admin/settings', label: 'Paramètres', icon: <SettingsIcon size={18} /> },
   ]
 
   const isActive = (path) => {
@@ -83,7 +95,6 @@ function AdminNav() {
         location.pathname.startsWith('/admin/resellers')
       )
     }
-
     return location.pathname === path || location.pathname.startsWith(`${path}/`)
   }
 
@@ -97,17 +108,16 @@ function AdminNav() {
         <div className="flex flex-wrap items-center gap-3 sm:gap-4">
           <NotificationBell />
           <UpdateBadge />
-
           <button
-  onClick={() => {
-    logout('admin')
-    navigate('/admin/login')
-  }}
-  className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-red-600 hover:bg-red-50 transition"
->
-  <LogOut size={16} />
-  Déconnexion
-</button>
+            onClick={() => {
+              logout('admin')
+              navigate('/admin/login')
+            }}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-red-600 hover:bg-red-50 transition"
+          >
+            <LogOut size={16} />
+            Déconnexion
+          </button>
         </div>
       </div>
       <div className="px-6">
@@ -116,11 +126,10 @@ function AdminNav() {
             <Link
               key={item.path}
               to={item.path}
-              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-lg transition ${
-                isActive(item.path)
+              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-lg transition ${isActive(item.path)
                   ? 'text-blue-600 border-b-2 border-blue-600'
                   : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-              }`}
+                }`}
             >
               {item.icon}
               {item.label}
@@ -143,7 +152,7 @@ function AdminLayout() {
   )
 }
 
-// ========== LAYOUT TECHNICIEN (une seule barre) ==========
+// ========== LAYOUT TECHNICIEN ==========
 function TechnicianLayout() {
   const { user, logout } = useTechnicianAuth()
   const navigate = useNavigate()
@@ -166,33 +175,26 @@ function TechnicianLayout() {
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               <NotificationBell />
               <UpdateBadge />
-              
-              {/* Bouton Tableau de bord */}
               <button
                 onClick={() => navigate('/technician/dashboard')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
-                  location.pathname === '/technician/dashboard'
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${location.pathname === '/technician/dashboard'
                     ? 'bg-blue-600 text-white shadow-sm'
                     : 'text-gray-600 hover:bg-gray-100'
-                }`}
+                  }`}
               >
                 <LayoutDashboard size={18} />
                 <span className="hidden sm:inline">Tableau de bord</span>
               </button>
-
-              {/* Bouton Historique */}
               <button
                 onClick={() => navigate('/technician/history')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
-                  location.pathname === '/technician/history'
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${location.pathname === '/technician/history'
                     ? 'bg-blue-600 text-white shadow-sm'
                     : 'text-gray-600 hover:bg-gray-100'
-                }`}
+                  }`}
               >
                 <History size={18} />
                 <span className="hidden sm:inline">Historique</span>
               </button>
-
               <button
                 onClick={logout}
                 className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-red-600 hover:bg-red-50 transition"
@@ -217,7 +219,7 @@ function TechnicianLayout() {
   )
 }
 
-// ========== LAYOUT CAISSIER (une seule barre) ==========
+// ========== LAYOUT CAISSIER ==========
 function CashierLayout() {
   const { user, logout } = useCashierAuth()
   const navigate = useNavigate()
@@ -240,33 +242,26 @@ function CashierLayout() {
             <div className="flex items-center gap-3">
               <NotificationBell />
               <UpdateBadge />
-              
-              {/* Bouton Ventes */}
               <button
                 onClick={() => navigate('/cashier/sales')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
-                  location.pathname === '/cashier/sales'
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${location.pathname === '/cashier/sales'
                     ? 'bg-emerald-600 text-white shadow-sm'
                     : 'text-gray-600 hover:bg-gray-100'
-                }`}
+                  }`}
               >
                 <ListChecks size={18} />
                 <span className="hidden sm:inline">Ventes</span>
               </button>
-
-              {/* Bouton Rapport */}
               <button
                 onClick={() => navigate('/cashier/report')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
-                  location.pathname === '/cashier/report'
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${location.pathname === '/cashier/report'
                     ? 'bg-emerald-600 text-white shadow-sm'
                     : 'text-gray-600 hover:bg-gray-100'
-                }`}
+                  }`}
               >
                 <BarChart3 size={18} />
                 <span className="hidden sm:inline">Rapport</span>
               </button>
-
               <button
                 onClick={logout}
                 className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-red-600 hover:bg-red-50 transition"
@@ -280,12 +275,12 @@ function CashierLayout() {
       </div>
       <main className="p-6">
         <Routes>
-  <Route path="sales" element={<CashierSales />} />
-  <Route path="repair/:id" element={<CashierRepairDetail />} />
-  <Route path="tradein/:id" element={<CashierTradeInDetail />} />
-  <Route path="report" element={<CashierReport />} />
-  <Route path="*" element={<Navigate to="/cashier/sales" replace />} />
-</Routes>
+          <Route path="sales" element={<CashierSales />} />
+          <Route path="repair/:id" element={<CashierRepairDetail />} />
+          <Route path="tradein/:id" element={<CashierTradeInDetail />} />
+          <Route path="report" element={<CashierReport />} />
+          <Route path="*" element={<Navigate to="/cashier/sales" replace />} />
+        </Routes>
       </main>
     </div>
   )
@@ -294,101 +289,121 @@ function CashierLayout() {
 // ========== APP PRINCIPALE ==========
 export default function App() {
   return (
-    <Router>
-      <AuthProvider>
-        <TechnicianAuthProvider>
-          <CashierAuthProvider>
-            <ResellerAuthProvider>
-              <VIPAuthProvider>
-                <NotificationProvider>
-              <Routes>
-                <Route path="/admin/login" element={<Login />} />
-                <Route path="/technician/login" element={<TechnicianLogin />} />
-                <Route path="/reseller/login" element={<ResellerLogin />} />
-                <Route path="/reseller/forgot" element={<ResellerForgot />} />
-                <Route path="/reseller/reset" element={<ResellerReset />} />
-                <Route path="/reseller/change-password" element={<ResellerChangePassword />} />
-                <Route path="/vip/login" element={<VIPLogin />} />
-                <Route path="/vip/forgot" element={<VIPForgot />} />
-                <Route path="/vip/reset" element={<VIPReset />} />
-                <Route path="/vip/change-password" element={<VIPChangePassword />} />
-                <Route
-                  path="/technician/*"
-                  element={
-                    <TechnicianProtectedRoute>
-                      <TechnicianLayout />
-                    </TechnicianProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/reseller/*"
-                  element={
-                    <ResellerProtectedRoute>
-                      <ResellerDashboard />
-                    </ResellerProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/vip/*"
-                  element={
-                    <VIPProtectedRoute>
-                      <VIPDashboard />
-                    </VIPProtectedRoute>
-                  }
-                />
-                <Route path="/cashier/login" element={<CashierLogin />} />
-                <Route
-                  path="/cashier/*"
-                  element={
-                    <CashierProtectedRoute>
-                      <CashierLayout />
-                    </CashierProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/admin"
-                  element={
-                    <ProtectedRoute>
-                      <AdminLayout />
-                    </ProtectedRoute>
-                  }
-                >
-                  <Route index element={<Navigate to="/admin/dashboard" replace />} />
-                  <Route path="dashboard" element={<Dashboard />} />
-                  <Route path="products" element={<Products />} />
-                  <Route path="products/:id" element={<ProductForm />} />
-                  <Route path="repairs" element={<Repairs />} />
-                  <Route path="repairs/:id" element={<RepairDetail />} />
-                  <Route path="tradeins" element={<TradeIns />} />
-                  <Route path="tradeins/:id" element={<TradeInDetail />} />
-                  <Route path="inventory" element={<Inventory />} />
-                  <Route path="contracts" element={<ResellerContracts />} />
-                  <Route path="accounts" element={<AccountManagement />} />
-                  <Route path="resellers" element={<Resellers />} />
-                  <Route path="resellers/new" element={<ResellerForm />} />
-                  <Route path="resellers/:id/edit" element={<ResellerForm />} />
-                  <Route path="resellers/:id" element={<ResellerDetail />} />
-                  <Route path="vips" element={<VIPs />} />
-                  <Route path="vips/new" element={<VIPForm />} />
-                  <Route path="vips/:id/edit" element={<VIPForm />} />
-                  <Route path="vips/:id" element={<VIPDetail />} />
-                  <Route path="vips/stats" element={<VipStats />} />
-                  <Route path="employees" element={<Employees />} />
-                  <Route path="employees/:id" element={<EmployeeForm />} />
-                  <Route path="employees/new" element={<EmployeeForm />} />
-                  <Route path="history" element={<ActivityHistory />} />
-                  <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
-                </Route>
-                <Route path="/" element={<Navigate to="/admin/login" replace />} />
-                <Route path="*" element={<Navigate to="/admin/login" replace />} />
-              </Routes>
-            </NotificationProvider>
-              </VIPAuthProvider>
-            </ResellerAuthProvider>
-          </CashierAuthProvider>
-        </TechnicianAuthProvider>
-      </AuthProvider>
+    <Router
+      future={{
+        v7_startTransition: true,
+        v7_relativeSplatPath: true,
+      }}
+    >
+      <ErrorBoundary>
+        <AuthProvider>
+          <TechnicianAuthProvider>
+            <CashierAuthProvider>
+              <ResellerAuthProvider>
+                <VIPAuthProvider>
+                  <NotificationProvider>
+                    <Routes>
+                      {/* Public routes */}
+                      <Route path="/admin/login" element={<Login />} />
+                      <Route path="/technician/login" element={<TechnicianLogin />} />
+                      <Route path="/reseller/login" element={<ResellerLogin />} />
+                      <Route path="/reseller/forgot" element={<ResellerForgot />} />
+                      <Route path="/reseller/reset" element={<ResellerReset />} />
+                      <Route path="/reseller/change-password" element={<ResellerChangePassword />} />
+                      <Route path="/vip/login" element={<VIPLogin />} />
+                      <Route path="/vip/forgot" element={<VIPForgot />} />
+                      <Route path="/vip/reset" element={<VIPReset />} />
+                      <Route path="/vip/change-password" element={<VIPChangePassword />} />
+                      <Route path="/cashier/login" element={<CashierLogin />} />
+
+                      {/* Protected routes */}
+                      <Route
+                        path="/technician/*"
+                        element={
+                          <TechnicianProtectedRoute>
+                            <TechnicianLayout />
+                          </TechnicianProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/reseller/*"
+                        element={
+                          <ResellerProtectedRoute>
+                            <ResellerDashboard />
+                          </ResellerProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/vip/*"
+                        element={
+                          <VIPProtectedRoute>
+                            <VIPDashboard />
+                          </VIPProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/cashier/*"
+                        element={
+                          <CashierProtectedRoute>
+                            <CashierLayout />
+                          </CashierProtectedRoute>
+                        }
+                      />
+
+                      {/* Admin routes (with nested layout) */}
+                      <Route
+                        path="/admin"
+                        element={
+                          <ProtectedRoute>
+                            <AdminLayout />
+                          </ProtectedRoute>
+                        }
+                      >
+                        <Route index element={<Navigate to="/admin/dashboard" replace />} />
+                        <Route path="dashboard" element={<Dashboard />} />
+                        <Route path="products" element={<Products />} />
+                        <Route path="products/:id" element={<ProductForm />} />
+                        <Route path="repairs" element={<Repairs />} />
+                        <Route path="repairs/:id" element={<RepairDetail />} />
+                        <Route path="tradeins" element={<TradeIns />} />
+                        <Route path="tradeins/:id" element={<TradeInDetail />} />
+                        <Route path="inventory" element={<Inventory />} />
+                        <Route path="contracts" element={<ResellerContracts />} />
+                        <Route path="accounts" element={<AccountManagement />} />
+                        <Route path="settings" element={<Settings />} />
+                        <Route path="resellers" element={<Resellers />} />
+                        <Route path="resellers/new" element={<ResellerForm />} />
+                        <Route path="resellers/:id/edit" element={<ResellerForm />} />
+                        <Route path="resellers/:id" element={<ResellerDetail />} />
+                        <Route path="vips" element={<VIPs />} />
+                        <Route path="vips/new" element={<VIPForm />} />
+                        <Route path="vips/:id/edit" element={<VIPForm />} />
+                        <Route path="vips/:id" element={<VIPDetail />} />
+                        <Route path="vips/stats" element={<VipStats />} />
+                        <Route path="employees" element={<Employees />} />
+                        <Route path="employees/:id" element={<EmployeeForm />} />
+                        <Route path="employees/new" element={<EmployeeForm />} />
+                        <Route path="history" element={<ActivityHistory />} />
+                        {/* Fallback inside admin */}
+                        <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
+                      </Route>
+
+                      {/* Root redirect */}
+                      <Route path="/" element={<Navigate to="/admin/login" replace />} />
+
+                      {/* Error routes */}
+                      <Route path="/404" element={<ErrorPage type="404" />} />
+                      <Route path="/500" element={<ErrorPage type="500" />} />
+                      <Route path="/offline" element={<ErrorPage type="offline" />} />
+                      <Route path="*" element={<ErrorPage type="404" />} />
+                    </Routes>
+                  </NotificationProvider>
+                </VIPAuthProvider>
+              </ResellerAuthProvider>
+            </CashierAuthProvider>
+          </TechnicianAuthProvider>
+        </AuthProvider>
+      </ErrorBoundary>
     </Router>
   )
 }
-        

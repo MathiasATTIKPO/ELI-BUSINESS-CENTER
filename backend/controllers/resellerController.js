@@ -8,8 +8,11 @@ const Reseller = require('../models/Reseller');
 const ResellerContract = require('../models/ResellerContract');
 const InventoryItem = require('../models/InventoryItem');
 const Product = require('../models/Product');
+const AppSettings = require('../models/AppSettings'); // ⭐ AJOUT
 const notificationService = require('../services/notificationService');
 const { storeFileBuffer, isAbsoluteUrl } = require('../services/cloudinary');
+
+// ====================== FONCTIONS UTILITAIRES ======================
 
 const generateContractNumber = () => {
   const year = new Date().getFullYear();
@@ -226,6 +229,24 @@ const findPhoneByAnySource = async (productId) => {
 
   return null;
 };
+
+// ====================== CACHE POUR LES PARAMÈTRES ======================
+// ⭐ NOUVEAU : cache des paramètres pour éviter des appels répétés à la base
+let settingsCache = null;
+let settingsCacheTime = 0;
+const CACHE_TTL = 60000; // 1 minute
+
+const getCachedSettings = async () => {
+  const now = Date.now();
+  if (settingsCache && (now - settingsCacheTime) < CACHE_TTL) {
+    return settingsCache;
+  }
+  settingsCache = await AppSettings.getSettings();
+  settingsCacheTime = now;
+  return settingsCache;
+};
+
+// ====================== EXPORTS ======================
 
 exports.createReseller = async (req, res) => {
   try {
@@ -448,8 +469,8 @@ exports.createContract = async (req, res) => {
       recipientId: effectiveResellerId,
       recipientRole: 'reseller',
       type: 'contract_created',
-      title: 'Contrat cree',
-      message: `Un contrat ${number} a ete cree et attend le retrait du telephone.`,
+      title: 'Contrat créé',
+      message: `Un contrat ${number} a été créé et attend le retrait du téléphone.`,
       requestId: contract._id,
       clientName: '',
       reference: number
@@ -457,7 +478,7 @@ exports.createContract = async (req, res) => {
     await notificationService.notifyAdmins({
       type: 'contract_created',
       title: 'Nouveau contrat revendeur',
-      message: `Contrat ${number} cree`,
+      message: `Contrat ${number} créé`,
       requestId: contract._id,
       clientName: '',
       reference: number
@@ -543,7 +564,7 @@ exports.updateContractStatus = async (req, res) => {
         return res.status(403).json({ success: false, message: 'Only admin can validate pickup step' });
       }
       if (contract.status !== 'approved') {
-        return res.status(400).json({ success: false, message: 'Only approved contracts can start 48h countdown' });
+        return res.status(400).json({ success: false, message: 'Only approved contracts can start countdown' });
       }
 
       const resolvedProduct = await findPhoneByAnySource(contract.product);
@@ -562,9 +583,13 @@ exports.updateContractStatus = async (req, res) => {
       }
       await product.save();
 
+      // ⭐ Récupération du délai de retrait depuis les paramètres
+      const settings = await getCachedSettings();
+      const pickupDelayHours = settings.reseller.pickupDelayHours || 48;
+
       const handedAt = new Date();
       contract.handedAt = handedAt;
-      contract.dueAt = new Date(handedAt.getTime() + 48 * 60 * 60 * 1000);
+      contract.dueAt = new Date(handedAt.getTime() + pickupDelayHours * 60 * 60 * 1000);
       contract.status = 'active';
       contract.history.push({ byRole: role, byId: req.user?.id || null, action: 'status:active', data: { dueAt: contract.dueAt } });
       await contract.save();
@@ -575,8 +600,8 @@ exports.updateContractStatus = async (req, res) => {
         recipientId: contract.reseller,
         recipientRole: 'reseller',
         type: 'contract_updated',
-        title: 'Contrat mis a jour',
-        message: `Contrat ${contract.number} : retrait confirmé, compte à rebours 48h démarré.`,
+        title: 'Contrat mis à jour',
+        message: `Contrat ${contract.number} : retrait confirmé, compte à rebours ${pickupDelayHours}h démarré.`,
         requestId: contract._id,
         reference: contract.number
       });
@@ -693,7 +718,11 @@ exports.updateContractStatus = async (req, res) => {
         contract.payment.status = 'pending_cashier';
         contract.payment.amountExpected = amount;
         contract.payment.amountPaid = 0;
-        contract.payment.collectionDueAt = new Date(now.getTime() + 5 * 60 * 60 * 1000);
+
+        // ⭐ Récupération du délai d'encaissement depuis les paramètres
+        const settings = await getCachedSettings();
+        const collectionHours = settings.reseller.paymentCollectionHours || 5;
+        contract.payment.collectionDueAt = new Date(now.getTime() + collectionHours * 60 * 60 * 1000);
         contract.payment.paidAt = null;
         contract.payment.paidById = null;
         contract.payment.paidByRole = null;
@@ -703,7 +732,7 @@ exports.updateContractStatus = async (req, res) => {
         await notificationService.notifyCashiers({
           type: 'reseller_contract_cash_collection_required',
           title: 'Encaissement revendeur requis',
-          message: `Contrat ${contract.number} vendu. Encaissement de ${amount.toLocaleString('fr-FR')} FCFA à effectuer.`,
+          message: `Contrat ${contract.number} vendu. Encaissement de ${amount.toLocaleString('fr-FR')} FCFA à effectuer (délai ${collectionHours}h).`,
           requestId: contract._id,
           reference: contract.number
         });
@@ -856,6 +885,10 @@ exports.collectSoldContractPayment = async (req, res) => {
       return res.status(400).json({ success: false, message: 'This contract is not pending cashier collection' });
     }
 
+    // ⭐ Récupérer le délai d'encaissement pour le message d'erreur
+    const settings = await getCachedSettings();
+    const collectionHours = settings.reseller.paymentCollectionHours || 5;
+
     const now = new Date();
     const dueAt = contract.payment?.collectionDueAt ? new Date(contract.payment.collectionDueAt) : null;
     const isOverdue = Boolean(dueAt && dueAt < now);
@@ -866,10 +899,10 @@ exports.collectSoldContractPayment = async (req, res) => {
 
     if (dueAt && dueAt < now) {
       if (!canOverrideOverdue) {
-        return res.status(403).json({ success: false, message: 'Le délai de 5h est dépassé. Seul un manager peut autoriser cet encaissement.' });
+        return res.status(403).json({ success: false, message: `Le délai de ${collectionHours}h est dépassé. Seul un manager peut autoriser cet encaissement.` });
       }
       if (!overrideReason) {
-        return res.status(400).json({ success: false, message: 'Motif d\'override obligatoire pour encaisser après 5h.' });
+        return res.status(400).json({ success: false, message: 'Motif d\'override obligatoire pour encaisser après le délai.' });
       }
     }
 
@@ -986,6 +1019,13 @@ exports.renewDelay = async (req, res) => {
     const { delayHours } = req.body;
     if (!delayHours || delayHours < 1) {
       return res.status(400).json({ success: false, message: 'Le délai doit être d\'au moins 1 heure.' });
+    }
+
+    // ⭐ Vérifier que le nouveau délai ne dépasse pas le max autorisé
+    const settings = await getCachedSettings();
+    const maxOverride = settings.reseller.maxOverdueOverride || 72;
+    if (delayHours > maxOverride) {
+      return res.status(400).json({ success: false, message: `Le délai ne peut pas dépasser ${maxOverride} heures.` });
     }
 
     // Calcul de la nouvelle date d'échéance

@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useCashierAuth } from '../../context/CashierAuthContext'
+import { useCashierAuth } from '../../hooks/useCashierAuth'
 import { 
   CreditCard, Mail, Lock, ArrowRight, Shield, Wrench,
   Eye, EyeOff, Star, DollarSign

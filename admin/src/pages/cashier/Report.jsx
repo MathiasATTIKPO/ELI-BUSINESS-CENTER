@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { useCashierAuth } from '../../context/CashierAuthContext'
+import { useCashierAuth } from '../../hooks/useCashierAuth' 
 import { 
   Download, LogOut, ListChecks, Search,
   Calendar, DollarSign, CreditCard, TrendingUp,

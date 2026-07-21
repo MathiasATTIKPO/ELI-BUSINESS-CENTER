@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useResellerAuth } from '../../context/ResellerAuthContext'
+import { useResellerAuth } from '../../hooks/useResellerAuth'
 import {
   Store, Mail, Lock, ArrowRight, Shield, CreditCard,
   Eye, EyeOff, Star, Zap, Phone ,Wrench   
