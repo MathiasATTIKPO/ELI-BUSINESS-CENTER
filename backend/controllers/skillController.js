@@ -1,5 +1,6 @@
-const Skill = require('../models/Skill');
 const Employee = require('../models/Employee');
+const Skill = require('../models/Skill');
+
 
 // === CRUD ===
 
