@@ -31,6 +31,10 @@ const startServer = async () => {
   }
 };
 
-startServer();
+// ⚠️ Important : ne lancer le serveur que si ce fichier est exécuté directement
+if (require.main === module) {
+  startServer();
+}
 
+// ✅ Exporter l'app pour Vercel (serverless)
 module.exports = app;
