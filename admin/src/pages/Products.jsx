@@ -415,8 +415,13 @@ export default function Products() {
                 className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-all duration-200 cursor-pointer group"
               >
                 <div className="flex items-start justify-between mb-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-                    <Smartphone size={24} className="text-blue-600" />
+                  {/* Bloc image/icône modifié */}
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200 overflow-hidden">
+                    {product.photos && product.photos.length > 0 ? (
+                      <img src={product.photos[0]} alt={product.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <Smartphone size={24} className="text-blue-600" />
+                    )}
                   </div>
                   <div className="flex gap-1">
                     <button
@@ -520,10 +525,15 @@ export default function Products() {
                           className="hover:bg-gray-50/50 transition-colors cursor-pointer group"
                           onClick={() => window.location.href = `/admin/products/${product._id}`}
                         >
+                          {/* Colonne Produit avec miniature photo */}
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-                                <Smartphone size={18} className="text-blue-600" />
+                              <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200 overflow-hidden flex-shrink-0">
+                                {product.photos && product.photos.length > 0 ? (
+                                  <img src={product.photos[0]} alt={product.name} className="w-full h-full object-cover" />
+                                ) : (
+                                  <Smartphone size={18} className="text-blue-600" />
+                                )}
                               </div>
                               <div>
                                 <p className="font-semibold text-gray-900">{product.name}</p>

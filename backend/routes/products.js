@@ -1,34 +1,33 @@
 const express = require('express');
 const router = express.Router();
 const productsController = require('../controllers/productsController');
+const { uploadMultiple } = require('../middleware/upload'); // Import du middleware pour les photos
 
-const Product = require('../models/Product'); 
+const Product = require('../models/Product');
 
+// Route pour les téléphones disponibles (existante)
 router.get('/phones/available', async (req, res) => {
   try {
-    // Liste des marques de téléphones connues
-    const phoneBrands = ['Apple', 'Samsung', 'Xiaomi', 'OnePlus', 'Nokia', 'Huawei', 'OPPO', 'vivo', 'Google', 'Sony', 'Apple'];
-    
-    const phones = await Product.find({ 
+    const phoneBrands = ['Apple', 'Samsung', 'Xiaomi', 'OnePlus', 'Nokia', 'Huawei', 'OPPO', 'vivo', 'Google', 'Sony'];
+    const phones = await Product.find({
       $or: [
         { name: { $regex: new RegExp(phoneBrands.join('|'), 'i') } },
         { brand: { $regex: new RegExp(phoneBrands.join('|'), 'i') } }
       ],
       stock: { $gt: 0 },
-      active: true 
+      active: true
     }).select('name brand price stock photos');
-    
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       data: phones,
-      message: `${phones.length} téléphones disponibles` 
+      message: `${phones.length} téléphones disponibles`
     });
   } catch (error) {
     console.error('Erreur phones/available:', error);
-    res.status(500).json({ 
-      success: false, 
-      data: [], 
-      message: error.message 
+    res.status(500).json({
+      success: false,
+      data: [],
+      message: error.message
     });
   }
 });
@@ -91,5 +90,15 @@ router.get('/', productsController.getProducts);
  *         description: Product not found
  */
 router.get('/:id', productsController.getProductById);
+
+// ---------- Routes pour l'administration (avec gestion des photos) ----------
+// Créer un produit (avec upload de photos multiples)
+router.post('/', uploadMultiple, productsController.createProduct);
+
+// Mettre à jour un produit (ajout/suppression de photos)
+router.put('/:id', uploadMultiple, productsController.updateProduct);
+
+// Supprimer un produit (supprime également les photos physiques)
+router.delete('/:id', productsController.deleteProduct);
 
 module.exports = router;

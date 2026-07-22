@@ -23,7 +23,9 @@ import {
   Box,
   Eye,
   EyeOff,
-  Truck
+  Truck,
+  Plus,
+  X
 } from 'lucide-react'
 import api, { resolveMediaUrl } from '../services/api'
 import Toast from '../components/Toast'
@@ -36,10 +38,15 @@ export default function ProductForm() {
   })
   const [loading, setLoading] = useState(false)
   const [toast, setToast] = useState(null)
-  const [preview, setPreview] = useState(null)
   const [active, setActive] = useState(true)
   const [dragActive, setDragActive] = useState(false)
   const [isFetching, setIsFetching] = useState(false)
+
+  // Gestion des photos
+  const [existingPhotos, setExistingPhotos] = useState([]) // URLs des photos existantes
+  const [newPhotos, setNewPhotos] = useState([]) // { file, previewUrl } pour les nouvelles
+  const [photosToRemove, setPhotosToRemove] = useState([]) // indices des photos existantes à supprimer
+  const [preview, setPreview] = useState(null) // pour l'affichage principal (première photo)
 
   const watchPrice = watch('price')
   const watchStock = watch('stock')
@@ -50,10 +57,10 @@ export default function ProductForm() {
     if (isEditing && !isFetching) {
       fetchProduct()
     }
-  }, [id]) // Dépendance uniquement sur id
+  }, [id])
 
   const fetchProduct = async () => {
-    if (isFetching) return; // Évite les appels multiples
+    if (isFetching) return;
     
     setIsFetching(true)
     setLoading(true)
@@ -62,16 +69,18 @@ export default function ProductForm() {
       const response = await api.get(`/api/admin/products/${id}`)
       const product = response.data.data
       
-      // Mise à jour des valeurs du formulaire
       setValue('name', product.name || '')
       setValue('brand', product.brand || '')
       setValue('price', product.price || 0)
       setValue('stock', product.stock || 0)
       setActive(product.active !== undefined ? product.active : true)
       
-      // Gestion de la photo
-      const firstPhoto = product.photos && product.photos.length > 0 ? product.photos[0] : null
-      setPreview(firstPhoto ? resolveMediaUrl(firstPhoto) : null)
+      // Récupération des photos existantes
+      const photos = product.photos || []
+      setExistingPhotos(photos)
+      if (photos.length > 0) {
+        setPreview(resolveMediaUrl(photos[0]))
+      }
     } catch (error) {
       console.error('Erreur lors du chargement:', error)
       setToast({ type: 'error', message: 'Erreur lors du chargement du produit' })
@@ -81,11 +90,24 @@ export default function ProductForm() {
     }
   }
 
-  const handlePhotoChange = (e) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      processFile(file)
+  // Gestion des fichiers (multiples)
+  const handleFileChange = (e) => {
+    const files = Array.from(e.target.files)
+    if (files.length === 0) return
+    
+    const newFiles = files.map(file => ({
+      file,
+      previewUrl: URL.createObjectURL(file)
+    }))
+    
+    setNewPhotos(prev => [...prev, ...newFiles])
+    
+    // Mettre à jour l'aperçu principal avec la première nouvelle photo (si aucune existante ou pour montrer)
+    if (newFiles.length > 0 && !preview) {
+      setPreview(newFiles[0].previewUrl)
     }
+    // Réinitialiser l'input pour permettre de sélectionner à nouveau les mêmes fichiers
+    e.target.value = ''
   }
 
   const handleDrag = (e) => {
@@ -103,21 +125,55 @@ export default function ProductForm() {
     e.stopPropagation()
     setDragActive(false)
     
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      processFile(e.dataTransfer.files[0])
+    const files = Array.from(e.dataTransfer.files)
+    if (files.length === 0) return
+    
+    const newFiles = files.map(file => ({
+      file,
+      previewUrl: URL.createObjectURL(file)
+    }))
+    
+    setNewPhotos(prev => [...prev, ...newFiles])
+    if (newFiles.length > 0 && !preview) {
+      setPreview(newFiles[0].previewUrl)
     }
   }
 
-  const processFile = (file) => {
-    if (file.type.startsWith('image/')) {
-      const reader = new FileReader()
-      reader.onload = () => setPreview(reader.result)
-      reader.readAsDataURL(file)
-    } else {
-      setToast({ type: 'error', message: 'Veuillez sélectionner une image valide' })
+  // Supprimer une photo existante (marquage pour suppression)
+  const removeExistingPhoto = (index) => {
+    setPhotosToRemove(prev => [...prev, index])
+    setExistingPhotos(prev => prev.filter((_, i) => i !== index))
+    // Si on supprime la photo qui sert d'aperçu, on met à jour
+    if (preview === resolveMediaUrl(existingPhotos[index])) {
+      // Choisir la première photo restante ou une nouvelle photo
+      const remaining = existingPhotos.filter((_, i) => i !== index)
+      if (remaining.length > 0) {
+        setPreview(resolveMediaUrl(remaining[0]))
+      } else if (newPhotos.length > 0) {
+        setPreview(newPhotos[0].previewUrl)
+      } else {
+        setPreview(null)
+      }
     }
   }
 
+  // Supprimer une nouvelle photo (avant upload)
+  const removeNewPhoto = (index) => {
+    setNewPhotos(prev => prev.filter((_, i) => i !== index))
+    // Si on supprime la photo qui sert d'aperçu, on met à jour
+    if (preview === newPhotos[index].previewUrl) {
+      if (newPhotos.length > 1) {
+        const next = newPhotos.filter((_, i) => i !== index)
+        setPreview(next[0].previewUrl)
+      } else if (existingPhotos.length > 0) {
+        setPreview(resolveMediaUrl(existingPhotos[0]))
+      } else {
+        setPreview(null)
+      }
+    }
+  }
+
+  // Soumission
   const onSubmit = async (data) => {
     try {
       const formData = new FormData()
@@ -127,8 +183,14 @@ export default function ProductForm() {
       formData.append('stock', String(data.stock || 0))
       formData.append('active', active ? 'true' : 'false')
       
-      if (data.photo?.[0]) {
-        formData.append('photo', data.photo[0])
+      // Ajouter les nouvelles photos (champ "photos")
+      newPhotos.forEach((photo) => {
+        formData.append('photos', photo.file)
+      })
+
+      // Ajouter les indices des photos existantes à supprimer
+      if (photosToRemove.length > 0) {
+        formData.append('removePhotos', JSON.stringify(photosToRemove))
       }
 
       if (isEditing) {
@@ -202,7 +264,7 @@ export default function ProductForm() {
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        {/* Carte Informations principales */}
+        {/* Carte Informations principales (inchangée) */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow duration-200">
           <div className="px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-white">
             <div className="flex items-center gap-3">
@@ -218,7 +280,7 @@ export default function ProductForm() {
           
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Nom du produit */}
+              {/* Nom */}
               <div className="space-y-2">
                 <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
                   <Tag size={16} className="text-blue-600" />
@@ -380,7 +442,7 @@ export default function ProductForm() {
           </div>
         </div>
 
-        {/* Carte Photo */}
+        {/* Carte Photos (modifiée pour gérer plusieurs photos) */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow duration-200">
           <div className="px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-purple-50 to-white">
             <div className="flex items-center gap-3">
@@ -388,93 +450,124 @@ export default function ProductForm() {
                 <Camera size={20} className="text-white" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-gray-900">Photo du produit</h2>
-                <p className="text-sm text-gray-500">Ajoutez une image attractive pour le produit</p>
+                <h2 className="text-lg font-bold text-gray-900">Photos du produit</h2>
+                <p className="text-sm text-gray-500">Ajoutez plusieurs images pour mettre en valeur votre produit</p>
               </div>
             </div>
           </div>
           
           <div className="p-6">
-            <div className="space-y-4">
-              <div
-                onDragEnter={handleDrag}
-                onDragLeave={handleDrag}
-                onDragOver={handleDrag}
-                onDrop={handleDrop}
-                className={`relative border-2 border-dashed rounded-2xl p-8 text-center transition-all duration-200 ${
-                  dragActive 
-                    ? 'border-blue-400 bg-blue-50 scale-105' 
-                    : preview 
-                      ? 'border-green-300 bg-green-50' 
-                      : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
-                }`}
-              >
-                {preview ? (
-                  <div className="space-y-4">
-                    <div className="relative inline-block">
-                      <img 
-                        src={preview} 
-                        alt="Aperçu du produit" 
-                        className="w-48 h-48 object-cover rounded-2xl shadow-lg ring-4 ring-white" 
+            {/* Zone de dépôt / sélection */}
+            <div
+              onDragEnter={handleDrag}
+              onDragLeave={handleDrag}
+              onDragOver={handleDrag}
+              onDrop={handleDrop}
+              className={`relative border-2 border-dashed rounded-2xl p-8 text-center transition-all duration-200 ${
+                dragActive 
+                  ? 'border-blue-400 bg-blue-50 scale-105' 
+                  : (existingPhotos.length > 0 || newPhotos.length > 0)
+                    ? 'border-green-300 bg-green-50'
+                    : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
+              }`}
+            >
+              <div className="space-y-4">
+                <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mx-auto">
+                  <Upload size={32} className="text-gray-400" />
+                </div>
+                <div>
+                  <p className="text-gray-700 font-medium">
+                    Glissez-déposez vos images ici
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    ou cliquez pour sélectionner plusieurs fichiers
+                  </p>
+                </div>
+                <p className="text-xs text-gray-400">
+                  Formats acceptés : JPG, PNG, WebP • Max 5MB par image • Jusqu'à 10 images
+                </p>
+              </div>
+              
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleFileChange}
+                className="absolute inset-0 opacity-0 cursor-pointer"
+              />
+            </div>
+
+            {/* Galerie des photos existantes */}
+            {existingPhotos.length > 0 && (
+              <div className="mt-6">
+                <p className="text-sm font-medium text-gray-700 mb-3">Photos actuelles ({existingPhotos.length})</p>
+                <div className="flex flex-wrap gap-4">
+                  {existingPhotos.map((url, index) => (
+                    <div key={`existing-${index}`} className="relative group">
+                      <img
+                        src={resolveMediaUrl(url)}
+                        alt={`Photo ${index+1}`}
+                        className="w-24 h-24 object-cover rounded-xl border-2 border-gray-200 shadow-sm"
                       />
                       <button
                         type="button"
-                        onClick={() => {
-                          setPreview(null)
-                          const input = document.querySelector('input[type="file"]')
-                          if (input) input.value = ''
-                        }}
-                        className="absolute -top-2 -right-2 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-110"
+                        onClick={() => removeExistingPhoto(index)}
+                        className="absolute -top-2 -right-2 p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 transition-all shadow-md hover:scale-110"
                       >
-                        <Trash2 size={16} />
+                        <X size={14} />
                       </button>
                     </div>
-                    <p className="text-sm text-green-600 font-medium flex items-center justify-center gap-2">
-                      <CheckCircle size={16} />
-                      Image chargée avec succès
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mx-auto">
-                      <Upload size={32} className="text-gray-400" />
-                    </div>
-                    <div>
-                      <p className="text-gray-700 font-medium">
-                        Glissez-déposez une image ici
-                      </p>
-                      <p className="text-sm text-gray-500 mt-1">
-                        ou cliquez pour sélectionner un fichier
-                      </p>
-                    </div>
-                    <p className="text-xs text-gray-400">
-                      Formats acceptés : JPG, PNG, WebP • Max 5MB
-                    </p>
-                  </div>
-                )}
-                
-                <input
-                  {...register('photo')}
-                  type="file"
-                  accept="image/*"
-                  onChange={handlePhotoChange}
-                  className="absolute inset-0 opacity-0 cursor-pointer"
-                />
-              </div>
-
-              {!preview && (
-                <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-xl">
-                  <Info size={16} className="text-blue-600" />
-                  <p className="text-sm text-blue-700">
-                    Une bonne photo augmente les ventes de 30%. Utilisez une image claire et professionnelle.
-                  </p>
+                  ))}
                 </div>
-              )}
+              </div>
+            )}
+
+            {/* Aperçu des nouvelles photos */}
+            {newPhotos.length > 0 && (
+              <div className="mt-4">
+                <p className="text-sm font-medium text-gray-700 mb-3">Nouvelles photos ({newPhotos.length})</p>
+                <div className="flex flex-wrap gap-4">
+                  {newPhotos.map((photo, index) => (
+                    <div key={`new-${index}`} className="relative group">
+                      <img
+                        src={photo.previewUrl}
+                        alt={`Nouvelle ${index+1}`}
+                        className="w-24 h-24 object-cover rounded-xl border-2 border-blue-300 shadow-sm"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeNewPhoto(index)}
+                        className="absolute -top-2 -right-2 p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 transition-all shadow-md hover:scale-110"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Aperçu principal (première photo) */}
+            {preview && (
+              <div className="mt-6 p-4 bg-gray-50 rounded-xl flex items-center gap-4">
+                <img src={preview} alt="Aperçu principal" className="w-16 h-16 object-cover rounded-lg shadow" />
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Photo principale</p>
+                  <p className="text-xs text-gray-500">Cette image sera affichée en premier dans le catalogue</p>
+                </div>
+              </div>
+            )}
+
+            <div className="mt-4 flex items-center gap-2 p-3 bg-blue-50 rounded-xl">
+              <Info size={16} className="text-blue-600" />
+              <p className="text-sm text-blue-700">
+                Vous pouvez ajouter jusqu'à 10 photos. Les premières seront utilisées comme vignettes.
+              </p>
             </div>
           </div>
         </div>
 
-        {/* Carte Statut */}
+        {/* Carte Statut (inchangée) */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow duration-200">
           <div className="px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-emerald-50 to-white">
             <div className="flex items-center gap-3">

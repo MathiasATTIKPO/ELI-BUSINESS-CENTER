@@ -41,6 +41,7 @@ function Products({ phoneNumber }) {
         }
         setProducts(json.data || []);
       } catch (error) {
+        console.error('Fetch error:', error);
         setLoadError(error.message || 'Impossible de charger les produits.');
         setProducts([]);
       } finally {
@@ -55,9 +56,9 @@ function Products({ phoneNumber }) {
     const modelSet = new Set();
     const stateSet = new Set();
     products.forEach((product) => {
-      if (product.brand) brandSet.add(product.brand);
-      if (product.model) modelSet.add(product.model);
-      if (product.state) stateSet.add(product.state);
+      if (product && product.brand) brandSet.add(product.brand);
+      if (product && product.model) modelSet.add(product.model);
+      if (product && product.state) stateSet.add(product.state);
     });
     return {
       brands: [...brandSet].sort(),
@@ -69,6 +70,7 @@ function Products({ phoneNumber }) {
   const filteredProducts = useMemo(() => {
     const query = search.trim().toLowerCase();
     return products.filter((product) => {
+      if (!product) return false;
       if (brandFilter && product.brand !== brandFilter) return false;
       if (modelFilter && product.model !== modelFilter) return false;
       if (stateFilter && product.state !== stateFilter) return false;
@@ -283,9 +285,11 @@ function Products({ phoneNumber }) {
               <p className="mt-3 text-red-600">{loadError}</p>
             </div>
           ) : pageProducts.length > 0 ? (
-            pageProducts.map((product) => (
-              <ProductCard key={product._id || product.name} product={product} phoneNumber={phoneNumber} />
-            ))
+            pageProducts
+              .filter(product => product) // Ignore les undefined
+              .map((product) => (
+                <ProductCard key={product._id || product.name} product={product} phoneNumber={phoneNumber} />
+              ))
           ) : (
             <div className="col-span-full rounded-3xl bg-white/70 backdrop-blur-xl border border-white/60 p-10 text-center shadow-md">
               <h2 className="text-xl font-semibold text-slate-900">Aucun produit trouvé</h2>

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const upload = require('../middleware/upload');
+const { upload } = require('../middleware/upload'); // ← Correction : destructuration
 const clientController = require('../controllers/clientController');
 
 // Route pour récupérer les produits disponibles

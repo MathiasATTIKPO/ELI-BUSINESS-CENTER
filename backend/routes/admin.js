@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
-const upload = require('../middleware/upload');
+const { upload } = require('../middleware/upload'); // ← Correction : destructuration
 const adminController = require('../controllers/adminController');
 const resellerController = require('../controllers/resellerController');
 
@@ -40,6 +40,7 @@ router.use(auth);
 // ===== PRODUCTS ROUTES =====
 router.get('/products', adminController.getProducts);
 router.get('/products/:id', adminController.getProductById);
+// Note : si vous voulez supporter plusieurs photos, remplacez upload.single('photo') par upload.array('photos', 10)
 router.post('/products', upload.single('photo'), adminController.createProduct);
 router.put('/products/:id', upload.single('photo'), adminController.updateProduct);
 router.delete('/products/:id', adminController.deleteProduct);
