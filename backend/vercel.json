@@ -1,19 +1,27 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "backend/server.cjs",
-      "use": "@vercel/node"
+  "functions": {
+    "backend/server.cjs": {
+      "includeFiles": "**"
     }
-  ],
-  "routes": [
+  },
+  "rewrites": [
     {
-      "src": "/api/(.*)",
-      "dest": "backend/server.cjs"
+      "source": "/api/(.*)",
+      "destination": "/backend/server.cjs"
     },
     {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET, POST, OPTIONS" },
+        { "key": "Access-Control-Allow-Headers", "value": "Content-Type" }
+      ]
     }
   ]
 }

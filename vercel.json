@@ -3,57 +3,26 @@
   "buildCommand": "npm run build:vercel",
   "outputDirectory": "client/dist",
   "rewrites": [
-    {
-      "source": "/uploads/(.*)",
-      "destination": "https://eli-business-center.vercel.app/uploads/$1"
-    },
+    { "source": "/admin", "destination": "/admin/index.html" },
+    { "source": "/admin/(.*)", "destination": "/admin/index.html" },
+    { "source": "/cashier", "destination": "/admin/index.html" },
+    { "source": "/cashier/(.*)", "destination": "/admin/index.html" },
+    { "source": "/technician", "destination": "/admin/index.html" },
+    { "source": "/technician/(.*)", "destination": "/admin/index.html" },
+    { "source": "/vip", "destination": "/admin/index.html" },
+    { "source": "/vip/(.*)", "destination": "/admin/index.html" },
+    { "source": "/reseller", "destination": "/admin/index.html" },
+    { "source": "/reseller/(.*)", "destination": "/admin/index.html" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "headers": [
     {
       "source": "/api/(.*)",
-      "destination": "https://eli-business-center.vercel.app/api/$1"
-    },
-    {
-      "source": "/admin",
-      "destination": "/admin/index.html"
-    },
-    {
-      "source": "/admin/(.*)",
-      "destination": "/admin/index.html"
-    },
-    {
-      "source": "/cashier",
-      "destination": "/admin/index.html"
-    },
-    {
-      "source": "/cashier/(.*)",
-      "destination": "/admin/index.html"
-    },
-    {
-      "source": "/technician",
-      "destination": "/admin/index.html"
-    },
-    {
-      "source": "/technician/(.*)",
-      "destination": "/admin/index.html"
-    },
-    {
-      "source": "/vip",
-      "destination": "/admin/index.html"
-    },
-    {
-      "source": "/vip/(.*)",
-      "destination": "/admin/index.html"
-    },
-    {
-      "source": "/reseller",
-      "destination": "/admin/index.html"
-    },
-    {
-      "source": "/reseller/(.*)",
-      "destination": "/admin/index.html"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET, POST, OPTIONS" },
+        { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization" }
+      ]
     }
   ]
 }
