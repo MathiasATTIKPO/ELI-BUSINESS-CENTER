@@ -93,12 +93,17 @@ router.get('/:id', productsController.getProductById);
 
 // ---------- Routes pour l'administration (avec gestion des photos) ----------
 // Créer un produit (avec upload de photos multiples)
-router.post('/', uploadMultiple, productsController.createProduct);
 
-// Mettre à jour un produit (ajout/suppression de photos)
-router.put('/:id', uploadMultiple, productsController.updateProduct);
+
+router.post('/', uploadMultiple.array('photos', 10), productsController.createProduct);
+
+router.put('/:id', uploadMultiple.array('photos', 10), productsController.updateProduct);
 
 // Supprimer un produit (supprime également les photos physiques)
 router.delete('/:id', productsController.deleteProduct);
+
+
+
+
 
 module.exports = router;

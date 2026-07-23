@@ -12,7 +12,7 @@ const uploadBufferToCloudinary = (buffer, options = {}) => {
         resource_type: options.resourceType || 'image',
         allowed_formats: options.allowedFormats || ['jpg', 'jpeg', 'png', 'webp'],
         transformation: options.transformation || undefined,
-        public_id: options.public_id || undefined, // optionnel
+        public_id: options.public_id || undefined,
       },
       (error, result) => {
         if (error) return reject(error);
@@ -24,7 +24,7 @@ const uploadBufferToCloudinary = (buffer, options = {}) => {
 };
 
 // ------------------------------------------------------------
-//  Filtre de fichiers (identique à l’original)
+//  Filtre de fichiers
 // ------------------------------------------------------------
 const fileFilter = (req, file, cb) => {
   const allowedTypes = [
@@ -39,69 +39,59 @@ const fileFilter = (req, file, cb) => {
 };
 
 // ------------------------------------------------------------
-//  Middleware de base (memoryStorage + multer)
+//  Instances Multer de base
 // ------------------------------------------------------------
+// Instance Multer générique (à utiliser avec .single(), .array(), etc.)
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter,
+});
+
+// Instance pour les uploads avec le champ 'photos' (utilisée dans certaines routes)
+const uploadMultiple = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter,
+});
+
+// ------------------------------------------------------------
+//  Middlewares pré‑configurés (prêts à être utilisés directement)
+// ------------------------------------------------------------
+// Pour les routes qui n'ont pas besoin de spécifier le champ et le nombre
 const createMulterMiddleware = (fieldName = 'files', maxCount = 10, limits = {}) => {
-  const storage = multer.memoryStorage();
   return multer({
-    storage,
+    storage: multer.memoryStorage(),
     limits: { fileSize: 10 * 1024 * 1024, ...limits },
     fileFilter,
   }).array(fieldName, maxCount);
 };
 
-// ------------------------------------------------------------
-//  Middlewares pré-configurés pour chaque cas d'usage
-// ------------------------------------------------------------
 const uploadProducts = createMulterMiddleware('files', 10);
 const uploadContracts = createMulterMiddleware('files', 5);
 const uploadInvoices = createMulterMiddleware('files', 5);
 const uploadReceipts = createMulterMiddleware('files', 5);
 const uploadVipInvoices = createMulterMiddleware('files', 5);
 
-// Pour compatibilité avec les routes qui utilisent le champ 'photos'
-const uploadMultiple = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 },
-  fileFilter,
-}).array('photos', 10);
-
-// Instance de base (champ 'files')
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 },
-  fileFilter,
-}).array('files', 10);
-
 // ------------------------------------------------------------
-//  Middleware d'upload complet (multer + envoi vers Cloudinary)
+//  Middlewares "tout‑en‑un" (Multer + upload Cloudinary automatique)
 // ------------------------------------------------------------
-// À utiliser comme remplacement direct de vos anciens middlewares
-// Exemple : router.post('/products', uploadAndProcess('products', 'image'), handler)
+// Pratique pour les routes où vous souhaitez que les fichiers soient immédiatement envoyés sur Cloudinary
 const uploadAndProcess = (folder, resourceType = 'image', transformation = undefined) => {
-  // Le vrai middleware à retourner
   return async (req, res, next) => {
     try {
       // 1) Multer lit les fichiers en mémoire
       await new Promise((resolve, reject) => {
-        const multerMiddleware = multer({
+        multer({
           storage: multer.memoryStorage(),
           limits: { fileSize: 10 * 1024 * 1024 },
           fileFilter,
-        }).array('files', 10);
-
-        multerMiddleware(req, res, (err) => {
-          if (err) return reject(err);
-          resolve();
-        });
+        }).array('files', 10)(req, res, (err) => (err ? reject(err) : resolve()));
       });
 
-      // 2) Si aucun fichier, on passe à la suite
-      if (!req.files || req.files.length === 0) {
-        return next();
-      }
+      if (!req.files || req.files.length === 0) return next();
 
-      // 3) Uploader chaque buffer vers Cloudinary
+      // 2) Envoi des buffers vers Cloudinary
       const uploadPromises = req.files.map((file) =>
         uploadBufferToCloudinary(file.buffer, {
           folder,
@@ -109,10 +99,9 @@ const uploadAndProcess = (folder, resourceType = 'image', transformation = undef
           transformation: resourceType === 'image' ? transformation : undefined,
         })
       );
-
       const results = await Promise.all(uploadPromises);
 
-      // 4) Attacher les URLs sécurisées et les public_id aux fichiers
+      // 3) Attacher les URLs et public_id aux fichiers
       req.files = req.files.map((file, index) => ({
         ...file,
         cloudinary: {
@@ -120,8 +109,6 @@ const uploadAndProcess = (folder, resourceType = 'image', transformation = undef
           public_id: results[index].public_id,
         },
       }));
-
-      // 5) Continuer vers le handler
       next();
     } catch (error) {
       next(error);
@@ -129,14 +116,12 @@ const uploadAndProcess = (folder, resourceType = 'image', transformation = undef
   };
 };
 
-// Versions pré-configurées avec transformations
 const uploadProductsCloud = uploadAndProcess('products', 'image', [{ width: 800, height: 800, crop: 'limit' }]);
 const uploadContractsCloud = uploadAndProcess('contracts', 'raw');
 const uploadInvoicesCloud = uploadAndProcess('invoices', 'raw');
 const uploadReceiptsCloud = uploadAndProcess('receipts', 'raw');
 const uploadVipInvoicesCloud = uploadAndProcess('vip_invoices', 'raw');
 
-// Pour le champ 'photos' (si besoin)
 const uploadMultipleCloud = async (req, res, next) => {
   try {
     await new Promise((resolve, reject) => {
@@ -156,7 +141,6 @@ const uploadMultipleCloud = async (req, res, next) => {
         transformation: [{ width: 800, height: 800, crop: 'limit' }],
       })
     );
-
     const results = await Promise.all(uploadPromises);
     req.files = req.files.map((file, i) => ({
       ...file,
@@ -169,19 +153,21 @@ const uploadMultipleCloud = async (req, res, next) => {
 };
 
 // ------------------------------------------------------------
-//  Exports (conservés pour compatibilité avec votre code existant)
+//  Exports
 // ------------------------------------------------------------
 module.exports = {
-  // Pour les routes qui veulent faire l'upload en deux étapes (multer puis Cloudinary manuel)
+  // Instances Multer (pour appeler .single(), .array(), .fields() etc.)
   upload,
   uploadMultiple,
+
+  // Middlewares Multer pré‑configurés (utilisables directement dans les routes)
   uploadProducts,
   uploadContracts,
   uploadInvoices,
   uploadReceipts,
   uploadVipInvoices,
 
-  // NOUVEAU : middlewares "tout-en-un" qui font multer + Cloudinary
+  // Middlewares tout‑en‑un (Multer + Cloudinary)
   uploadProductsCloud,
   uploadContractsCloud,
   uploadInvoicesCloud,
@@ -189,6 +175,6 @@ module.exports = {
   uploadVipInvoicesCloud,
   uploadMultipleCloud,
 
-  // Fonction utilitaire si vous voulez faire des uploads personnalisés ailleurs
+  // Utilitaire
   uploadBufferToCloudinary,
 };
