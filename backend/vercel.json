@@ -1,13 +1,13 @@
 {
   "functions": {
-    "backend/server.cjs": {
+    "backend/server.js": {
       "includeFiles": "**"
     }
   },
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "/backend/server.cjs"
+      "destination": "/backend/server.js"
     },
     {
       "source": "/(.*)",
