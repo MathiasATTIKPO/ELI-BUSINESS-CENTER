@@ -1,6 +1,9 @@
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
+console.log('server.js loaded, exporting app');
+
+
 const { app } = require('./app');
 const { connectDatabase, ensureSeedData, startBackgroundJobs } = require('./bootstrap');
 const logger = require('./utils/logger');
