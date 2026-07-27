@@ -6,7 +6,6 @@ const configuredBaseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/+
 const configuredMediaBaseUrl = (import.meta.env.VITE_MEDIA_BASE_URL || '').replace(/\/+$/, '')
 
 
-const configuredBaseUrl =  (import.meta.env.VITE_API_BASE_URL || '').replace(/\/+$/, '');
 const API_BASE_URL =
   configuredBaseUrl || 'http://localhost:4001';
 
