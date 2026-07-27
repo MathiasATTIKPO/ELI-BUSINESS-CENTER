@@ -1,27 +1,9 @@
 {
-  "buildCommand": "npm run build:vercel",
-  "outputDirectory": "client/dist",
-  "rewrites": [
-    { "source": "/admin", "destination": "/admin/index.html" },
-    { "source": "/admin/(.*)", "destination": "/admin/index.html" },
-    { "source": "/cashier", "destination": "/admin/index.html" },
-    { "source": "/cashier/(.*)", "destination": "/admin/index.html" },
-    { "source": "/technician", "destination": "/admin/index.html" },
-    { "source": "/technician/(.*)", "destination": "/admin/index.html" },
-    { "source": "/vip", "destination": "/admin/index.html" },
-    { "source": "/vip/(.*)", "destination": "/admin/index.html" },
-    { "source": "/reseller", "destination": "/admin/index.html" },
-    { "source": "/reseller/(.*)", "destination": "/admin/index.html" },
-    { "source": "/(.*)", "destination": "/index.html" }
-  ],
-  "headers": [
+  "version": 2,
+  "routes": [
     {
-      "source": "/api/(.*)",
-      "headers": [
-        { "key": "Access-Control-Allow-Origin", "value": "*" },
-        { "key": "Access-Control-Allow-Methods", "value": "GET, POST, OPTIONS" },
-        { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization" }
-      ]
+      "src": "/(.*)",
+      "dest": "/api/index.js"
     }
   ]
 }
