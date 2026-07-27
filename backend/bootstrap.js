@@ -72,6 +72,7 @@ const attachConnectionDiagnostics = () => {
 
   mongoose.connection.on('disconnected', () => {
     state.dbConnected = false;
+    connectPromise = null;
     logger.warn('db', 'Mongoose connection event: disconnected');
   });
 
@@ -84,9 +85,23 @@ const attachConnectionDiagnostics = () => {
 const connectDatabase = async () => {
   attachConnectionDiagnostics();
 
-  if (state.dbConnected || mongoose.connection.readyState === 1) {
+  const readyState = mongoose.connection.readyState;
+
+  if (readyState === 1) {
     state.dbConnected = true;
     return mongoose.connection;
+  }
+
+  state.dbConnected = false;
+
+  if (readyState === 2 && connectPromise) {
+    return connectPromise;
+  }
+
+  // A resolved promise from a previous serverless invocation must not prevent
+  // Mongoose from reconnecting after its underlying connection was dropped.
+  if (readyState === 0) {
+    connectPromise = null;
   }
 
   const mongoUri = getMongoUri();
