@@ -91,15 +91,13 @@ api.interceptors.response.use(
       const status = error.response.status
       const url = error.config?.url || ''
       
-      // 🔹 Redirection vers les pages d'erreur 404 et 500 (sauf pour les endpoints d'authentification)
+      // Redirection 404 uniquement. Une erreur serveur doit laisser
+      // l'utilisateur sur la page courante afin que le composant puisse
+      // afficher son propre message d'erreur.
       const isAuthEndpoint = /\/login|\/forgot|\/reset|\/admin\/login|\/technician\/login|\/cashier\/login|\/reseller\/login|\/vip\/login/.test(url)
       if (!isAuthEndpoint && typeof window !== 'undefined') {
         if (status === 404) {
           window.location.href = '/404?from=' + encodeURIComponent(window.location.pathname)
-          return Promise.reject(error)
-        }
-        if (status === 500) {
-          window.location.href = '/500'
           return Promise.reject(error)
         }
       }
