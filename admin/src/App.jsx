@@ -207,13 +207,7 @@ function TechnicianLayout() {
         </div>
       </div>
       <main className="p-3 sm:p-4 lg:p-6">
-        <Routes>
-          <Route path="dashboard" element={<TechnicianDashboard />} />
-          <Route path="repair/:id" element={<TechnicianRepairDetail />} />
-          <Route path="tradein/:id" element={<TechnicianTradeInDetail />} />
-          <Route path="history" element={<TechnicianHistory />} />
-          <Route path="*" element={<Navigate to="/technician/dashboard" replace />} />
-        </Routes>
+        <Outlet />
       </main>
     </div>
   )
@@ -274,13 +268,7 @@ function CashierLayout() {
         </div>
       </div>
       <main className="p-6">
-        <Routes>
-          <Route path="sales" element={<CashierSales />} />
-          <Route path="repair/:id" element={<CashierRepairDetail />} />
-          <Route path="tradein/:id" element={<CashierTradeInDetail />} />
-          <Route path="report" element={<CashierReport />} />
-          <Route path="*" element={<Navigate to="/cashier/sales" replace />} />
-        </Routes>
+        <Outlet />
       </main>
     </div>
   )
@@ -318,13 +306,20 @@ export default function App() {
 
                       {/* Protected routes */}
                       <Route
-                        path="/technician/*"
+                        path="/technician"
                         element={
                           <TechnicianProtectedRoute>
                             <TechnicianLayout />
                           </TechnicianProtectedRoute>
                         }
-                      />
+                      >
+                        <Route index element={<Navigate to="/technician/dashboard" replace />} />
+                        <Route path="dashboard" element={<TechnicianDashboard />} />
+                        <Route path="repair/:id" element={<TechnicianRepairDetail />} />
+                        <Route path="tradein/:id" element={<TechnicianTradeInDetail />} />
+                        <Route path="history" element={<TechnicianHistory />} />
+                        <Route path="*" element={<Navigate to="/technician/dashboard" replace />} />
+                      </Route>
                       <Route
                         path="/reseller/*"
                         element={
@@ -342,13 +337,20 @@ export default function App() {
                         }
                       />
                       <Route
-                        path="/cashier/*"
+                        path="/cashier"
                         element={
                           <CashierProtectedRoute>
                             <CashierLayout />
                           </CashierProtectedRoute>
                         }
-                      />
+                      >
+                        <Route index element={<Navigate to="/cashier/sales" replace />} />
+                        <Route path="sales" element={<CashierSales />} />
+                        <Route path="repair/:id" element={<CashierRepairDetail />} />
+                        <Route path="tradein/:id" element={<CashierTradeInDetail />} />
+                        <Route path="report" element={<CashierReport />} />
+                        <Route path="*" element={<Navigate to="/cashier/sales" replace />} />
+                      </Route>
 
                       {/* Admin routes (with nested layout) */}
                       <Route
@@ -391,11 +393,11 @@ export default function App() {
                       {/* Root redirect */}
                       <Route path="/" element={<Navigate to="/admin/login" replace />} />
 
-                      {/* Error routes 
+                      {/* Error routes */}
                       <Route path="/404" element={<ErrorPage type="404" />} />
                       <Route path="/500" element={<ErrorPage type="500" />} />
                       <Route path="/offline" element={<ErrorPage type="offline" />} />
-                      <Route path="*" element={<ErrorPage type="404" />} />*/}
+                      <Route path="*" element={<ErrorPage type="404" />} />
                     </Routes>
                   </NotificationProvider>
                 </VIPAuthProvider>

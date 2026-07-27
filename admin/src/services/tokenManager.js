@@ -71,7 +71,15 @@ class TokenManager {
    */
   static getUser(role = 'admin') {
     const userStr = localStorage.getItem(USER_KEYS[role])
-    return userStr ? JSON.parse(userStr) : null
+    if (!userStr) return null
+
+    try {
+      return JSON.parse(userStr)
+    } catch (error) {
+      console.error(`[TokenManager] Invalid ${role} user data:`, error)
+      this.clearRole(role)
+      return null
+    }
   }
 
   /**

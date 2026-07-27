@@ -11,13 +11,18 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const initAuth = async () => {
-      const roles = ['admin', 'cashier', 'technician', 'reseller', 'vip']
+      const activeRole = localStorage.getItem('active_role')
+
+      const roles = activeRole
+        ? [activeRole]
+        : ['admin', 'cashier', 'technician', 'reseller', 'vip']
+
       let found = false
-      
+
       for (const role of roles) {
         const token = localStorage.getItem(`${role}_token`)
         const userData = localStorage.getItem(`${role}_user`)
-        
+
         if (token && userData) {
           try {
             setUser(JSON.parse(userData))
@@ -31,24 +36,24 @@ export const AuthProvider = ({ children }) => {
           }
         }
       }
-      
+
       if (!found) {
         console.log('[AuthContext] Aucun utilisateur authentifié trouvé')
       }
-      
+
       setLoading(false)
     }
-    
+
     initAuth()
   }, [])
 
   const login = (userData, token, role) => {
     console.log(`[AuthContext] Login - rôle: ${role}`, userData)
-    
+
     localStorage.setItem(`${role}_token`, token)
     localStorage.setItem(`${role}_user`, JSON.stringify(userData))
     localStorage.setItem('active_role', role)
-    
+
     setUser(userData)
     setActiveRole(role)
     api.defaults.headers.common['Authorization'] = `Bearer ${token}`
@@ -56,20 +61,20 @@ export const AuthProvider = ({ children }) => {
 
   const logout = (role) => {
     console.log(`[AuthContext] Logout demandé pour le rôle: ${role}`)
-    
+
     if (role) {
       localStorage.removeItem(`${role}_token`)
       localStorage.removeItem(`${role}_user`)
-      
+
       if (activeRole === role) {
         const roles = ['admin', 'cashier', 'technician', 'reseller', 'vip']
         let found = false
-        
+
         for (const r of roles) {
           if (r === role) continue
           const token = localStorage.getItem(`${r}_token`)
           const userData = localStorage.getItem(`${r}_user`)
-          
+
           if (token && userData) {
             try {
               setUser(JSON.parse(userData))
@@ -84,7 +89,7 @@ export const AuthProvider = ({ children }) => {
             }
           }
         }
-        
+
         if (!found) {
           setUser(null)
           setActiveRole(null)
@@ -101,7 +106,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem('technician_token')
       localStorage.removeItem('technician_user')
       localStorage.removeItem('active_role')
-      
+
       setUser(null)
       setActiveRole(null)
       delete api.defaults.headers.common['Authorization']
