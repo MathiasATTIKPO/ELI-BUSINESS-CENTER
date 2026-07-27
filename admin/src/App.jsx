@@ -391,11 +391,11 @@ export default function App() {
                       {/* Root redirect */}
                       <Route path="/" element={<Navigate to="/admin/login" replace />} />
 
-                      {/* Error routes */}
+                      {/* Error routes 
                       <Route path="/404" element={<ErrorPage type="404" />} />
                       <Route path="/500" element={<ErrorPage type="500" />} />
                       <Route path="/offline" element={<ErrorPage type="offline" />} />
-                      <Route path="*" element={<ErrorPage type="404" />} />
+                      <Route path="*" element={<ErrorPage type="404" />} />*/}
                     </Routes>
                   </NotificationProvider>
                 </VIPAuthProvider>
