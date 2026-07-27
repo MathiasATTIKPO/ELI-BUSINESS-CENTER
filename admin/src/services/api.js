@@ -4,10 +4,14 @@ import TokenManager from './tokenManager'
 
 const configuredBaseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/+$/, '')
 const configuredMediaBaseUrl = (import.meta.env.VITE_MEDIA_BASE_URL || '').replace(/\/+$/, '')
-const isVercelRuntime = typeof window !== 'undefined' && /\.vercel\.app$/i.test(window.location.hostname)
-const API_BASE_URL = isVercelRuntime
-  ? ''
-  : (configuredBaseUrl || 'http://localhost:4001')
+
+
+const configuredBaseUrl =  (import.meta.env.VITE_API_BASE_URL || '').replace(/\/+$/, '');
+const API_BASE_URL =
+  configuredBaseUrl || 'http://localhost:4001';
+
+console.log('API_BASE_URL =', API_BASE_URL);
+
 const MEDIA_BASE_URL = configuredMediaBaseUrl || configuredBaseUrl || API_BASE_URL
 
 const resolveMediaUrl = (value) => {
