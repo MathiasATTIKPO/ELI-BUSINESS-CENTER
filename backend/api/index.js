@@ -10,7 +10,31 @@ module.exports = async (req, res) => {
       await ensureSeedData();
     }
 
-    return app(req, res);
+    // Express returns before asynchronous route handlers have sent their
+    // response. Keep the Vercel invocation alive until the response is
+    // complete so the MongoDB connection is not frozen in the meantime.
+    await new Promise((resolve, reject) => {
+      const cleanup = () => {
+        res.removeListener('finish', finish);
+        res.removeListener('close', finish);
+      };
+      const finish = () => {
+        cleanup();
+        resolve();
+      };
+
+      res.once('finish', finish);
+      res.once('close', finish);
+
+      try {
+        app(req, res);
+      } catch (error) {
+        cleanup();
+        reject(error);
+      }
+    });
+
+    return undefined;
   } catch (error) {
     // Logger may fail to import if dependencies are broken, fallback to console.
     try {
