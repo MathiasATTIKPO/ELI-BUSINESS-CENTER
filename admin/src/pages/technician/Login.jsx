@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useTechnicianAuth } from '../../hooks/useTechnicianAuth'
 import { 
   Wrench, Mail, Lock, ArrowRight, Shield, CreditCard,
-  Eye, EyeOff, Star, Zap
+  Eye, EyeOff, Zap, Copy, Check
 } from 'lucide-react'
 import api from '../../services/api'
 import Toast from '../../components/Toast'
@@ -16,6 +16,18 @@ export default function TechnicianLogin() {
   const [loading, setLoading] = useState(false)
   const [toast, setToast] = useState(null)
   const [showPassword, setShowPassword] = useState(false)
+  const [generatedToken, setGeneratedToken] = useState('')
+  const [tokenCopied, setTokenCopied] = useState(false)
+
+  const copyToken = async () => {
+    try {
+      await navigator.clipboard.writeText(generatedToken)
+      setTokenCopied(true)
+      setTimeout(() => setTokenCopied(false), 2000)
+    } catch {
+      setToast({ type: 'error', message: 'Impossible de copier le token.' })
+    }
+  }
 
  const handleSubmit = async (e) => {
   e.preventDefault()
@@ -28,9 +40,10 @@ export default function TechnicianLogin() {
     })
 
     if (response.data.success) {
-      login(response.data.data.user, response.data.data.token, 'technician')  // ← Ajouter 'technician'
-      setToast({ type: 'success', message: 'Connexion réussie ! Redirection...' })
-      setTimeout(() => navigate('/technician/dashboard'), 1000)
+      const token = response.data.data.token
+      login(response.data.data.user, token, 'technician')
+      setGeneratedToken(token)
+      setToast({ type: 'success', message: 'Connexion réussie. Votre token a été généré.' })
     }
   } catch (error) {
     const message = error.response?.data?.message || 'Erreur lors de la connexion'
@@ -133,6 +146,36 @@ export default function TechnicianLogin() {
             )}
           </button>
         </form>
+
+        {generatedToken && (
+          <div className="mt-5 rounded-xl border border-purple-200 bg-purple-50 p-4">
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <p className="text-sm font-semibold text-purple-900">Token JWT généré</p>
+              <button
+                type="button"
+                onClick={copyToken}
+                className="flex items-center gap-1 rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-purple-700 shadow-sm hover:bg-purple-100"
+              >
+                {tokenCopied ? <Check size={14} /> : <Copy size={14} />}
+                {tokenCopied ? 'Copié' : 'Copier'}
+              </button>
+            </div>
+            <p className="max-h-28 overflow-auto break-all rounded-lg bg-white p-3 font-mono text-xs text-gray-700">
+              {generatedToken}
+            </p>
+            <p className="mt-2 text-xs text-amber-700">
+              Ne partagez pas ce token : il donne accès au compte technicien.
+            </p>
+            <button
+              type="button"
+              onClick={() => navigate('/technician/dashboard')}
+              className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-purple-600 py-2.5 font-semibold text-white hover:bg-purple-700"
+            >
+              Accéder au tableau de bord
+              <ArrowRight size={18} />
+            </button>
+          </div>
+        )}
 
         <div className="mt-8 pt-6 border-t border-gray-100">
           <p className="text-center text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">
