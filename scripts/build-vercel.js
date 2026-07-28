@@ -18,6 +18,10 @@ const run = (command, extraEnv = {}) => {
   });
 };
 
+// The repository-level Vercel function delegates to backend/api/index.js.
+// Install its runtime dependencies when this monorepo is deployed from root.
+run('npm --prefix backend install');
+
 run('npm --prefix admin install');
 run('npm --prefix admin run build', { VITE_BASE_PATH: '/admin/' });
 
