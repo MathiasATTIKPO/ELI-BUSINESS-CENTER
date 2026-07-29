@@ -31,6 +31,9 @@ const notificationSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
+notificationSchema.index({ recipientRole: 1, createdAt: -1 });
+notificationSchema.index({ recipientRole: 1, recipientId: 1, createdAt: -1 });
+
 notificationSchema.pre('save', function (next) {
   if (!this.userId && this.recipientId) {
     this.userId = this.recipientId;

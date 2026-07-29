@@ -5,7 +5,11 @@ module.exports = async (req, res) => {
     const { connectDatabase, ensureSeedData } = require('../bootstrap');
 
     const pathname = String(req.url || '').split('?')[0];
-    const requiresDatabase = pathname.startsWith('/api/');
+    const selfManagedDatabasePaths = new Set(['/api/health', '/api/db-status']);
+    const requiresDatabase = pathname.startsWith('/api/')
+      && req.method !== 'OPTIONS'
+      && !selfManagedDatabasePaths.has(pathname)
+      && pathname !== '/api/notifications/vapid-public-key';
 
     // Static frontend assets and SPA navigation must remain available even
     // during a temporary database outage.
@@ -55,7 +59,7 @@ module.exports = async (req, res) => {
       console.error('Logger bootstrap failed:', logError && logError.stack ? logError.stack : logError);
     }
 
-    return res.status(500).json({
+    return res.status(503).json({
       success: false,
       data: null,
       message: error.message || 'Server initialization failed',

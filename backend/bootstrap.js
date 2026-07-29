@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require('./config/mongoose');
 const RepairRequest = require('./models/RepairRequest');
 const TradeinRequest = require('./models/TradeinRequest');
 const ResellerContract = require('./models/ResellerContract');
@@ -95,25 +95,30 @@ const connectDatabase = async () => {
     databaseCache.connection = mongoose.connection;
     state.dbConnected = true;
     state.lastError = null;
-    return mongoose.connection;
+  } else {
+    state.dbConnected = false;
   }
 
-  state.dbConnected = false;
-
   // Every concurrent request in a warm Vercel instance awaits the exact same
-  // connection attempt. Never disconnect the shared pool from a request.
+  // health check or connection attempt. Never disconnect the shared pool from
+  // a request.
   if (databaseCache.promise) {
     return databaseCache.promise;
   }
 
-  // Once a MongoClient has been created, the MongoDB driver owns its
-  // topology-recovery lifecycle. A temporary "disconnected" event must not
-  // create a second client or close the pool while other requests use it.
+  // Always wake and validate a reused serverless topology, even when Mongoose
+  // still reports readyState=1. A frozen instance can retain that state while
+  // its underlying network socket is no longer usable.
   if (databaseCache.connection?.db) {
     const recoveryAttempt = databaseCache.connection.db
       .admin()
       .ping()
       .then(() => {
+        if (mongoose.connection.readyState !== 1) {
+          const error = new Error('MongoDB responded but the Mongoose connection is not ready');
+          error.code = 'MONGOOSE_NOT_READY';
+          throw error;
+        }
         state.dbConnected = true;
         state.lastError = null;
         return databaseCache.connection;

@@ -12,6 +12,9 @@ export const NotificationProvider = ({ children }) => {
   const [pushEnabled, setPushEnabled] = useState(false)
   const { activeRole, isAuthenticated, getToken } = useAuth()
   const isFetchingRef = useRef(false)
+  const failureCountRef = useRef(0)
+  const retryAfterRef = useRef(0)
+  const lastSuccessfulFetchRef = useRef(0)
 
   const getRoleAuthHeaders = () => {
     const token = activeRole ? getToken(activeRole) : null
@@ -20,6 +23,8 @@ export const NotificationProvider = ({ children }) => {
 
   const fetchNotifications = async () => {
     if (isFetchingRef.current) return
+    if (Date.now() < retryAfterRef.current) return
+    if (Date.now() - lastSuccessfulFetchRef.current < 30000) return
     if (!activeRole || !isAuthenticated(activeRole)) {
       console.log('[NotificationContext] Non authentifié, skip fetch')
       setLoading(false)
@@ -32,10 +37,21 @@ export const NotificationProvider = ({ children }) => {
       setNotifications(response.data.data || [])
       const unread = (response.data.data || []).filter(n => !n.read).length
       setUnreadCount(unread)
+      failureCountRef.current = 0
+      retryAfterRef.current = 0
+      lastSuccessfulFetchRef.current = Date.now()
     } catch (error) {
-      console.error('Erreur chargement notifications:', error)
-      setNotifications([])
-      setUnreadCount(0)
+      failureCountRef.current += 1
+      const retryDelay = Math.min(300000, 15000 * (2 ** (failureCountRef.current - 1)))
+      retryAfterRef.current = Date.now() + retryDelay
+      console.warn(
+        `Notifications temporairement indisponibles. Nouvelle tentative dans ${Math.round(retryDelay / 1000)} s.`,
+        error.response?.data?.message || error.message
+      )
+      if ([401, 403].includes(Number(error.response?.status || 0))) {
+        setNotifications([])
+        setUnreadCount(0)
+      }
     } finally {
       setLoading(false)
       isFetchingRef.current = false
@@ -79,9 +95,15 @@ export const NotificationProvider = ({ children }) => {
 
   useEffect(() => {
     if (activeRole && isAuthenticated(activeRole)) {
+      failureCountRef.current = 0
+      retryAfterRef.current = 0
+      lastSuccessfulFetchRef.current = 0
+      setNotifications([])
+      setUnreadCount(0)
+
       // Let the business-critical dashboard requests finish before starting
       // optional notification traffic. Push remains available via enablePush.
-      const initialFetchTimer = setTimeout(fetchNotifications, 15000)
+      const initialFetchTimer = setTimeout(fetchNotifications, 30000)
 
       const onFocusOrVisible = () => {
         if (document.visibilityState === 'visible') {
@@ -100,9 +122,13 @@ export const NotificationProvider = ({ children }) => {
       }
       navigator?.serviceWorker?.addEventListener?.('message', onServiceWorkerMessage)
       
-      // Seven-second polling creates unnecessary serverless/database pressure.
-      // Focus, visibility and push events still refresh immediately.
-      const interval = setInterval(fetchNotifications, 60000)
+      // Keep optional polling infrequent and pause it while the tab is hidden.
+      // Focus, visibility and push events can still refresh after the cooldown.
+      const interval = setInterval(() => {
+        if (document.visibilityState === 'visible') {
+          fetchNotifications()
+        }
+      }, 120000)
       return () => {
         clearTimeout(initialFetchTimer)
         clearInterval(interval)

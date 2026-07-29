@@ -133,7 +133,7 @@ export function useDashboardData() {
         try {
           return await request()
         } catch (firstError) {
-          const isTransientServerError = Number(firstError.response?.status || 0) >= 500
+          const isTransientServerError = Number(firstError.response?.status || 0) === 503
           if (isTransientServerError) {
             await wait(500)
             try {
@@ -151,19 +151,27 @@ export function useDashboardData() {
         }
       }
 
-      // Match the reliable Postman behavior during a cold start: one request
-      // at a time, while still rendering the dashboard if one resource fails.
-      const repairsRes = await loadResource('réparations', getRepairs)
-      const employeesRes = await loadResource('employés', getEmployees)
-      const tradeinsRes = await loadResource('échanges', getTradeins)
-      const productsRes = await loadResource('produits', getProducts)
-      const inventoryRes = await loadResource('inventaire', getInventory)
-      const phoneSalesRes = await loadResource('ventes', getSales)
-      const resellersRes = await loadResource('revendeurs', getResellers)
-      const resellerContractsRes = await loadResource('contrats revendeurs', getResellerContracts)
-      const vipClientsRes = await loadResource('clients VIP', getVipClients)
-      const vipRepairsRes = await loadResource('réparations VIP', getVipRepairs)
-      const vipInvoicesRes = await loadResource('factures VIP', getVipInvoices)
+      // Keep concurrency below the MongoDB pool size while avoiding the very
+      // slow eleven-request sequential waterfall.
+      const [repairsRes, employeesRes, tradeinsRes] = await Promise.all([
+        loadResource('réparations', getRepairs),
+        loadResource('employés', getEmployees),
+        loadResource('échanges', getTradeins),
+      ])
+      const [productsRes, inventoryRes, phoneSalesRes] = await Promise.all([
+        loadResource('produits', getProducts),
+        loadResource('inventaire', getInventory),
+        loadResource('ventes', getSales),
+      ])
+      const [resellersRes, resellerContractsRes, vipClientsRes] = await Promise.all([
+        loadResource('revendeurs', getResellers),
+        loadResource('contrats revendeurs', getResellerContracts),
+        loadResource('clients VIP', getVipClients),
+      ])
+      const [vipRepairsRes, vipInvoicesRes] = await Promise.all([
+        loadResource('réparations VIP', getVipRepairs),
+        loadResource('factures VIP', getVipInvoices),
+      ])
 
       const repairs = repairsRes.data.data || []
       const employeesList = employeesRes.data.data || []
