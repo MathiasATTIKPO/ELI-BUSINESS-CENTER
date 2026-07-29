@@ -35,8 +35,11 @@ const state = {
 const databaseCache = globalThis.__eliBusinessCenterMongoCache || {
   connection: null,
   promise: null,
+  lastValidatedAt: 0,
 };
 globalThis.__eliBusinessCenterMongoCache = databaseCache;
+
+const DATABASE_VALIDATION_TTL_MS = 1500;
 
 const getDatabaseStatus = () => {
   const readyState = mongoose.connection.readyState;
@@ -77,10 +80,12 @@ const attachConnectionDiagnostics = () => {
 
   mongoose.connection.on('disconnected', () => {
     state.dbConnected = false;
+    databaseCache.lastValidatedAt = 0;
     logger.warn('db', 'Mongoose connection event: disconnected');
   });
 
   mongoose.connection.on('error', (error) => {
+    databaseCache.lastValidatedAt = 0;
     state.lastError = error.message;
     logger.error('db', 'Mongoose connection event: error', { message: error.message });
   });
@@ -96,6 +101,11 @@ const connectDatabase = async () => {
     state.dbConnected = true;
     state.lastError = null;
   } else {
+    // Never reuse the native db handle of a connection that Mongoose already
+    // considers disconnected. A ping on that stale handle can succeed while
+    // models remain attached to a non-ready Mongoose connection.
+    databaseCache.connection = null;
+    databaseCache.lastValidatedAt = 0;
     state.dbConnected = false;
   }
 
@@ -106,10 +116,21 @@ const connectDatabase = async () => {
     return databaseCache.promise;
   }
 
+  // Dashboard requests arrive in short waves. Reuse a successful validation
+  // for that wave, while forcing a fresh ping after a Vercel instance has been
+  // idle or frozen.
+  if (
+    readyState === 1
+    && databaseCache.connection === mongoose.connection
+    && Date.now() - Number(databaseCache.lastValidatedAt || 0) < DATABASE_VALIDATION_TTL_MS
+  ) {
+    return databaseCache.connection;
+  }
+
   // Always wake and validate a reused serverless topology, even when Mongoose
   // still reports readyState=1. A frozen instance can retain that state while
   // its underlying network socket is no longer usable.
-  if (databaseCache.connection?.db) {
+  if (readyState === 1 && databaseCache.connection?.db) {
     const recoveryAttempt = databaseCache.connection.db
       .admin()
       .ping()
@@ -121,6 +142,7 @@ const connectDatabase = async () => {
         }
         state.dbConnected = true;
         state.lastError = null;
+        databaseCache.lastValidatedAt = Date.now();
         return databaseCache.connection;
       })
       .catch((error) => {
@@ -145,6 +167,7 @@ const connectDatabase = async () => {
     try {
       const connection = await pendingConnection;
       databaseCache.connection = connection;
+      databaseCache.lastValidatedAt = Date.now();
       state.dbConnected = true;
       return connection;
     } finally {
@@ -166,12 +189,15 @@ const connectDatabase = async () => {
       socketTimeoutMS: 0,
       maxPoolSize: 5,
       minPoolSize: 0,
-      maxIdleTimeMS: 60000,
+      // Keep sockets reusable across short Vercel idle periods. The ping and
+      // readiness guard validate them again before business queries.
+      maxIdleTimeMS: 0,
       family: 4,
       tls: true,
     })
     .then(() => {
       databaseCache.connection = mongoose.connection;
+      databaseCache.lastValidatedAt = Date.now();
       state.dbConnected = true;
       state.lastConnectedAt = new Date().toISOString();
       state.lastError = null;
@@ -182,6 +208,7 @@ const connectDatabase = async () => {
     })
     .catch((error) => {
       databaseCache.connection = null;
+      databaseCache.lastValidatedAt = 0;
       state.lastError = error.message;
       logger.error('db', 'MongoDB connection failed', { message: error.message });
       throw error;

@@ -1,4 +1,4 @@
-require('./config/mongoose');
+const mongoose = require('./config/mongoose');
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
@@ -127,7 +127,7 @@ const adminController = require('./controllers/adminController');
 const clientRoutes = require('./routes/clientRoutes');
 const skillRoutes = require('./routes/skill');
 const settingsRoutes = require('./routes/setting');
-const { getDatabaseStatus, connectDatabase } = require('./bootstrap');
+const { getDatabaseStatus, connectDatabase, ensureSeedData } = require('./bootstrap');
 
 const app = express();
 
@@ -181,6 +181,74 @@ app.options('*', cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+const DATABASE_BYPASS_PATHS = new Set([
+  '/api',
+  '/api/health',
+  '/api/db-status',
+  '/api/notifications/vapid-public-key',
+]);
+
+const getOriginalPathname = (req) => {
+  const pathname = String(req.originalUrl || req.url || '').split('?')[0];
+  return pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname;
+};
+
+// Run the database readiness check in the same Express chain as the model
+// operation. This removes the serverless bootstrap/route gap during which a
+// frozen MongoDB topology could become disconnected again.
+app.use('/api', async (req, res, next) => {
+  const pathname = getOriginalPathname(req);
+
+  if (req.method === 'OPTIONS' || DATABASE_BYPASS_PATHS.has(pathname)) {
+    return next();
+  }
+
+  try {
+    await connectDatabase();
+
+    if (mongoose.connection.readyState !== 1) {
+      const error = new Error('MongoDB connection is not ready for queries');
+      error.code = 'MONGOOSE_NOT_READY';
+      throw error;
+    }
+
+    const unavailableModel = Object.values(mongoose.models).find(
+      (model) => model.db !== mongoose.connection || model.db.readyState !== 1
+    );
+    if (unavailableModel) {
+      const error = new Error(`MongoDB model ${unavailableModel.modelName} is not attached to the ready connection`);
+      error.code = 'MONGOOSE_MODEL_NOT_READY';
+      throw error;
+    }
+
+    if (!process.env.VERCEL || process.env.VERCEL_ENABLE_SEED === 'true') {
+      await ensureSeedData();
+    }
+
+    return next();
+  } catch (error) {
+    const database = getDatabaseStatus();
+
+    logger.error('db', 'Database unavailable before API route', {
+      method: req.method,
+      path: pathname,
+      readyState: database.readyState,
+      code: error.code || null,
+      message: error.message,
+    });
+
+    res.set('Retry-After', '3');
+    return res.status(503).json({
+      success: false,
+      data: {
+        code: 'DATABASE_UNAVAILABLE',
+        retryable: true,
+      },
+      message: 'Base de donnees temporairement indisponible. Veuillez reessayer.',
+    });
+  }
+});
 
 app.use('/api/products', productsRoutes);
 app.use('/api/repair', repairRoutes);
