@@ -10,7 +10,7 @@ const workingHourSchema = new mongoose.Schema({
 const employeeSchema = new mongoose.Schema({
   name: { type: String, required: true },
   phone: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
+  email: { type: String, required: true, unique: true, trim: true, lowercase: true },
   password: { type: String, required: true },
   forcePasswordChange: { type: Boolean, default: false },
   resetPasswordToken: { type: String },

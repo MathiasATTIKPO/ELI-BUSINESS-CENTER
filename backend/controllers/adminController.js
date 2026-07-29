@@ -256,7 +256,7 @@ exports.markAllNotificationsRead = async (req, res) => {
 // ==================== AUTHENTIFICATION ====================
 const loginEmployee = async (req, res, allowedRoles) => {
   try {
-    const email = String(req.body?.email || '').trim();
+    const email = String(req.body?.email || '').trim().toLowerCase();
     const password = String(req.body?.password || '').trim();
     if (!email || !password) return res.status(400).json({ success: false, message: 'Identifiants requis.' });
 
@@ -277,11 +277,11 @@ const loginEmployee = async (req, res, allowedRoles) => {
 };
 
 exports.login = async (req, res) => {
-  const email = String(req.body?.email || '').trim();
+  const email = String(req.body?.email || '').trim().toLowerCase();
   const password = String(req.body?.password || '').trim();
   if (!email || !password) return res.status(400).json({ success: false, message: 'Identifiants requis.' });
 
-  const ADMIN_USER = process.env.ADMIN_USER || 'admin@elibusiness.com';
+  const ADMIN_USER = String(process.env.ADMIN_USER || 'admin@elibusiness.com').trim().toLowerCase();
   const ADMIN_PASS = process.env.ADMIN_PASS || 'password123';
 
   const isEnvAdmin = email === ADMIN_USER && password === ADMIN_PASS;

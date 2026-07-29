@@ -99,7 +99,7 @@ export default function TechnicianLogin() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 bg-gray-50 hover:bg-white"
-                placeholder="technicien@elibusiness.com"
+                placeholder="tech@elis.com"
               />
             </div>
           </div>
