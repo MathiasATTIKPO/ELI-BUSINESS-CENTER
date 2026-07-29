@@ -125,27 +125,37 @@ export function useDashboardData() {
   const fetchAllData = useCallback(async () => {
     try {
       setLoading(true)
+      // Avoid opening eleven concurrent serverless invocations on initial
+      // dashboard load. Small batches are friendlier to cold MongoDB pools.
       const [
         repairsRes,
         employeesRes,
         tradeinsRes,
         productsRes,
-        inventoryRes,
-        phoneSalesRes,
-        resellersRes,
-        resellerContractsRes,
-        vipClientsRes,
-        vipRepairsRes,
-        vipInvoicesRes,
       ] = await Promise.all([
         getRepairs(),
         getEmployees(),
         getTradeins(),
         getProducts(),
+      ])
+
+      const [
+        inventoryRes,
+        phoneSalesRes,
+        resellersRes,
+        resellerContractsRes,
+      ] = await Promise.all([
         getInventory(),
         getSales(),
         getResellers(),
         getResellerContracts(),
+      ])
+
+      const [
+        vipClientsRes,
+        vipRepairsRes,
+        vipInvoicesRes,
+      ] = await Promise.all([
         getVipClients(),
         getVipRepairs(),
         getVipInvoices(),

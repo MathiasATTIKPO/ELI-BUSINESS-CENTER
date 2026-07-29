@@ -101,7 +101,9 @@ export const NotificationProvider = ({ children }) => {
       }
       navigator?.serviceWorker?.addEventListener?.('message', onServiceWorkerMessage)
       
-      const interval = setInterval(fetchNotifications, 7000)
+      // Seven-second polling creates unnecessary serverless/database pressure.
+      // Focus, visibility and push events still refresh immediately.
+      const interval = setInterval(fetchNotifications, 30000)
       return () => {
         clearInterval(interval)
         window.removeEventListener('focus', onFocusOrVisible)

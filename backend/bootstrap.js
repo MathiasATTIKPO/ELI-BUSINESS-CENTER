@@ -88,8 +88,22 @@ const connectDatabase = async () => {
   const readyState = mongoose.connection.readyState;
 
   if (readyState === 1) {
-    state.dbConnected = true;
-    return mongoose.connection;
+    try {
+      // A serverless instance may be resumed with readyState=1 even though
+      // its underlying socket was closed while the instance was frozen.
+      await mongoose.connection.db.admin().ping();
+      state.dbConnected = true;
+      state.lastError = null;
+      return mongoose.connection;
+    } catch (error) {
+      state.dbConnected = false;
+      state.lastError = error.message;
+      connectPromise = null;
+      logger.warn('db', 'Stale MongoDB connection detected, reconnecting', {
+        message: error.message,
+      });
+      await mongoose.disconnect().catch(() => undefined);
+    }
   }
 
   state.dbConnected = false;
@@ -112,9 +126,9 @@ const connectDatabase = async () => {
 
     connectPromise = mongoose
       .connect(mongoUri, {
-        serverSelectionTimeoutMS: 100000,
-        connectTimeoutMS: 100000,
-        socketTimeoutMS: 100000,
+        serverSelectionTimeoutMS: 15000,
+        connectTimeoutMS: 15000,
+        socketTimeoutMS: 45000,
         family: 4,
         tls: true,
       })
