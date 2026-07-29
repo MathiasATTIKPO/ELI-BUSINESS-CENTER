@@ -1,7 +1,7 @@
 import React, { createContext, useState, useEffect, useRef } from 'react'
 import api from '../services/api'
 import { useAuth } from '../hooks/useAuth'
-import { isPushSupported, subscribeUserToPush } from '../services/pushNotifications'
+import { subscribeUserToPush } from '../services/pushNotifications'
 
 export const NotificationContext = createContext(null)
 
@@ -79,10 +79,9 @@ export const NotificationProvider = ({ children }) => {
 
   useEffect(() => {
     if (activeRole && isAuthenticated(activeRole)) {
-      fetchNotifications()
-      if (isPushSupported()) {
-        enablePush()
-      }
+      // Let the business-critical dashboard requests finish before starting
+      // optional notification traffic. Push remains available via enablePush.
+      const initialFetchTimer = setTimeout(fetchNotifications, 15000)
 
       const onFocusOrVisible = () => {
         if (document.visibilityState === 'visible') {
@@ -103,8 +102,9 @@ export const NotificationProvider = ({ children }) => {
       
       // Seven-second polling creates unnecessary serverless/database pressure.
       // Focus, visibility and push events still refresh immediately.
-      const interval = setInterval(fetchNotifications, 30000)
+      const interval = setInterval(fetchNotifications, 60000)
       return () => {
+        clearTimeout(initialFetchTimer)
         clearInterval(interval)
         window.removeEventListener('focus', onFocusOrVisible)
         document.removeEventListener('visibilitychange', onFocusOrVisible)

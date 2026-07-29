@@ -207,10 +207,6 @@ exports.getNotifications = async (req, res) => {
       return res.status(401).json({ success: false, message: 'Authentification requise.' });
     }
 
-    if (normalizeNotificationRole(req.user.role) === 'admin') {
-      await ensureAdminBroadcastNotifications();
-    }
-
     const notifications = await Notification.find(buildNotificationFilter(req.user)).sort({ createdAt: -1 });
     res.json({ success: true, data: notifications, message: 'Notifications récupérées.' });
   } catch (error) {

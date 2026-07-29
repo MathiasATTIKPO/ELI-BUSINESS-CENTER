@@ -7,7 +7,7 @@ const configuredMediaBaseUrl = (import.meta.env.VITE_MEDIA_BASE_URL || '').repla
 
 
 const API_BASE_URL =
-  configuredBaseUrl || 'http://localhost:4001';
+  configuredBaseUrl || (import.meta.env.DEV ? 'http://localhost:4001' : '');
 
 /* console.log('API_BASE_URL =', API_BASE_URL);
  */

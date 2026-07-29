@@ -32,6 +32,12 @@ const state = {
   lastError: null,
 };
 
+const databaseCache = globalThis.__eliBusinessCenterMongoCache || {
+  connection: null,
+  promise: null,
+};
+globalThis.__eliBusinessCenterMongoCache = databaseCache;
+
 const getDatabaseStatus = () => {
   const readyState = mongoose.connection.readyState;
 
@@ -50,7 +56,6 @@ const getDatabaseStatus = () => {
   };
 };
 
-let connectPromise = null;
 let connectionEventsAttached = false;
 
 const attachConnectionDiagnostics = () => {
@@ -72,7 +77,6 @@ const attachConnectionDiagnostics = () => {
 
   mongoose.connection.on('disconnected', () => {
     state.dbConnected = false;
-    connectPromise = null;
     logger.warn('db', 'Mongoose connection event: disconnected');
   });
 
@@ -88,68 +92,105 @@ const connectDatabase = async () => {
   const readyState = mongoose.connection.readyState;
 
   if (readyState === 1) {
-    try {
-      // A serverless instance may be resumed with readyState=1 even though
-      // its underlying socket was closed while the instance was frozen.
-      await mongoose.connection.db.admin().ping();
-      state.dbConnected = true;
-      state.lastError = null;
-      return mongoose.connection;
-    } catch (error) {
-      state.dbConnected = false;
-      state.lastError = error.message;
-      connectPromise = null;
-      logger.warn('db', 'Stale MongoDB connection detected, reconnecting', {
-        message: error.message,
-      });
-      await mongoose.disconnect().catch(() => undefined);
-    }
+    databaseCache.connection = mongoose.connection;
+    state.dbConnected = true;
+    state.lastError = null;
+    return mongoose.connection;
   }
 
   state.dbConnected = false;
 
-  if (readyState === 2 && connectPromise) {
-    return connectPromise;
+  // Every concurrent request in a warm Vercel instance awaits the exact same
+  // connection attempt. Never disconnect the shared pool from a request.
+  if (databaseCache.promise) {
+    return databaseCache.promise;
   }
 
-  // A resolved promise from a previous serverless invocation must not prevent
-  // Mongoose from reconnecting after its underlying connection was dropped.
-  if (readyState === 0) {
-    connectPromise = null;
+  // Once a MongoClient has been created, the MongoDB driver owns its
+  // topology-recovery lifecycle. A temporary "disconnected" event must not
+  // create a second client or close the pool while other requests use it.
+  if (databaseCache.connection?.db) {
+    const recoveryAttempt = databaseCache.connection.db
+      .admin()
+      .ping()
+      .then(() => {
+        state.dbConnected = true;
+        state.lastError = null;
+        return databaseCache.connection;
+      })
+      .catch((error) => {
+        state.lastError = error.message;
+        logger.error('db', 'MongoDB topology recovery failed', { message: error.message });
+        throw error;
+      });
+
+    databaseCache.promise = recoveryAttempt;
+    try {
+      return await recoveryAttempt;
+    } finally {
+      if (databaseCache.promise === recoveryAttempt) {
+        databaseCache.promise = null;
+      }
+    }
+  }
+
+  if (readyState === 2) {
+    const pendingConnection = mongoose.connection.asPromise();
+    databaseCache.promise = pendingConnection;
+    try {
+      const connection = await pendingConnection;
+      databaseCache.connection = connection;
+      state.dbConnected = true;
+      return connection;
+    } finally {
+      if (databaseCache.promise === pendingConnection) {
+        databaseCache.promise = null;
+      }
+    }
   }
 
   const mongoUri = getMongoUri();
 
-  if (!connectPromise) {
-    state.lastAttemptAt = new Date().toISOString();
-    state.lastError = null;
+  state.lastAttemptAt = new Date().toISOString();
+  state.lastError = null;
 
-    connectPromise = mongoose
-      .connect(mongoUri, {
-        serverSelectionTimeoutMS: 15000,
-        connectTimeoutMS: 15000,
-        socketTimeoutMS: 45000,
-        family: 4,
-        tls: true,
-      })
-      .then(() => {
-        state.dbConnected = true;
-        state.lastConnectedAt = new Date().toISOString();
-        state.lastError = null;
-        const host = mongoose.connection?.host || 'unknown-host';
-        const dbName = mongoose.connection?.name || 'unknown-db';
-        logger.info('db', 'MongoDB connected', { host, dbName, readyState: mongoose.connection.readyState });
-        return mongoose.connection;
-      })
-      .catch((error) => {
-        connectPromise = null;
-        state.lastError = error.message;
-        logger.error('db', 'MongoDB connection failed', { message: error.message });
-        throw error;
-      });
+  const connectionAttempt = mongoose
+    .connect(mongoUri, {
+      serverSelectionTimeoutMS: 15000,
+      connectTimeoutMS: 15000,
+      socketTimeoutMS: 0,
+      maxPoolSize: 5,
+      minPoolSize: 0,
+      maxIdleTimeMS: 60000,
+      family: 4,
+      tls: true,
+    })
+    .then(() => {
+      databaseCache.connection = mongoose.connection;
+      state.dbConnected = true;
+      state.lastConnectedAt = new Date().toISOString();
+      state.lastError = null;
+      const host = mongoose.connection?.host || 'unknown-host';
+      const dbName = mongoose.connection?.name || 'unknown-db';
+      logger.info('db', 'MongoDB connected', { host, dbName, readyState: mongoose.connection.readyState });
+      return mongoose.connection;
+    })
+    .catch((error) => {
+      databaseCache.connection = null;
+      state.lastError = error.message;
+      logger.error('db', 'MongoDB connection failed', { message: error.message });
+      throw error;
+    });
+
+  databaseCache.promise = connectionAttempt;
+
+  try {
+    return await connectionAttempt;
+  } finally {
+    if (databaseCache.promise === connectionAttempt) {
+      databaseCache.promise = null;
+    }
   }
-
-  return connectPromise;
 };
 
 const migrateVipSettledStatuses = async () => {

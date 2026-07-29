@@ -25,6 +25,9 @@ const pctChange = (current, previous) => {
   return ((current - previous) / previous) * 100
 }
 
+const emptyApiResponse = () => ({ data: { data: [] } })
+const wait = (durationMs) => new Promise((resolve) => setTimeout(resolve, durationMs))
+
 const inferBrand = (sale) => {
   const explicitBrand = String(sale?.productBrand || '').trim()
   if (explicitBrand) return explicitBrand
@@ -125,41 +128,42 @@ export function useDashboardData() {
   const fetchAllData = useCallback(async () => {
     try {
       setLoading(true)
-      // Avoid opening eleven concurrent serverless invocations on initial
-      // dashboard load. Small batches are friendlier to cold MongoDB pools.
-      const [
-        repairsRes,
-        employeesRes,
-        tradeinsRes,
-        productsRes,
-      ] = await Promise.all([
-        getRepairs(),
-        getEmployees(),
-        getTradeins(),
-        getProducts(),
-      ])
+      const failedResources = []
+      const loadResource = async (label, request) => {
+        try {
+          return await request()
+        } catch (firstError) {
+          const isTransientServerError = Number(firstError.response?.status || 0) >= 500
+          if (isTransientServerError) {
+            await wait(500)
+            try {
+              return await request()
+            } catch (retryError) {
+              failedResources.push(label)
+              console.error(`[Dashboard] ${label} indisponible après une nouvelle tentative`, retryError)
+              return emptyApiResponse()
+            }
+          }
 
-      const [
-        inventoryRes,
-        phoneSalesRes,
-        resellersRes,
-        resellerContractsRes,
-      ] = await Promise.all([
-        getInventory(),
-        getSales(),
-        getResellers(),
-        getResellerContracts(),
-      ])
+          failedResources.push(label)
+          console.error(`[Dashboard] ${label} indisponible`, firstError)
+          return emptyApiResponse()
+        }
+      }
 
-      const [
-        vipClientsRes,
-        vipRepairsRes,
-        vipInvoicesRes,
-      ] = await Promise.all([
-        getVipClients(),
-        getVipRepairs(),
-        getVipInvoices(),
-      ])
+      // Match the reliable Postman behavior during a cold start: one request
+      // at a time, while still rendering the dashboard if one resource fails.
+      const repairsRes = await loadResource('réparations', getRepairs)
+      const employeesRes = await loadResource('employés', getEmployees)
+      const tradeinsRes = await loadResource('échanges', getTradeins)
+      const productsRes = await loadResource('produits', getProducts)
+      const inventoryRes = await loadResource('inventaire', getInventory)
+      const phoneSalesRes = await loadResource('ventes', getSales)
+      const resellersRes = await loadResource('revendeurs', getResellers)
+      const resellerContractsRes = await loadResource('contrats revendeurs', getResellerContracts)
+      const vipClientsRes = await loadResource('clients VIP', getVipClients)
+      const vipRepairsRes = await loadResource('réparations VIP', getVipRepairs)
+      const vipInvoicesRes = await loadResource('factures VIP', getVipInvoices)
 
       const repairs = repairsRes.data.data || []
       const employeesList = employeesRes.data.data || []
@@ -536,6 +540,13 @@ export function useDashboardData() {
       setSales(allTransactions)
       setHistoryList(allTransactions)
       setInvoicesData(allTransactions)
+
+      if (failedResources.length > 0) {
+        setToast({
+          type: 'error',
+          message: `Tableau de bord chargé partiellement. Indisponible : ${failedResources.join(', ')}.`,
+        })
+      }
     } catch (error) {
       setToast({ type: 'error', message: `Erreur lors du chargement: ${error.message}` })
     } finally {

@@ -4,10 +4,17 @@ module.exports = async (req, res) => {
     const { app } = require('../app');
     const { connectDatabase, ensureSeedData } = require('../bootstrap');
 
-    await connectDatabase();
+    const pathname = String(req.url || '').split('?')[0];
+    const requiresDatabase = pathname.startsWith('/api/');
 
-    if (!process.env.VERCEL || process.env.VERCEL_ENABLE_SEED === 'true') {
-      await ensureSeedData();
+    // Static frontend assets and SPA navigation must remain available even
+    // during a temporary database outage.
+    if (requiresDatabase) {
+      await connectDatabase();
+
+      if (!process.env.VERCEL || process.env.VERCEL_ENABLE_SEED === 'true') {
+        await ensureSeedData();
+      }
     }
 
     // Express returns before asynchronous route handlers have sent their

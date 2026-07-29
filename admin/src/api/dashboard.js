@@ -7,11 +7,11 @@ export const getProducts = () => client.get('/api/admin/products')
 export const getInventory = () => client.get('/api/admin/inventory')
 export const getSales = () => client.get('/api/admin/sales')
 
-export const getResellers = () => client.get('/api/admin/resellers').catch(() => ({ data: { data: [] } }))
-export const getResellerContracts = () => client.get('/api/admin/resellers/contracts/all').catch(() => ({ data: { data: [] } }))
-export const getVipClients = () => client.get('/api/admin/vips').catch(() => ({ data: { data: [] } }))
-export const getVipRepairs = () => client.get('/api/admin/vips/repairs').catch(() => ({ data: { data: [] } }))
-export const getVipInvoices = () => client.get('/api/admin/vips/invoices').catch(() => ({ data: { data: [] } }))
+export const getResellers = () => client.get('/api/admin/resellers')
+export const getResellerContracts = () => client.get('/api/admin/resellers/contracts/all')
+export const getVipClients = () => client.get('/api/admin/vips')
+export const getVipRepairs = () => client.get('/api/admin/vips/repairs')
+export const getVipInvoices = () => client.get('/api/admin/vips/invoices')
 
 export const downloadInvoicePdf = (type, id) => {
   let endpoint = ''

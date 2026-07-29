@@ -203,7 +203,35 @@ app.use('/api/skills', skillRoutes);
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
+const bundledClientDistPath = path.join(__dirname, 'public-web');
+const workspaceClientDistPath = path.join(__dirname, '..', 'client', 'dist');
+const clientDistPath = fs.existsSync(path.join(bundledClientDistPath, 'index.html'))
+  ? bundledClientDistPath
+  : workspaceClientDistPath;
+const bundledAdminDistPath = path.join(bundledClientDistPath, 'admin');
+const workspaceAdminDistPath = path.join(__dirname, '..', 'admin', 'dist');
+const adminDistPath = fs.existsSync(path.join(bundledAdminDistPath, 'index.html'))
+  ? bundledAdminDistPath
+  : workspaceAdminDistPath;
+
 app.get('/', (req, res) => {
+  if (fs.existsSync(path.join(clientDistPath, 'index.html'))) {
+    return res.sendFile(path.join(clientDistPath, 'index.html'));
+  }
+
+  res.json({
+    success: true,
+    data: {
+      service: 'eli-business-center-backend',
+      docs: '/api-docs',
+      health: '/api/health',
+      dbStatus: '/api/db-status',
+    },
+    message: 'Backend API is online',
+  });
+});
+
+app.get('/api', (req, res) => {
   res.json({
     success: true,
     data: {
@@ -282,14 +310,32 @@ app.get('/api/db-status', (req, res) => {
     });
 });
 
-const adminDistPath = path.join(__dirname, '..', 'admin', 'dist');
 if (fs.existsSync(adminDistPath)) {
-  app.use(express.static(adminDistPath));
+  app.use('/admin', express.static(adminDistPath));
+  app.get(
+    [
+      '/admin',
+      '/admin/*',
+      '/cashier',
+      '/cashier/*',
+      '/technician',
+      '/technician/*',
+      '/vip',
+      '/vip/*',
+      '/reseller',
+      '/reseller/*',
+    ],
+    (req, res) => res.sendFile(path.join(adminDistPath, 'index.html'))
+  );
+}
+
+if (fs.existsSync(clientDistPath)) {
+  app.use(express.static(clientDistPath));
   app.get('*', (req, res, next) => {
     if (req.path.startsWith('/api')) {
       return next();
     }
-    return res.sendFile(path.join(adminDistPath, 'index.html'));
+    return res.sendFile(path.join(clientDistPath, 'index.html'));
   });
 }
 
