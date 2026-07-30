@@ -1,6 +1,7 @@
 import React from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { AlertCircle, Server, Home, RefreshCw, ArrowLeft, WifiOff } from 'lucide-react'
+import { resolvePortalNavigation } from '../utils/portalNavigation'
 
 /**
  * Composant de page d'erreur générique
@@ -8,8 +9,14 @@ import { AlertCircle, Server, Home, RefreshCw, ArrowLeft, WifiOff } from 'lucide
  * @param {string} message - Message personnalisé (optionnel)
  * @param {string} title - Titre personnalisé (optionnel)
  */
-export default function ErrorPage({ type = '404', message, title }) {
+export default function ErrorPage({ type = '404', message, title, portalRole, onReset }) {
   const navigate = useNavigate()
+  const location = useLocation()
+  const portalNavigation = resolvePortalNavigation({
+    pathname: location.pathname,
+    search: location.search,
+    portalRole,
+  })
 
   const is404 = type === '404'
   const is500 = type === '500'
@@ -36,6 +43,16 @@ export default function ErrorPage({ type = '404', message, title }) {
     'offline': { Icon: WifiOff, gradient: 'from-slate-400 to-gray-500', badge: '⚠️' },
   }
   const { Icon, gradient, badge } = iconMap[type] || iconMap['404']
+
+  const goTo = (path) => {
+    onReset?.()
+    navigate(path, { replace: true })
+  }
+
+  const canReturnToSource = (
+    portalNavigation.returnPath
+    && portalNavigation.returnPath !== portalNavigation.destination
+  )
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center px-4 py-12">
@@ -66,25 +83,30 @@ export default function ErrorPage({ type = '404', message, title }) {
 
           {/* Boutons d'action */}
           <div className="mt-8 space-y-3">
-            <button
-              onClick={() => navigate(-1)}
-              className="inline-flex items-center justify-center gap-2 w-full px-4 py-3 bg-white border-2 border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 font-medium shadow-sm"
-            >
-              <ArrowLeft size={18} />
-              Retour
-            </button>
+            {canReturnToSource && (
+              <button
+                onClick={() => goTo(portalNavigation.returnPath)}
+                className="inline-flex items-center justify-center gap-2 w-full px-4 py-3 bg-white border-2 border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 font-medium shadow-sm"
+              >
+                <ArrowLeft size={18} />
+                Retour à la page précédente
+              </button>
+            )}
 
             <button
-              onClick={() => navigate('/admin/dashboard')}
+              onClick={() => goTo(portalNavigation.destination)}
               className="inline-flex items-center justify-center gap-2 w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-medium shadow-md hover:shadow-lg"
             >
               <Home size={18} />
-              Tableau de bord
+              {portalNavigation.destinationLabel}
             </button>
 
             {(is500 || isOffline) && (
               <button
-                onClick={() => window.location.reload()}
+                onClick={() => {
+                  onReset?.()
+                  window.location.reload()
+                }}
                 className="inline-flex items-center justify-center gap-2 w-full px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all duration-200 font-medium"
               >
                 <RefreshCw size={18} />

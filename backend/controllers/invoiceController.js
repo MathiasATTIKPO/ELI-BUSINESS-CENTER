@@ -22,6 +22,15 @@ const {
 
 const getInvoiceApiPath = (invoiceId) => `/api/invoices/${invoiceId}/pdf`;
 
+const toInvoiceResponse = (invoice) => {
+  if (!invoice) return null;
+  const data = typeof invoice.toObject === 'function' ? invoice.toObject() : { ...invoice };
+  return {
+    ...data,
+    downloadUrl: data._id ? getInvoiceApiPath(data._id) : '',
+  };
+};
+
 // ====================== Fonctions utilitaires ======================
 
 
@@ -250,6 +259,7 @@ exports.createInvoicePdf = async ({
       const hasRemotePdf = isAbsoluteUrl(existingInvoice.pdfUrl);
       const remoteIsReachable = hasRemotePdf ? await downloadSourceExists(existingInvoice.pdfUrl) : true;
       if ((hasRemotePdf && remoteIsReachable) || !hasCloudinaryConfig()) {
+        existingInvoice.downloadUrl = getInvoiceApiPath(existingInvoice._id);
         return existingInvoice;
       }
     }
@@ -368,7 +378,9 @@ exports.downloadInvoicePdf = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Facture introuvable.' });
     }
 
-    const source = invoice.pdfPath || invoice.pdfUrl;
+    // Prefer the durable Cloudinary URL. Legacy documents can still contain a
+    // stale local pdfPath left over from before the uploads migration.
+    const source = [invoice.pdfUrl, invoice.pdfPath];
     if (!source) {
       return res.status(404).json({ success: false, message: 'PDF introuvable.' });
     }
@@ -419,7 +431,7 @@ exports.generateInvoice = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      data: invoice,
+      data: toInvoiceResponse(invoice),
       message: 'Facture generee avec succes.'
     });
   } catch (error) {

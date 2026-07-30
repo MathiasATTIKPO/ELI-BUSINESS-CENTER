@@ -24,6 +24,7 @@ import ResellerProtectedRoute from './components/ResellerProtectedRoute'
 import VIPProtectedRoute from './components/VIPProtectedRoute'
 import ErrorBoundary from './components/ErrorBoundary'
 import ErrorPage from './pages/ErrorPage'
+import { resolvePortalNavigation } from './utils/portalNavigation'
 
 const Login = React.lazy(() => import('./pages/Login'))
 const Dashboard = React.lazy(() => import('./pages/Dashboard'))
@@ -75,6 +76,11 @@ function RouteLoadingFallback() {
       </div>
     </div>
   )
+}
+
+function PortalEntryRedirect() {
+  const { destination } = resolvePortalNavigation()
+  return <Navigate to={destination} replace />
 }
 
 function AdminLayout() {
@@ -248,7 +254,7 @@ export default function App() {
                         <Route path="repair/:id" element={<TechnicianRepairDetail />} />
                         <Route path="tradein/:id" element={<TechnicianTradeInDetail />} />
                         <Route path="history" element={<TechnicianHistory />} />
-                        <Route path="*" element={<Navigate to="/technician/dashboard" replace />} />
+                        <Route path="*" element={<ErrorPage type="404" portalRole="technician" />} />
                       </Route>
                       <Route
                         path="/reseller/*"
@@ -279,7 +285,7 @@ export default function App() {
                         <Route path="repair/:id" element={<CashierRepairDetail />} />
                         <Route path="tradein/:id" element={<CashierTradeInDetail />} />
                         <Route path="report" element={<CashierReport />} />
-                        <Route path="*" element={<Navigate to="/cashier/sales" replace />} />
+                        <Route path="*" element={<ErrorPage type="404" portalRole="cashier" />} />
                       </Route>
 
                       {/* Admin routes (with nested layout) */}
@@ -317,11 +323,11 @@ export default function App() {
                         <Route path="employees/new" element={<EmployeeForm />} />
                         <Route path="history" element={<ActivityHistory />} />
                         {/* Fallback inside admin */}
-                        <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
+                        <Route path="*" element={<ErrorPage type="404" portalRole="admin" />} />
                       </Route>
 
                       {/* Root redirect */}
-                      <Route path="/" element={<Navigate to="/admin/login" replace />} />
+                      <Route path="/" element={<PortalEntryRedirect />} />
 
                       {/* Error routes */}
                       <Route path="/404" element={<ErrorPage type="404" />} />

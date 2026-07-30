@@ -1,6 +1,7 @@
 // services/api.js - Version compatible avec TokenManager
 import axios from 'axios'
 import TokenManager from './tokenManager'
+import { buildErrorRoute } from '../utils/portalNavigation'
 
 const configuredBaseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/+$/, '')
 const configuredMediaBaseUrl = (import.meta.env.VITE_MEDIA_BASE_URL || '').replace(/\/+$/, '')
@@ -104,7 +105,7 @@ api.interceptors.response.use(
       const isCredentialEndpoint = /\/(login|forgot|reset|change-password)\b/.test(url)
       if (!isCredentialEndpoint && typeof window !== 'undefined') {
         if (status === 404) {
-          window.location.href = '/404?from=' + encodeURIComponent(window.location.pathname)
+          window.location.href = buildErrorRoute('404', window.location)
           return Promise.reject(error)
         }
       }

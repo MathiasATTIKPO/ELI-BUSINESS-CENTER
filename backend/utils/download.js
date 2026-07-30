@@ -1,8 +1,35 @@
 const fs = require('fs');
+const path = require('path');
 const { v2: cloudinary } = require('cloudinary');
 const { getCloudinaryConfig } = require('../services/cloudinary');
 
 const isAbsoluteUrl = (value) => /^https?:\/\//i.test(String(value || ''));
+const backendRoot = path.resolve(__dirname, '..');
+
+const getSourceCandidates = (source) => {
+  const values = Array.isArray(source) ? source : [source];
+  return [...new Set(values.map((value) => String(value || '').trim()).filter(Boolean))];
+};
+
+const resolveLocalSource = (source) => {
+  const value = String(source || '').trim();
+  if (!value || isAbsoluteUrl(value)) return '';
+
+  // Local development stores generated files under backend/uploads while the
+  // database may contain either an absolute path or a public /uploads URL.
+  if (/^[\\/]?uploads[\\/]/i.test(value)) {
+    const relativeUploadPath = value.replace(/^[\\/]+/, '');
+    const resolved = path.resolve(backendRoot, relativeUploadPath);
+    const uploadsRoot = path.resolve(backendRoot, 'uploads');
+    if (resolved === uploadsRoot || resolved.startsWith(`${uploadsRoot}${path.sep}`)) {
+      return resolved;
+    }
+    return '';
+  }
+
+  return path.isAbsolute(value) ? path.normalize(value) : value;
+};
+
 const isCloudinaryUrl = (value) => {
   try {
     const parsed = new URL(String(value || ''));
@@ -63,13 +90,17 @@ const getCloudinarySignedUrl = (source) => {
 
   const expiresAt = Math.floor(Date.now() / 1000) + (5 * 60);
 
-  // Works for protected raw files (PDF, receipts, contracts) and keeps public files unaffected.
-  return cloudinary.utils.private_download_url(info.publicId, info.format, {
-    resource_type: info.resourceType || 'raw',
-    type: 'upload',
-    expires_at: expiresAt,
-    attachment: false,
-  });
+  try {
+    // Works for protected raw files (PDF, receipts, contracts) and keeps public files unaffected.
+    return cloudinary.utils.private_download_url(info.publicId, info.format, {
+      resource_type: info.resourceType || 'raw',
+      type: 'upload',
+      expires_at: expiresAt,
+      attachment: false,
+    });
+  } catch (error) {
+    return null;
+  }
 };
 
 const fetchRemoteBuffer = async (source) => {
@@ -84,7 +115,7 @@ const fetchRemoteBuffer = async (source) => {
     };
   }
 
-  if ((response.status === 401 || response.status === 403) && isCloudinaryUrl(source)) {
+  if (isCloudinaryUrl(source)) {
     const signedUrl = getCloudinarySignedUrl(source);
     if (signedUrl) {
       const signedResponse = await fetch(signedUrl);
@@ -105,44 +136,58 @@ const fetchRemoteBuffer = async (source) => {
 };
 
 const downloadSourceExists = async (source) => {
-  if (!source) return false;
+  const candidates = getSourceCandidates(source);
+  if (!candidates.length) return false;
 
-  if (isAbsoluteUrl(source)) {
-    try {
-      const head = await fetch(source, { method: 'HEAD' });
-      if (head.ok) return true;
+  for (const candidate of candidates) {
+    if (isAbsoluteUrl(candidate)) {
+      try {
+        const head = await fetch(candidate, { method: 'HEAD' });
+        if (head.ok) return true;
 
-      const fallback = await fetchRemoteBuffer(source);
-      return fallback.ok;
-    } catch (error) {
-      return false;
+        const fallback = await fetchRemoteBuffer(candidate);
+        if (fallback.ok) return true;
+      } catch (error) {
+        // Try the next persisted source (for example a local development copy).
+      }
+      continue;
     }
+
+    const localSource = resolveLocalSource(candidate);
+    if (localSource && fs.existsSync(localSource)) return true;
   }
 
-  return fs.existsSync(source);
+  return false;
 };
 
 const sendAttachment = async (res, source, fileName, mimeType = 'application/pdf') => {
-  if (!source) {
+  const candidates = getSourceCandidates(source);
+  if (!candidates.length) {
     return res.status(404).json({ success: false, message: 'Fichier introuvable.' });
   }
 
-  if (isAbsoluteUrl(source)) {
-    const remote = await fetchRemoteBuffer(source);
-    if (!remote.ok) {
-      return res.status(404).json({ success: false, message: 'Fichier distant introuvable.' });
+  for (const candidate of candidates) {
+    if (isAbsoluteUrl(candidate)) {
+      try {
+        const remote = await fetchRemoteBuffer(candidate);
+        if (remote.ok) {
+          res.setHeader('Content-Type', remote.contentType || mimeType);
+          res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+          return res.send(remote.buffer);
+        }
+      } catch (error) {
+        // A stale remote URL must not hide another valid persisted source.
+      }
+      continue;
     }
 
-    res.setHeader('Content-Type', remote.contentType || mimeType);
-    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
-    return res.send(remote.buffer);
+    const localSource = resolveLocalSource(candidate);
+    if (localSource && fs.existsSync(localSource)) {
+      return res.download(localSource, fileName);
+    }
   }
 
-  if (!fs.existsSync(source)) {
-    return res.status(404).json({ success: false, message: 'Fichier local introuvable.' });
-  }
-
-  return res.download(source, fileName);
+  return res.status(404).json({ success: false, message: 'Fichier introuvable dans le stockage.' });
 };
 
 module.exports = {

@@ -110,10 +110,14 @@ export default function CashierSales() {
       return
     }
 
-    const response = await api.get(endpoint, { responseType: 'blob' })
-    const blobUrl = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }))
-    window.open(blobUrl, '_blank', 'noopener,noreferrer')
-    setTimeout(() => window.URL.revokeObjectURL(blobUrl), 60000)
+    try {
+      const response = await api.get(endpoint, { responseType: 'blob' })
+      const blobUrl = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }))
+      window.open(blobUrl, '_blank', 'noopener,noreferrer')
+      setTimeout(() => window.URL.revokeObjectURL(blobUrl), 60000)
+    } catch (error) {
+      setToast({ type: 'error', message: 'Impossible d’ouvrir cette facture.' })
+    }
   }
 
   const downloadPdfBlob = async (endpoint, filename) => {
@@ -122,16 +126,20 @@ export default function CashierSales() {
       return
     }
 
-    const response = await api.get(endpoint, { responseType: 'blob' })
-    const blob = new Blob([response.data], { type: 'application/pdf' })
-    const url = window.URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.setAttribute('download', filename)
-    document.body.appendChild(link)
-    link.click()
-    link.remove()
-    window.URL.revokeObjectURL(url)
+    try {
+      const response = await api.get(endpoint, { responseType: 'blob' })
+      const blob = new Blob([response.data], { type: 'application/pdf' })
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', filename)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+    } catch (error) {
+      setToast({ type: 'error', message: 'Impossible de télécharger cette facture.' })
+    }
   }
 
   const getLatestVipReceiptUrl = (invoice) => {
@@ -405,11 +413,13 @@ export default function CashierSales() {
       const inv = await api.post('/api/invoice/generate', payload)
       console.log('📄 Réponse facture:', inv.data)
       
-      const pdf = inv?.data?.data?.pdfUrl
-      const downloadUrl = inv?.data?.data?.downloadUrl
-      if (pdf) {
-        setInvoiceLink(pdf.startsWith('http') ? pdf : `${API_BASE_URL}${pdf}`)
-        setInvoiceDownloadUrl(downloadUrl || '')
+      const invoice = inv?.data?.data
+      const pdf = invoice?.pdfUrl
+      const downloadUrl = invoice?.downloadUrl
+        || (invoice?._id ? `/api/invoices/${invoice._id}/pdf` : '')
+      if (pdf || downloadUrl) {
+        setInvoiceLink(resolveStoredUrl(pdf || downloadUrl))
+        setInvoiceDownloadUrl(downloadUrl || pdf)
         return true
       }
       return false
@@ -804,6 +814,9 @@ export default function CashierSales() {
           const link = invoice.pdfPath.startsWith('http') ? invoice.pdfPath : `${API_BASE_URL}${invoice.pdfPath}`
           setInvoiceLink(link)
         }
+        if (invoice?._id) {
+          setInvoiceDownloadUrl(`${vipBase}/invoices/${invoice._id}/pdf`)
+        }
         setToast({ type: 'success', message: 'Facture VIP générée avec succès.' })
         setSelectedVipRepairIds([])
         closeVipPreview()
@@ -879,6 +892,9 @@ export default function CashierSales() {
         if (receipt) {
           const link = resolveStoredUrl(receipt)
           setInvoiceLink(link)
+        }
+        if (updatedInvoice?._id) {
+          setInvoiceDownloadUrl(`${vipBase}/invoices/${updatedInvoice._id}/receipt`)
         }
         setSelectedVipInvoice(updatedInvoice || selectedVipInvoice)
         setToast({ type: 'success', message: 'Encaissement VIP enregistré.' })

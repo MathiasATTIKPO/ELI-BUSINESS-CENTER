@@ -376,7 +376,7 @@ export default function ResellerContracts() {
       const blobUrl = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }))
       const link = document.createElement('a')
       link.href = blobUrl
-      link.download = `contrat_revendeur_${contract.number || contract._id}.pdf`
+      link.download = `recepisse_contrat_revendeur_${contract.number || contract._id}.pdf`
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)

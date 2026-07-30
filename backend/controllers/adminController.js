@@ -1591,7 +1591,7 @@ exports.downloadSaleInvoice = async (req, res) => {
       }).sort({ sentAt: -1, createdAt: -1 });
 
       if (existingInvoice) {
-        const source = existingInvoice.pdfPath || existingInvoice.pdfUrl;
+        const source = [existingInvoice.pdfUrl, existingInvoice.pdfPath];
         return sendAttachment(res, source, `facture_vente_${req.params.id}.pdf`);
       }
 
@@ -1600,10 +1600,10 @@ exports.downloadSaleInvoice = async (req, res) => {
 
     const existingInvoiceUrl = sale.saleInfo?.invoiceUrl;
     if (existingInvoiceUrl) {
-      let existingSource = '';
+      let existingSource = [];
 
       if (isAbsoluteUrl(existingInvoiceUrl)) {
-        existingSource = existingInvoiceUrl;
+        existingSource = [existingInvoiceUrl];
       } else if (String(existingInvoiceUrl).startsWith('/api/invoices/')) {
         const existingInvoice = await Invoice.findOne({
           requestType: 'product',
@@ -1611,13 +1611,13 @@ exports.downloadSaleInvoice = async (req, res) => {
         }).sort({ sentAt: -1, createdAt: -1 });
 
         if (existingInvoice) {
-          existingSource = existingInvoice.pdfPath || existingInvoice.pdfUrl;
+          existingSource = [existingInvoice.pdfUrl, existingInvoice.pdfPath];
         }
       } else {
-        existingSource = path.join(__dirname, '..', existingInvoiceUrl.replace(/^\/+/, ''));
+        existingSource = [path.join(__dirname, '..', existingInvoiceUrl.replace(/^\/+/, ''))];
       }
 
-      if (existingSource && await downloadSourceExists(existingSource)) {
+      if (existingSource.length && await downloadSourceExists(existingSource)) {
         return sendAttachment(
           res,
           existingSource,
@@ -1648,7 +1648,7 @@ exports.downloadSaleInvoice = async (req, res) => {
     };
     await sale.save();
     
-    const source = invoice.pdfPath || invoice.pdfUrl;
+    const source = [invoice.pdfUrl, invoice.pdfPath];
     return sendAttachment(
       res,
       source,
@@ -1678,7 +1678,7 @@ exports.downloadRepairInvoice = async (req, res) => {
       amount: amount
     });
     
-    const source = invoice.pdfPath || invoice.pdfUrl;
+    const source = [invoice.pdfUrl, invoice.pdfPath];
     return sendAttachment(
       res,
       source,
@@ -1708,7 +1708,7 @@ exports.downloadTradeinInvoice = async (req, res) => {
       amount: amount
     });
     
-    const source = invoice.pdfPath || invoice.pdfUrl;
+    const source = [invoice.pdfUrl, invoice.pdfPath];
     return sendAttachment(
       res,
       source,

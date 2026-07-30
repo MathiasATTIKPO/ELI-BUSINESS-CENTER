@@ -235,7 +235,11 @@ const appendTables = (rows, products, inventory, employees, sales) => {
     id: item._id || '',
     label: item.name || '',
     category: item.category || '',
-    status: asNumber(item.quantity) > 0 ? 'Disponible' : 'Rupture',
+    status: asNumber(item.quantity) > 10
+      ? 'Stock ok'
+      : asNumber(item.quantity) > 0
+        ? 'Stock faible'
+        : 'Rupture',
     quantity: asNumber(item.quantity),
     indicator: 'Prix unitaire',
     value: asNumber(item.unitPrice),
