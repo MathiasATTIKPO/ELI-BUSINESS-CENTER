@@ -1,12 +1,12 @@
-export function exportCsv(rows, filename = 'export') {
+export function exportCsv(rows, filename = 'export', headers = null) {
   if (!rows || !rows.length) {
-    return
+    return false
   }
 
-  const headers = Object.keys(rows[0])
-  const csvContent = [headers.join(';')].concat(
+  const orderedHeaders = headers?.length ? headers : Object.keys(rows[0])
+  const csvContent = [orderedHeaders.join(';')].concat(
     rows.map((row) =>
-      headers.map((header) => {
+      orderedHeaders.map((header) => {
         const value = row[header] ?? ''
         const escaped = String(value).replace(/"/g, '""')
         return `"${escaped}"`
@@ -14,7 +14,7 @@ export function exportCsv(rows, filename = 'export') {
     )
   ).join('\r\n')
 
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+  const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' })
   const link = document.createElement('a')
   const url = URL.createObjectURL(blob)
   link.setAttribute('href', url)
@@ -23,4 +23,5 @@ export function exportCsv(rows, filename = 'export') {
   link.click()
   document.body.removeChild(link)
   URL.revokeObjectURL(url)
+  return true
 }

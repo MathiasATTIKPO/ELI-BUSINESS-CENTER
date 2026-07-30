@@ -16,6 +16,8 @@ import ReportsTab from './ReportsTab'
 import { useDashboardStore } from '../../store/dashboardStore'
 import { useDashboardData } from '../../hooks/useDashboardData'
 import { useFilters } from '../../hooks/useFilters'
+import { buildDashboardCsvRows } from '../../utils/dashboardCsv'
+import { exportCsv } from '../../utils/exportCsv'
 import {
   buildEmployeeColumns,
   buildInventoryColumns,
@@ -64,6 +66,26 @@ export default function DashboardPage() {
   const transactionColumns = buildTransactionColumns()
   const invoiceColumns = buildInvoiceColumns(downloadInvoice)
 
+  const handleExportDashboard = () => {
+    const rows = buildDashboardCsvRows({
+      stats,
+      kpis,
+      salesEvolution,
+      repairsEvolution,
+      tradeinsEvolution,
+      weeklyActivity,
+      products,
+      inventory,
+      employees,
+      sales,
+    })
+    const date = new Date().toISOString().slice(0, 10)
+    const exported = exportCsv(rows, `dashboard_complet_${date}`)
+    setToast(exported
+      ? { type: 'success', message: 'Toutes les données du dashboard ont été exportées.' }
+      : { type: 'error', message: 'Aucune donnée disponible pour l’export.' })
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/30">
@@ -93,7 +115,7 @@ export default function DashboardPage() {
           repairsEvolution={repairsEvolution}
           tradeinsEvolution={tradeinsEvolution}
           weeklyActivity={weeklyActivity}
-          setToast={setToast}
+          onExportDashboard={handleExportDashboard}
         />
       )}
 

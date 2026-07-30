@@ -3,7 +3,6 @@ import { ResponsiveContainer, LineChart, Line, CartesianGrid, XAxis, YAxis, Tool
 import { Wrench, RefreshCw, Smartphone, DollarSign, Users, ShoppingCart, TrendingUp, BarChart3, Calendar, PieChartIcon, Download, Clock, Target } from 'lucide-react'
 import StatCard from '../../components/ui/StatCard'
 import ChartCard from '../../components/ui/ChartCard'
-import { exportCsv } from '../../utils/exportCsv'
 
 function CustomTooltip({ active, payload, label }) {
   if (!(active && payload && payload.length)) return null
@@ -19,29 +18,13 @@ function CustomTooltip({ active, payload, label }) {
   )
 }
 
-export default function OverviewTab({ stats, salesEvolution, repairsEvolution, tradeinsEvolution, weeklyActivity, setToast }) {
-  const exportVipResellerStatsCsv = () => {
-    const rows = [
-      { Bloc: 'KPI VIP', Indicateur: 'Clients VIP total', Valeur: stats.totalVIPClients },
-      { Bloc: 'KPI VIP', Indicateur: 'Clients VIP actifs', Valeur: stats.activeVIPClients },
-      { Bloc: 'KPI VIP', Indicateur: 'Reparations VIP', Valeur: stats.vipRepairsCount },
-      { Bloc: 'KPI VIP', Indicateur: 'Factures VIP', Valeur: stats.vipInvoicesCount },
-      { Bloc: 'KPI VIP', Indicateur: 'CA VIP (FCFA)', Valeur: stats.vipRevenue },
-      { Bloc: 'KPI Revendeur', Indicateur: 'Revendeurs actifs', Valeur: stats.activeResellers },
-      { Bloc: 'KPI Revendeur', Indicateur: 'Contrats vendus', Valeur: stats.soldContractsCount },
-      { Bloc: 'KPI Revendeur', Indicateur: 'Contrats actifs', Valeur: stats.activeContractsCount },
-      { Bloc: 'KPI Revendeur', Indicateur: 'CA Revendeur (FCFA)', Valeur: stats.resellerSalesAmount },
-    ]
-    exportCsv(rows, 'stats_vip_revendeurs_dashboard')
-    setToast({ type: 'success', message: 'Export CSV des statistiques VIP/revendeurs genere.' })
-  }
-
+export default function OverviewTab({ stats, salesEvolution, repairsEvolution, tradeinsEvolution, weeklyActivity, onExportDashboard }) {
   return (
     <div className="space-y-6">
       <div className="flex justify-end">
-        <button type="button" onClick={exportVipResellerStatsCsv} className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-50 transition-all duration-200 shadow-sm">
+        <button type="button" onClick={onExportDashboard} className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-50 transition-all duration-200 shadow-sm">
           <Download size={16} />
-          Export CSV VIP/Revendeurs
+          Exporter tout le dashboard
         </button>
       </div>
 

@@ -17,6 +17,16 @@ const Product = require('../models/Product');
 const AppSettings = require('../models/AppSettings'); // ⭐ AJOUT
 const notificationService = require('../services/notificationService');
 const { storeFileBuffer, isAbsoluteUrl } = require('../services/cloudinary');
+const {
+  PDF_MARGIN,
+  PDF_THEME,
+  collectPdfBuffer,
+  drawDocumentFooter,
+  drawDocumentHeader,
+  drawSectionTitle,
+  formatDocumentDate,
+  formatFcfa,
+} = require('../utils/pdfDocument');
 
 // ====================== FONCTIONS UTILITAIRES ======================
 
@@ -31,8 +41,6 @@ const ensureDir = (dirPath) => {
     fs.mkdirSync(dirPath, { recursive: true });
   }
 };
-
-const formatFcfa = (value) => `${Number(value || 0).toLocaleString('fr-FR')} FCFA`;
 
 const normalizePhone = (value = '') => {
   const raw = String(value || '').trim();
@@ -126,89 +134,79 @@ const createContractPdf = async (contract) => {
   const createdAt = contract.createdAt ? new Date(contract.createdAt) : new Date();
   const dueAt = contract.dueAt ? new Date(contract.dueAt) : null;
 
-  const doc = new PDFDocument({ size: 'A4', margin: 40 });
+  const doc = new PDFDocument({ size: 'A4', margin: 0 });
   const chunks = [];
   doc.on('data', (chunk) => chunks.push(chunk));
 
-  doc.rect(0, 0, doc.page.width, 110).fill('#0F172A');
-  doc.font('Helvetica-Bold').fontSize(22).fillColor('#FFFFFF').text('CONTRAT REVENDEUR', 40, 36);
-  doc.font('Helvetica').fontSize(10).fillColor('#CBD5E1').text(`Référence: ${contract.number}`, 40, 68);
-  doc.font('Helvetica').fontSize(10).fillColor('#CBD5E1').text(`Date: ${createdAt.toLocaleDateString('fr-FR')}`, 260, 68);
+  doc.rect(0, 0, doc.page.width, doc.page.height).fill(PDF_THEME.white);
+  drawDocumentHeader(doc, {
+    title: 'CONTRAT REVENDEUR',
+    subtitle: 'Récépissé de remise de produit',
+    number: contract.number,
+    date: createdAt,
+    reference: imei !== 'Non renseigné' ? `IMEI ${imei}` : '',
+  });
 
-  let y = 130;
-  doc.font('Helvetica-Bold').fontSize(12).fillColor('#0F172A').text('1. Parties', 40, y);
-  y += 20;
-  doc.font('Helvetica').fontSize(10).fillColor('#111827')
-    .text('Entreprise: Eli Business Center, Lomé, Togo', 40, y)
-    .text(`Revendeur: ${resellerName}`, 40, y + 16)
-    .text(`Téléphone: ${resellerPhone || 'Non renseigné'}`, 40, y + 32)
-    .text(`WhatsApp: ${resellerWhatsapp || 'Non renseigné'}`, 40, y + 48);
+  let y = drawSectionTitle(doc, '1. Parties', 150);
+  doc.font('Helvetica').fontSize(9).fillColor(PDF_THEME.text)
+    .text('Entreprise : Eli Business Center, Lomé, Togo', PDF_MARGIN + 12, y)
+    .text(`Revendeur : ${resellerName}`, PDF_MARGIN + 12, y + 16)
+    .text(`Téléphone : ${resellerPhone || 'Non renseigné'}`, PDF_MARGIN + 12, y + 32)
+    .text(`WhatsApp : ${resellerWhatsapp || 'Non renseigné'}`, PDF_MARGIN + 12, y + 48);
 
-  y += 80;
-  doc.font('Helvetica-Bold').fontSize(12).fillColor('#0F172A').text('2. Objet du contrat', 40, y);
-  y += 20;
-  doc.font('Helvetica').fontSize(10).fillColor('#111827')
-    .text(`Produit confié: ${productName}`, 40, y)
-    .text(`IMEI / Série: ${imei}`, 40, y + 16)
-    .text(`Prix catalogue: ${formatFcfa(catalogPrice)}`, 40, y + 32)
-    .text(`Prix négocié: ${formatFcfa(negotiatedPrice)}`, 40, y + 48)
-    .text(`Prix final attendu: ${formatFcfa(expectedSalePrice)}`, 40, y + 64);
+  y = drawSectionTitle(doc, '2. Objet du contrat', y + 76);
+  doc.roundedRect(PDF_MARGIN, y - 4, doc.page.width - (2 * PDF_MARGIN), 82, 8).fill(PDF_THEME.soft);
+  doc.font('Helvetica').fontSize(9).fillColor(PDF_THEME.text)
+    .text(`Produit confié : ${productName}`, PDF_MARGIN + 14, y + 7)
+    .text(`IMEI / Série : ${imei}`, PDF_MARGIN + 14, y + 23)
+    .text(`Prix catalogue : ${formatFcfa(catalogPrice)}`, PDF_MARGIN + 14, y + 39)
+    .text(`Prix négocié : ${formatFcfa(negotiatedPrice)}`, 320, y + 39, { width: 220 })
+    .text(`Prix final attendu : ${formatFcfa(expectedSalePrice)}`, PDF_MARGIN + 14, y + 55);
 
-  y += 100;
-  doc.font('Helvetica-Bold').fontSize(12).fillColor('#0F172A').text('3. Conditions principales', 40, y);
-  y += 22;
-  doc.font('Helvetica').fontSize(10).fillColor('#111827').text(
+  y = drawSectionTitle(doc, '3. Conditions principales', y + 96);
+  doc.font('Helvetica').fontSize(9).fillColor(PDF_THEME.text).text(
     '- Le revendeur confirme la réception du produit et s’engage à respecter le délai convenu.\n' +
     '- En cas de vente validée par les deux parties, l’encaissement est réalisé par le caissier.\n' +
     '- En cas de retour validé, le produit est restitué au stock de l’entreprise.\n' +
     '- Toute modification substantielle doit être validée dans le système.',
-    40,
+    PDF_MARGIN + 12,
     y,
-    { width: doc.page.width - 80, lineGap: 4 }
+    { width: doc.page.width - (2 * PDF_MARGIN) - 24, lineGap: 3 }
   );
 
-  y += 88;
-  doc.font('Helvetica-Bold').fontSize(12).fillColor('#0F172A').text('4. Délai et échéance', 40, y);
-  y += 20;
-  doc.font('Helvetica').fontSize(10).fillColor('#111827').text(
+  y = drawSectionTitle(doc, '4. Délai et échéance', y + 76);
+  doc.font('Helvetica').fontSize(9).fillColor(PDF_THEME.text).text(
     dueAt
-      ? `Échéance actuelle: ${dueAt.toLocaleString('fr-FR')}`
+      ? `Échéance actuelle : ${formatDocumentDate(dueAt, { withTime: true })}`
       : 'L’échéance de 48h démarre après confirmation du retrait.',
-    40,
+    PDF_MARGIN + 12,
     y
   );
 
-  y += 38;
-  doc.font('Helvetica-Bold').fontSize(12).fillColor('#0F172A').text('5. Retard et pénalités', 40, y);
-  y += 20;
-  doc.font('Helvetica').fontSize(10).fillColor('#111827').text(
+  y = drawSectionTitle(doc, '5. Retard et pénalités', y + 38);
+  doc.font('Helvetica').fontSize(8.5).fillColor(PDF_THEME.text).text(
     '- Tout retard de régularisation après l\'échéance est considéré comme un manquement contractuel.\n' +
     '- Une pénalité forfaitaire de 10% du montant attendu peut être appliquée après 24h de retard.\n' +
     '- Au-delà de 72h de retard, Eli Business Center peut suspendre les nouvelles mises à disposition de produits et exiger la restitution immédiate des appareils non réglés.\n' +
     '- Toute dérogation (encaissement hors délai) doit être validée par un manager et tracée dans le système.',
-    40,
+    PDF_MARGIN + 12,
     y,
-    { width: doc.page.width - 80, lineGap: 4 }
+    { width: doc.page.width - (2 * PDF_MARGIN) - 24, lineGap: 3 }
   );
 
-  const signatureY = 670;
-  doc.moveTo(60, signatureY).lineTo(260, signatureY).strokeColor('#9CA3AF').stroke();
-  doc.moveTo(340, signatureY).lineTo(540, signatureY).strokeColor('#9CA3AF').stroke();
-  doc.font('Helvetica').fontSize(9).fillColor('#374151').text('Signature entreprise', 110, signatureY + 8);
-  doc.font('Helvetica').fontSize(9).fillColor('#374151').text('Signature revendeur', 395, signatureY + 8);
+  const signatureY = 680;
+  doc.moveTo(65, signatureY).lineTo(260, signatureY).strokeColor(PDF_THEME.border).stroke();
+  doc.moveTo(335, signatureY).lineTo(530, signatureY).strokeColor(PDF_THEME.border).stroke();
+  doc.font('Helvetica').fontSize(8.5).fillColor(PDF_THEME.muted)
+    .text('Signature entreprise', 65, signatureY + 9, { width: 195, align: 'center' })
+    .text('Signature revendeur', 335, signatureY + 9, { width: 195, align: 'center' });
 
-  doc.font('Helvetica').fontSize(8).fillColor('#6B7280')
-    .text('Document généré électroniquement par Eli Business Center.', 40, 740, {
-      width: doc.page.width - 80,
-      align: 'center'
-    });
+  drawDocumentFooter(doc, {
+    message: 'Ce document fait office de contrat et de récépissé de remise du produit.',
+  });
 
   doc.end();
-
-  const pdfBuffer = await new Promise((resolve, reject) => {
-    doc.on('end', () => resolve(Buffer.concat(chunks)));
-    doc.on('error', reject);
-  });
+  const pdfBuffer = await collectPdfBuffer(doc, chunks);
 
   const storedPdf = await storeFileBuffer(pdfBuffer, {
     folder: 'contracts',
@@ -890,7 +888,7 @@ exports.downloadContractPdf = async (req, res) => {
     await contract.save();
 
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="contrat_revendeur_${contract.number}.pdf"`);
+    res.setHeader('Content-Disposition', `attachment; filename="recepisse_contrat_revendeur_${contract.number}.pdf"`);
     return res.send(regenerated.pdfBuffer);
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });

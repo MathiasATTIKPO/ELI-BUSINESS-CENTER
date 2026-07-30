@@ -540,7 +540,7 @@ export default function ResellerContracts() {
                             className="inline-flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-60"
                           >
                             <FileDown size={14} />
-                            {downloadingContractId === contract._id ? 'Téléchargement...' : 'Contrat PDF'}
+                            {downloadingContractId === contract._id ? 'Téléchargement...' : 'Récépissé / contrat'}
                           </button>
                         </div>
                       )}
@@ -561,7 +561,7 @@ export default function ResellerContracts() {
                             className="inline-flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-60"
                           >
                             <FileDown size={14} />
-                            {downloadingContractId === contract._id ? 'Téléchargement...' : 'Contrat PDF'}
+                            {downloadingContractId === contract._id ? 'Téléchargement...' : 'Récépissé / contrat'}
                           </button>
                         </div>
                       )}
@@ -590,7 +590,7 @@ export default function ResellerContracts() {
                             className="inline-flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-60"
                           >
                             <FileDown size={14} />
-                            {downloadingContractId === contract._id ? 'Téléchargement...' : 'Contrat PDF'}
+                            {downloadingContractId === contract._id ? 'Téléchargement...' : 'Récépissé / contrat'}
                           </button>
                         </div>
                       )}
@@ -614,7 +614,7 @@ export default function ResellerContracts() {
                           className="inline-flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-60"
                         >
                           <FileDown size={14} />
-                          {downloadingContractId === contract._id ? 'Téléchargement...' : 'Contrat PDF'}
+                          {downloadingContractId === contract._id ? 'Téléchargement...' : 'Récépissé / contrat'}
                         </button>
                       )}
                     </td>

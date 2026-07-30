@@ -271,8 +271,10 @@ export default function CashierReport() {
   }
 
   const openInvoice = async (item) => {
+    const isResellerReceipt = item?.transactionType === 'reseller_contract'
+    const documentLabel = isResellerReceipt ? 'récépissé / contrat' : 'facture'
     if (!item?._id || !item?.transactionType) {
-      setToast({ type: 'error', message: 'Aucune facture disponible pour cette transaction' })
+      setToast({ type: 'error', message: `Aucun ${documentLabel} disponible pour cette transaction` })
       return
     }
 
@@ -284,7 +286,7 @@ export default function CashierReport() {
       ''
 
     if (!endpoint) {
-      setToast({ type: 'error', message: 'Aucune facture disponible pour cette transaction' })
+      setToast({ type: 'error', message: `Aucun ${documentLabel} disponible pour cette transaction` })
       return
     }
 
@@ -294,12 +296,12 @@ export default function CashierReport() {
       window.open(blobUrl, '_blank', 'noopener,noreferrer')
       setTimeout(() => window.URL.revokeObjectURL(blobUrl), 60000)
     } catch (error) {
-      setToast({ type: 'error', message: error.response?.data?.message || 'Impossible d’ouvrir la facture' })
+      setToast({ type: 'error', message: error.response?.data?.message || `Impossible d’ouvrir le ${documentLabel}` })
     }
   }
 
   const exportReport = () => {
-    let csv = 'Date,Type,Client,WhatsApp,Transaction ID,Montant,Méthode,Validé par,Override manager,Motif override,Facture,Notes\n'
+    let csv = 'Date,Type,Client,WhatsApp,Transaction ID,Montant,Méthode,Validé par,Override manager,Motif override,Document,Notes\n'
     filteredTransactions.forEach(item => {
       const date = item.saleInfo?.paymentDate ? new Date(item.saleInfo.paymentDate).toLocaleDateString('fr-FR') : '-'
       const amount = item.saleInfo?.amountPaid || item.saleInfo?.amount || item.price || 0
@@ -561,7 +563,7 @@ export default function CashierReport() {
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Montant</th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Méthode</th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Validé par</th>
-                  <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Facture</th>
+                  <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Document</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
@@ -628,7 +630,7 @@ export default function CashierReport() {
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg transition-colors text-sm font-medium border border-emerald-200"
                           >
                             <Eye size={14} />
-                            Voir
+                            {item.transactionType === 'reseller_contract' ? 'Récépissé' : 'Facture'}
                           </button>
                         ) : (
                           <span className="text-sm text-gray-400">-</span>

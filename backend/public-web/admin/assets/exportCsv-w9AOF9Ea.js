@@ -1,2 +1,0 @@
-function p(t,o="export"){if(!t||!t.length)return;const n=Object.keys(t[0]),r=[n.join(";")].concat(t.map(a=>n.map(d=>{const i=a[d]??"";return`"${String(i).replace(/"/g,'""')}"`}).join(";"))).join(`\r
-`),s=new Blob([r],{type:"text/csv;charset=utf-8;"}),e=document.createElement("a"),c=URL.createObjectURL(s);e.setAttribute("href",c),e.setAttribute("download",`${o}.csv`),document.body.appendChild(e),e.click(),document.body.removeChild(e),URL.revokeObjectURL(c)}export{p as e};

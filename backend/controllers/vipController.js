@@ -23,15 +23,21 @@ const fs = require('fs');
 const PDFDocument = require('pdfkit');
 const { storeFileBuffer, isAbsoluteUrl } = require('../services/cloudinary');
 const { sendAttachment, downloadSourceExists } = require('../utils/download');
+const {
+  PDF_MARGIN,
+  PDF_THEME,
+  collectPdfBuffer,
+  drawDocumentFooter,
+  drawDocumentHeader,
+  drawSectionTitle,
+  formatDocumentDate,
+  formatFcfa,
+  formatPaymentMethod,
+} = require('../utils/pdfDocument');
 
 // ============================================================
 //  UTILITAIRES
 // ============================================================
-
-const formatFcfa = (value) => {
-  const amount = Math.round(Number(value) || 0);
-  return `${amount.toLocaleString('fr-FR')} FCFA`;
-};
 
 const normalizePhone = (value = '') => {
   const raw = String(value || '').trim();
@@ -62,17 +68,37 @@ const ensureDir = (dirPath) => {
 
 const generateVIPInvoicePDF = async ({ invoice, vipClient, repairs, tvaRate = 0 }) => {
   const invoiceNumber = invoice.invoiceNumber || `VIP-INV-${Date.now().toString().slice(-6)}`;
+  const invoiceLines = Array.isArray(invoice.repairs) && invoice.repairs.length
+    ? invoice.repairs
+    : repairs;
 
-  const items = repairs.map((repair) => ({
-    quantity: 1,
-    description: `${repair.deviceModel || 'Téléphone'} - ${repair.issueDescription || 'Réparation VIP'}`,
-    unitPrice: Number(repair.cost || repair.saleInfo?.amount || 0),
-    total: Number(repair.cost || repair.saleInfo?.amount || 0)
-  }));
+  const items = invoiceLines.map((repair) => {
+    const unitPrice = Number(
+      repair.unitPrice
+      ?? repair.total
+      ?? repair.cost
+      ?? repair.saleInfo?.amount
+      ?? repair.price
+      ?? repair.estimatedPrice
+      ?? 0
+    );
+    const quantity = Math.max(1, Number(repair.quantity || 1));
+    return {
+      quantity,
+      description: repair.description
+        || `${repair.deviceModel || 'Téléphone'} - ${repair.issue || repair.issueDescription || 'Réparation VIP'}`,
+      unitPrice,
+      total: Number(repair.total ?? (unitPrice * quantity))
+    };
+  });
 
-  const totalHT = items.reduce((sum, item) => sum + item.total, 0);
-  const tvaAmount = totalHT * (tvaRate / 100);
-  const totalTTC = totalHT + tvaAmount;
+  // Le PDF reprend le snapshot financier enregistré sur la facture. Il ne
+  // recalcule pas les montants métier au moment du téléchargement.
+  const linesSubtotal = items.reduce((sum, item) => sum + Number(item.total || 0), 0);
+  const totalHT = Number(invoice.subtotal ?? linesSubtotal);
+  const totalTTC = Number(invoice.total ?? (totalHT + Number(invoice.tva || 0)));
+  const tvaAmount = Number(invoice.tva ?? (totalTTC - totalHT));
+  const displayTvaRate = totalHT > 0 ? (tvaAmount / totalHT) * 100 : Number(tvaRate || 0);
 
   return generateDevisPDF({
     invoiceNumber,
@@ -81,7 +107,7 @@ const generateVIPInvoicePDF = async ({ invoice, vipClient, repairs, tvaRate = 0 
     shippingAddress: vipClient?.address || 'Adresse non renseignée',
     items,
     totalHT,
-    tvaRate,
+    tvaRate: displayTvaRate,
     totalTTC,
     paymentMethod: 'transfer',
     date: new Date()
@@ -634,7 +660,7 @@ exports.getVIPInvoices = async (req, res) => {
 
 const generateReceiptPdf = async ({ invoice, payment, vipClient }) => {
   const fileName = `receipt_vip_${invoice.invoiceNumber || invoice._id}_${Date.now()}.pdf`;
-  const doc = new PDFDocument({ size: 'A4', margin: 50 });
+  const doc = new PDFDocument({ size: 'A4', margin: 0 });
   const chunks = [];
   doc.on('data', (chunk) => chunks.push(chunk));
 
@@ -645,74 +671,77 @@ const generateReceiptPdf = async ({ invoice, payment, vipClient }) => {
   const invoiceBalance = Number(invoice.balance || 0);
   const collector = payment.receivedByName || payment.receivedByRole || '-';
 
-  doc.rect(0, 0, doc.page.width, 120).fill('#0B132B');
-  doc.font('Helvetica-Bold').fontSize(22).fillColor('#FFFFFF').text('RECU DE PAIEMENT VIP', 50, 42);
-  doc.font('Helvetica').fontSize(10).fillColor('#D1D5DB').text('Eli Business Center', 50, 72);
-  doc.text(`Emission: ${new Date().toLocaleDateString('fr-FR')}`, 50, 88);
-  doc.font('Helvetica-Bold').fontSize(11).fillColor('#FFFFFF').text(`Recu #${invoiceRef}`, 420, 72, { width: 120, align: 'right' });
+  doc.rect(0, 0, doc.page.width, doc.page.height).fill(PDF_THEME.white);
+  drawDocumentHeader(doc, {
+    title: 'REÇU DE PAIEMENT',
+    subtitle: 'Encaissement client VIP',
+    number: `REC-${invoiceRef}`,
+    date: paidAt,
+    reference: `Facture ${invoiceRef}`,
+    operator: collector !== '-' ? `Encaissé par : ${collector}` : '',
+  });
 
-  let y = 145;
-  doc.roundedRect(50, y, doc.page.width - 100, 95, 8).fill('#F8FAFC');
-  doc.font('Helvetica-Bold').fontSize(11).fillColor('#0F172A').text('Informations client', 65, y + 14);
-  doc.font('Helvetica').fontSize(10).fillColor('#111827')
-    .text(`Client VIP: ${vipClient?.name || '-'}`, 65, y + 36)
-    .text(`Telephone: ${vipClient?.phone || vipClient?.whatsapp || '-'}`, 65, y + 54)
-    .text(`Facture: ${invoice.invoiceNumber || invoice._id}`, 320, y + 36)
-    .text(`Date paiement: ${paidAt.toLocaleString('fr-FR')}`, 320, y + 54);
+  let y = 150;
+  doc.roundedRect(PDF_MARGIN, y, doc.page.width - (2 * PDF_MARGIN), 94, 8).fill(PDF_THEME.soft);
+  doc.font('Helvetica-Bold').fontSize(8).fillColor(PDF_THEME.emeraldDark)
+    .text('INFORMATIONS CLIENT', PDF_MARGIN + 15, y + 14);
+  doc.font('Helvetica-Bold').fontSize(10).fillColor(PDF_THEME.text)
+    .text(vipClient?.name || 'Client VIP', PDF_MARGIN + 15, y + 34, { width: 210 });
+  doc.font('Helvetica').fontSize(9).fillColor(PDF_THEME.muted)
+    .text(`Téléphone : ${vipClient?.phone || vipClient?.whatsapp || '-'}`, PDF_MARGIN + 15, y + 53, { width: 210 })
+    .text(`Facture : ${invoice.invoiceNumber || invoice._id}`, 320, y + 34, { width: 225 })
+    .text(`Paiement : ${formatDocumentDate(paidAt, { withTime: true })}`, 320, y + 53, { width: 225 });
 
-  y += 125;
-  doc.font('Helvetica-Bold').fontSize(12).fillColor('#0F172A').text('Details de paiement', 50, y);
-  y += 18;
-
-  doc.rect(50, y, doc.page.width - 100, 28).fill('#E2E8F0');
-  doc.font('Helvetica-Bold').fontSize(10).fillColor('#1E293B')
-    .text('Designation', 60, y + 9)
+  y = drawSectionTitle(doc, 'Détails du paiement', y + 118);
+  doc.roundedRect(PDF_MARGIN, y, doc.page.width - (2 * PDF_MARGIN), 28, 5).fill(PDF_THEME.navySoft);
+  doc.font('Helvetica-Bold').fontSize(9).fillColor(PDF_THEME.white)
+    .text('Désignation', PDF_MARGIN + 10, y + 9)
     .text('Montant', 430, y + 9, { width: 100, align: 'right' });
 
   y += 28;
-  doc.rect(50, y, doc.page.width - 100, 34).fill('#FFFFFF').strokeColor('#CBD5E1').stroke();
-  doc.font('Helvetica').fontSize(10).fillColor('#111827')
-    .text(`Reglement facture VIP ${invoiceRef}`, 60, y + 11)
+  doc.rect(PDF_MARGIN, y, doc.page.width - (2 * PDF_MARGIN), 36)
+    .fill(PDF_THEME.white)
+    .strokeColor(PDF_THEME.border)
+    .stroke();
+  doc.font('Helvetica').fontSize(9.5).fillColor(PDF_THEME.text)
+    .text(`Règlement de la facture VIP ${invoiceRef}`, PDF_MARGIN + 10, y + 12)
     .text(formatFcfa(paidAmount), 430, y + 11, { width: 100, align: 'right' });
 
   y += 52;
-  doc.font('Helvetica').fontSize(10).fillColor('#111827')
-    .text(`Mode de paiement: ${payment.method || '-'}`, 50, y)
-    .text(`Encaisse par: ${collector}`, 50, y + 16);
+  doc.font('Helvetica').fontSize(9.5).fillColor(PDF_THEME.text)
+    .text(`Mode de paiement : ${formatPaymentMethod(payment.method)}`, PDF_MARGIN, y)
+    .text(`Encaissé par : ${collector}`, PDF_MARGIN, y + 17);
 
   if (payment.reference) {
-    doc.text(`Reference: ${payment.reference}`, 320, y);
+    doc.text(`Référence : ${payment.reference}`, 320, y, { width: 225 });
   }
 
   y += 52;
-  doc.roundedRect(50, y, doc.page.width - 100, 82, 8).fill('#ECFDF5');
-  doc.font('Helvetica-Bold').fontSize(10).fillColor('#065F46')
-    .text('Resume financier', 65, y + 14)
-    .text(`Total facture: ${formatFcfa(invoiceTotal)}`, 65, y + 34)
-    .text(`Montant regle: ${formatFcfa(paidAmount)}`, 260, y + 34)
-    .text(`Solde restant: ${formatFcfa(invoiceBalance)}`, 430, y + 34, { width: 100, align: 'right' });
+  doc.roundedRect(PDF_MARGIN, y, doc.page.width - (2 * PDF_MARGIN), 84, 8).fill(PDF_THEME.emeraldSoft);
+  doc.font('Helvetica-Bold').fontSize(9).fillColor(PDF_THEME.emeraldDark)
+    .text('RÉSUMÉ FINANCIER', PDF_MARGIN + 15, y + 14);
+  doc.font('Helvetica').fontSize(8).fillColor(PDF_THEME.muted)
+    .text('Total facture', PDF_MARGIN + 15, y + 37)
+    .text('Montant réglé', 240, y + 37)
+    .text('Solde restant', 420, y + 37);
+  doc.font('Helvetica-Bold').fontSize(10).fillColor(PDF_THEME.emeraldDark)
+    .text(formatFcfa(invoiceTotal), PDF_MARGIN + 15, y + 53, { width: 150 })
+    .text(formatFcfa(paidAmount), 240, y + 53, { width: 150 })
+    .text(formatFcfa(invoiceBalance), 420, y + 53, { width: 110, align: 'right' });
 
   if (payment.note) {
-    y += 100;
-    doc.font('Helvetica-Bold').fontSize(10).fillColor('#0F172A').text('Note', 50, y);
-    doc.font('Helvetica').fontSize(9).fillColor('#334155').text(String(payment.note), 50, y + 14, {
-      width: doc.page.width - 100,
+    y = drawSectionTitle(doc, 'Note', y + 105);
+    doc.font('Helvetica').fontSize(9).fillColor(PDF_THEME.muted).text(String(payment.note), PDF_MARGIN + 12, y, {
+      width: doc.page.width - (2 * PDF_MARGIN) - 24,
       lineGap: 3
     });
   }
 
-  doc.font('Helvetica').fontSize(8).fillColor('#64748B').text(
-    'Document genere automatiquement par Eli Business Center. Merci pour votre confiance.',
-    50,
-    760,
-    { width: doc.page.width - 100, align: 'center' }
-  );
-  doc.end();
-
-  const pdfBuffer = await new Promise((resolve, reject) => {
-    doc.on('end', () => resolve(Buffer.concat(chunks)));
-    doc.on('error', reject);
+  drawDocumentFooter(doc, {
+    message: 'Ce reçu confirme l’encaissement indiqué ci-dessus. Merci pour votre confiance.',
   });
+  doc.end();
+  const pdfBuffer = await collectPdfBuffer(doc, chunks);
 
   const storedReceipt = await storeFileBuffer(pdfBuffer, {
     folder: 'receipts',

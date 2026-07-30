@@ -1,5 +1,3 @@
-const fs = require('fs');
-const path = require('path');
 const PDFDocument = require('pdfkit');
 
 const Invoice = require('../models/Invoice');
@@ -11,6 +9,16 @@ const VIPInvoice = require('../models/VIPInvoice');
 const ResellerContract = require('../models/ResellerContract');
 const { storeFileBuffer, isAbsoluteUrl, hasCloudinaryConfig } = require('../services/cloudinary');
 const { downloadSourceExists, sendAttachment } = require('../utils/download');
+const {
+  PDF_MARGIN,
+  PDF_THEME,
+  collectPdfBuffer,
+  drawDocumentFooter,
+  drawDocumentHeader,
+  drawSectionTitle,
+  formatFcfa,
+  formatPaymentMethod,
+} = require('../utils/pdfDocument');
 
 const getInvoiceApiPath = (invoiceId) => `/api/invoices/${invoiceId}/pdf`;
 
@@ -37,17 +45,6 @@ const getServiceLabel = (requestType) => {
     reseller_contract: 'Encaissement contrat revendeur'
   };
   return labels[requestType] || 'Service';
-};
-
-const getPaymentMethodLabel = (value) => {
-  const labels = {
-    cash: 'Especes',
-    card: 'Carte bancaire',
-    mobile_money: 'Monnaie mobile',
-    check: 'Cheque',
-    transfer: 'Virement'
-  };
-  return labels[value] || (value || 'Non precise');
 };
 
 const getDescription = (requestType, requestData) => {
@@ -82,120 +79,89 @@ const parseAmount = (value) => {
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
-const formatFcfa = (value) => {
-  const amount = Math.round(parseAmount(value));
-  const grouped = String(amount).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-  return `${grouped} FCFA`;
-};
-
-// ====================== Couleurs ======================
-
-const C = {
-  text: '#1a1a1a',
-  muted: '#666666',
-  border: '#cccccc',
-  softBorder: '#eeeeee',
-  white: '#ffffff'
-};
-
 // ====================== Fonctions de dessin du PDF ======================
 
 /**
  * drawHeaderDevis – modifié pour inclure le nom du caissier
  */
 
-// ====================== En-tête ======================
-const MARGIN = 50;   // marge constante
-
-// ====================== En-tête ======================
 const drawHeaderDevis = (doc, invoiceNumber, date = new Date(), cashierName = '') => {
-  const rightEdge = doc.page.width - MARGIN;
-  const rightColX = rightEdge - 160;   // colonne de droite (libellés)
-  const rightValX = rightColX + 60;    // valeurs
-
-  doc.font('Helvetica-Bold').fontSize(18).fillColor(C.text).text('Eli Business Center', MARGIN, 30);
-  doc.font('Helvetica').fontSize(9).fillColor(C.muted).text('Lome, Togo', MARGIN, 52);
-  doc.font('Helvetica').fontSize(9).fillColor(C.muted).text('+228 90 17 84 75', MARGIN, 64);
-
-  doc.font('Helvetica-Bold').fontSize(9).fillColor(C.text).text('Facture no', rightColX, 30);
-  doc.font('Helvetica').fontSize(9).fillColor(C.text).text(invoiceNumber, rightValX, 30);
-
-  doc.font('Helvetica-Bold').fontSize(9).fillColor(C.text).text('Date', rightColX, 45);
-  doc.font('Helvetica').fontSize(9).fillColor(C.text).text(
-    date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }),
-    rightValX,
-    45
-  );
-
-  doc.font('Helvetica-Bold').fontSize(9).fillColor(C.text).text('Reference', rightColX, 60);
-  doc.font('Helvetica').fontSize(9).fillColor(C.text).text(`CMD-${invoiceNumber}`, rightValX, 60);
-
-  if (cashierName) {
-    doc.font('Helvetica-Bold').fontSize(9).fillColor(C.text).text('Caissier', rightColX, 75);
-    doc.font('Helvetica').fontSize(9).fillColor(C.text).text(cashierName, rightValX, 75);
-  }
-
-  doc.moveTo(MARGIN, 85).lineTo(rightEdge, 85).stroke(C.border);
+  drawDocumentHeader(doc, {
+    title: 'FACTURE',
+    subtitle: 'Document de vente et de prestation',
+    number: invoiceNumber,
+    date,
+    reference: `CMD-${invoiceNumber}`,
+    operator: cashierName ? `Caissier : ${cashierName}` : '',
+  });
 };
 
 // ====================== Adresses ======================
 const drawAddresses = (doc, clientName, clientAddress, additionalAddress = '') => {
-  const rightEdge = doc.page.width - MARGIN;
-  const yStart = 100;
-  const leftCol = MARGIN;
-  const rightCol = MARGIN + 200;
+  const gap = 14;
+  const yStart = 150;
+  const availableWidth = doc.page.width - (2 * PDF_MARGIN);
+  const cardWidth = (availableWidth - gap) / 2;
+  const rightCol = PDF_MARGIN + cardWidth + gap;
 
-  doc.font('Helvetica-Bold').fontSize(8).fillColor(C.muted).text('Facture a', leftCol, yStart);
-  doc.font('Helvetica').fontSize(9).fillColor(C.text);
-  doc.text(clientName || 'Client', leftCol, yStart + 14);
-  doc.text(clientAddress || 'Adresse non renseignee', leftCol, yStart + 28);
+  doc.roundedRect(PDF_MARGIN, yStart, cardWidth, 72, 8).fill(PDF_THEME.soft);
+  doc.roundedRect(rightCol, yStart, cardWidth, 72, 8).fill(PDF_THEME.soft);
 
-  doc.font('Helvetica-Bold').fontSize(8).fillColor(C.muted).text('Service rendu a', rightCol, yStart);
-  doc.font('Helvetica').fontSize(9).fillColor(C.text);
-  doc.text(clientName || 'Client', rightCol, yStart + 14);
-  doc.text(additionalAddress || 'Adresse non renseignee', rightCol, yStart + 28);
+  doc.font('Helvetica-Bold').fontSize(8).fillColor(PDF_THEME.emeraldDark)
+    .text('FACTURÉ À', PDF_MARGIN + 14, yStart + 12)
+    .text('SERVICE RENDU À', rightCol + 14, yStart + 12);
 
-  const yEnd = yStart + 70;
-  doc.moveTo(MARGIN, yEnd).lineTo(rightEdge, yEnd).stroke(C.border);
+  doc.font('Helvetica-Bold').fontSize(9.5).fillColor(PDF_THEME.text)
+    .text(clientName || 'Client', PDF_MARGIN + 14, yStart + 29, { width: cardWidth - 28 })
+    .text(clientName || 'Client', rightCol + 14, yStart + 29, { width: cardWidth - 28 });
+  doc.font('Helvetica').fontSize(8.5).fillColor(PDF_THEME.muted)
+    .text(clientAddress || 'Adresse non renseignée', PDF_MARGIN + 14, yStart + 46, { width: cardWidth - 28 })
+    .text(additionalAddress || 'Adresse non renseignée', rightCol + 14, yStart + 46, { width: cardWidth - 28 });
 };
 
 // ====================== Tableau des articles ======================
 const drawItemsTableDevis = (doc, items, totalHT, tvaRate = 0, tvaAmount = 0, totalTTC = 0) => {
-  const rightEdge = doc.page.width - MARGIN;
-  const yStart = 195;
-  const colQtyX = MARGIN;
-  const colDescX = MARGIN + 50;
+  const rightEdge = doc.page.width - PDF_MARGIN;
+  const yStart = drawSectionTitle(doc, 'Détails de la facture', 244);
+  const colQtyX = PDF_MARGIN;
+  const colDescX = PDF_MARGIN + 50;
   const colPriceX = rightEdge - 150;   // largeur réservée pour le prix unitaire
   const colTotalX = rightEdge - 80;    // largeur réservée pour le montant
+  const descWidth = colPriceX - colDescX - 14;
 
-  doc.font('Helvetica-Bold').fontSize(9).fillColor(C.text);
-  doc.text('Qte', colQtyX, yStart);
-  doc.text('Designation', colDescX, yStart);
-  doc.text('Prix unit.', colPriceX, yStart, { width: 70, align: 'right' });
-  doc.text('Montant', colTotalX, yStart, { width: 70, align: 'right' });
+  doc.roundedRect(PDF_MARGIN, yStart, rightEdge - PDF_MARGIN, 27, 5).fill(PDF_THEME.navySoft);
+  doc.font('Helvetica-Bold').fontSize(8.5).fillColor(PDF_THEME.white);
+  doc.text('Qté', colQtyX + 8, yStart + 9);
+  doc.text('Désignation', colDescX, yStart + 9);
+  doc.text('Prix unit.', colPriceX, yStart + 9, { width: 70, align: 'right' });
+  doc.text('Montant', colTotalX, yStart + 9, { width: 70, align: 'right' });
 
-  doc.moveTo(MARGIN, yStart + 10).lineTo(rightEdge, yStart + 10).stroke(C.border);
-
-  let currentY = yStart + 20;
+  let currentY = yStart + 36;
   items.forEach((item, index) => {
+    const description = String(item.description || 'Service');
+    const rowHeight = Math.max(24, doc.heightOfString(description, { width: descWidth }) + 10);
     if (index > 0) {
-      doc.moveTo(MARGIN, currentY - 2).lineTo(rightEdge, currentY - 2).stroke(C.softBorder);
+      doc.moveTo(PDF_MARGIN, currentY - 4).lineTo(rightEdge, currentY - 4)
+        .strokeColor(PDF_THEME.border)
+        .stroke();
     }
-    doc.font('Helvetica').fontSize(9).fillColor(C.text);
-    doc.text(String(item.quantity), colQtyX, currentY);
-    doc.text(item.description, colDescX, currentY);
+    doc.font('Helvetica').fontSize(9).fillColor(PDF_THEME.text);
+    doc.text(String(item.quantity), colQtyX + 8, currentY);
+    doc.text(description, colDescX, currentY, { width: descWidth });
     doc.text(formatFcfa(item.unitPrice), colPriceX, currentY, { width: 70, align: 'right' });
     doc.text(formatFcfa(item.total), colTotalX, currentY, { width: 70, align: 'right' });
-    currentY += 18;
+    currentY += rowHeight;
   });
 
-  doc.moveTo(MARGIN, currentY + 5).lineTo(rightEdge, currentY + 5).stroke(C.border);
+  doc.moveTo(PDF_MARGIN, currentY + 3).lineTo(rightEdge, currentY + 3)
+    .strokeColor(PDF_THEME.border)
+    .stroke();
 
-  const totalY = currentY + 15;
+  const totalY = currentY + 17;
   const labelX = rightEdge - 160;   // position des libellés (Total HT, TVA, Total)
   const valueX = rightEdge - 80;    // position des montants
 
-  doc.font('Helvetica').fontSize(9).fillColor(C.text);
+  doc.font('Helvetica').fontSize(9).fillColor(PDF_THEME.text);
   doc.text('Total HT', labelX, totalY);
   doc.text(formatFcfa(totalHT), valueX, totalY, { width: 70, align: 'right' });
 
@@ -204,26 +170,24 @@ const drawItemsTableDevis = (doc, items, totalHT, tvaRate = 0, tvaAmount = 0, to
   doc.text(formatFcfa(tvaAmount), valueX, tvaY, { width: 70, align: 'right' });
 
   const ttcY = tvaY + 18;
-  doc.moveTo(MARGIN, ttcY - 5).lineTo(rightEdge, ttcY - 5).stroke(C.border);
-  doc.font('Helvetica-Bold').fontSize(10).fillColor(C.text);
+  doc.roundedRect(labelX - 12, ttcY - 7, 172, 28, 5).fill(PDF_THEME.emeraldSoft);
+  doc.font('Helvetica-Bold').fontSize(10).fillColor(PDF_THEME.emeraldDark);
   doc.text('Total de la facture', labelX, ttcY);
   doc.text(formatFcfa(totalTTC), valueX, ttcY, { width: 70, align: 'right' });
+  return ttcY + 28;
 };
 
 // ====================== Conditions de paiement ======================
-const drawPaymentTerms = (doc, paymentMethod) => {
-  const yStart = 600;
-  doc.font('Helvetica-Bold').fontSize(9).fillColor(C.text).text('Conditions de paiement', MARGIN, yStart);
-  doc.font('Helvetica').fontSize(8).fillColor(C.muted).text('Paiement a reception de facture', MARGIN, yStart + 16);
+const drawPaymentTerms = (doc, paymentMethod, requestedY = 600) => {
+  const yStart = Math.min(Math.max(requestedY, 565), doc.page.height - 120);
+  drawSectionTitle(doc, 'Conditions de paiement', yStart);
+  doc.font('Helvetica').fontSize(8.5).fillColor(PDF_THEME.muted)
+    .text('Paiement à réception de la facture.', PDF_MARGIN + 12, yStart + 25);
   if (paymentMethod) {
-    doc.text(`Mode de reglement: ${getPaymentMethodLabel(paymentMethod)}`, MARGIN, yStart + 30);
+    doc.text(`Mode de règlement : ${formatPaymentMethod(paymentMethod)}`, PDF_MARGIN + 12, yStart + 40);
   }
-
-  const footerY = doc.page.height - 40;
-  doc.font('Helvetica').fontSize(7).fillColor('#999999');
-  doc.text('Facture valable sans signature - Merci de votre confiance', MARGIN, footerY, {
-    width: doc.page.width - 2 * MARGIN,
-    align: 'center'
+  drawDocumentFooter(doc, {
+    message: 'Facture valable sans signature. Merci pour votre confiance.',
   });
 };
 
@@ -249,18 +213,14 @@ const generateDevisPDF = async ({
   const chunks = [];
   doc.on('data', (chunk) => chunks.push(chunk));
 
-  doc.rect(0, 0, doc.page.width, doc.page.height).fill(C.white);
+  doc.rect(0, 0, doc.page.width, doc.page.height).fill(PDF_THEME.white);
   drawHeaderDevis(doc, invoiceNumber, date, cashierName); // ✨ on passe le nom
   drawAddresses(doc, clientName, clientAddress, shippingAddress);
-  drawItemsTableDevis(doc, items, totalHT, tvaRate, tvaAmount, totalTTC);
-  drawPaymentTerms(doc, paymentMethod);
+  const tableEndY = drawItemsTableDevis(doc, items, totalHT, tvaRate, tvaAmount, totalTTC);
+  drawPaymentTerms(doc, paymentMethod, tableEndY + 18);
 
   doc.end();
-
-  return new Promise((resolve, reject) => {
-    doc.on('end', () => resolve(Buffer.concat(chunks)));
-    doc.on('error', reject);
-  });
+  return collectPdfBuffer(doc, chunks);
 };
 
 // ====================== Fonction principale de création de facture ======================
