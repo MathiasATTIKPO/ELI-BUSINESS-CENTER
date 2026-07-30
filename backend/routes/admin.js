@@ -1,9 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
+const authorizeRoles = require('../middleware/authorizeRoles');
 const { upload } = require('../middleware/upload'); // ← Correction : destructuration
 const adminController = require('../controllers/adminController');
 const resellerController = require('../controllers/resellerController');
+const manageEmployees = authorizeRoles('admin', 'super_admin');
 
 /**
  * @openapi
@@ -36,6 +38,7 @@ const resellerController = require('../controllers/resellerController');
  */
 router.post('/login', adminController.login);
 router.use(auth);
+router.use(authorizeRoles('admin', 'super_admin', 'commercial_manager'));
 
 // ===== PRODUCTS ROUTES =====
 router.get('/products', adminController.getProducts);
@@ -71,9 +74,9 @@ router.delete('/inventory/:id', adminController.deleteInventoryItem);
 
 // ===== EMPLOYEES ROUTES =====
 router.get('/employees', adminController.getEmployees);
-router.post('/employees', adminController.createEmployee);
-router.put('/employees/:id', adminController.updateEmployee);
-router.delete('/employees/:id', adminController.deleteEmployee);
+router.post('/employees', manageEmployees, adminController.createEmployee);
+router.put('/employees/:id', manageEmployees, adminController.updateEmployee);
+router.delete('/employees/:id', manageEmployees, adminController.deleteEmployee);
 
 // ===== WORK TRACKING ROUTES =====
 router.post('/work/clockin', adminController.clockIn);

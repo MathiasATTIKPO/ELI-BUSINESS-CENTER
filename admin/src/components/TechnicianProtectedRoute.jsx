@@ -1,8 +1,9 @@
-import { Navigate } from 'react-router-dom'
+import { Navigate, useLocation } from 'react-router-dom'
 import { useTechnicianAuth } from '../hooks/useTechnicianAuth'  // ← chemin corrigé
 
 export default function TechnicianProtectedRoute({ children }) {
-  const { isAuthenticated, loading } = useTechnicianAuth()
+  const { user, isAuthenticated, loading } = useTechnicianAuth()
+  const location = useLocation()
 
   if (loading) {
     return (
@@ -14,6 +15,10 @@ export default function TechnicianProtectedRoute({ children }) {
 
   if (!isAuthenticated) {
     return <Navigate to="/technician/login" replace />
+  }
+
+  if (user?.forcePasswordChange && location.pathname !== '/technician/change-password') {
+    return <Navigate to="/technician/change-password" replace />
   }
 
   return children

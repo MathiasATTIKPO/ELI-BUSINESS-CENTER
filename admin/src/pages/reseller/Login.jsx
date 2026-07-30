@@ -32,8 +32,8 @@ export default function ResellerLogin() {
         setToast({ type: 'success', message: 'Connexion réussie ! Redirection...' })
         const user = response.data.data.user
         setTimeout(() => {
-          if (user && user.forcePasswordChange) navigate('/reseller/change-password')
-          else navigate('/reseller/dashboard')
+          if (user && user.forcePasswordChange) navigate('/reseller/change-password', { replace: true })
+          else navigate('/reseller/dashboard', { replace: true })
         }, 1000)
       }
     } catch (error) {
@@ -45,7 +45,7 @@ export default function ResellerLogin() {
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-emerald-900 via-teal-900 to-emerald-900 flex items-center justify-center p-4">
+    <div className="relative flex min-h-screen min-h-[100dvh] items-start justify-center overflow-x-hidden overflow-y-auto bg-gradient-to-br from-emerald-900 via-teal-900 to-emerald-900 px-4 py-6 sm:items-center sm:py-8">
       {/* Cercles décoratifs */}
       <div className="absolute top-0 left-0 w-96 h-96 bg-emerald-500/10 rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl"></div>
       <div className="absolute bottom-0 right-0 w-96 h-96 bg-teal-500/10 rounded-full translate-x-1/2 translate-y-1/2 blur-3xl"></div>
@@ -53,9 +53,9 @@ export default function ResellerLogin() {
 
       {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
 
-      <div className="relative bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 max-w-md w-full border border-white/20 animate-fadeIn">
+      <div className="relative w-full max-w-md rounded-3xl border border-white/20 bg-white/95 p-6 shadow-2xl backdrop-blur-xl animate-fadeIn sm:p-8">
         {/* Logo et titre */}
-        <div className="text-center mb-8">
+        <div className="mb-6 text-center sm:mb-8">
           <div className="relative inline-flex mb-4">
             <div className="w-20 h-20 bg-gradient-to-br from-emerald-600 to-teal-600 rounded-2xl flex items-center justify-center shadow-2xl shadow-emerald-500/30 transform hover:scale-105 transition-transform duration-200">
               <Store className="text-white" size={36} />
@@ -79,32 +79,38 @@ export default function ResellerLogin() {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+            <label htmlFor="reseller-phone" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
               <Phone size={16} className="text-emerald-600" />
               Numéro de téléphone
             </label>
             <div className="relative group">
               <input
+                id="reseller-phone"
+                name="phone"
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
+                autoComplete="tel"
                 required
                 className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 bg-gray-50 hover:bg-white"
-                placeholder="+225 XX XX XX XX XX"
+                placeholder="+228 XX XX XX XX"
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+            <label htmlFor="reseller-password" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
               <Lock size={16} className="text-emerald-600" />
               Mot de passe
             </label>
             <div className="relative group">
               <input
+                id="reseller-password"
+                name="password"
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
                 required
                 className="w-full pl-4 pr-12 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 bg-gray-50 hover:bg-white"
                 placeholder="••••••••"
@@ -112,7 +118,9 @@ export default function ResellerLogin() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-emerald-600 transition-colors"
+                className="absolute right-1 top-1/2 -translate-y-1/2 rounded-lg p-2 text-gray-400 transition-colors hover:text-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                aria-pressed={showPassword}
               >
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
@@ -122,11 +130,12 @@ export default function ResellerLogin() {
           <button
             type="submit"
             disabled={loading}
+            aria-busy={loading}
             className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white py-3.5 rounded-xl font-bold hover:from-emerald-700 hover:to-teal-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:shadow-emerald-500/30 transform hover:scale-[1.02] active:scale-[0.98]"
           >
             {loading ? (
               <>
-                <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                <div aria-hidden="true" className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
                 Connexion en cours...
               </>
             ) : (

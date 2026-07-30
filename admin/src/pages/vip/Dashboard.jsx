@@ -3,11 +3,12 @@ import { useVIPAuth } from '../../hooks/useVIPAuth'
 import { useNavigate } from 'react-router-dom'
 import api from '../../services/api'
 import Toast from '../../components/Toast'
+import PortalHeader from '../../components/layout/PortalHeader'
 import { API_BASE_URL } from '../../services/api'
 import {
   Award, FileText, DollarSign, TrendingUp, Wrench,
-  Search, X, LogOut, RefreshCw, Phone, Calendar,
-  AlertCircle, CheckCircle, Clock, Crown, User
+  Search, X, RefreshCw, Phone, Calendar,
+  AlertCircle, CheckCircle, Clock, Crown
 } from 'lucide-react'
 
 export default function VIPDashboard() {
@@ -125,40 +126,29 @@ export default function VIPDashboard() {
   )
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-amber-50/30">
+    <div className="eli-canvas">
       {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
 
-      <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
-
-        {/* En-tête avec déconnexion */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
-              Espace Client VIP
-            </h1>
-            <p className="text-gray-500 mt-1 flex items-center gap-2">
-              <User size={16} className="text-amber-500" />
-              Bienvenue, <span className="font-semibold">{user?.name || 'Client'}</span>
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
+      <PortalHeader
+        role="vip"
+        icon={Crown}
+        title="Espace Client VIP"
+        subtitle={`Bienvenue, ${user?.name || 'Client'}`}
+        onLogout={handleLogout}
+        actions={(
             <button
+              type="button"
               onClick={loadData}
-              className="p-2.5 bg-white border border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50 transition-colors"
+              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl text-gray-600 transition-colors hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
               title="Rafraîchir"
+              aria-label="Rafraîchir le tableau de bord"
             >
-              <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
+              <RefreshCw aria-hidden="true" size={18} className={loading ? 'animate-spin' : ''} />
             </button>
-            <button
-              onClick={handleLogout}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-red-500 to-rose-500 text-white rounded-xl hover:from-red-600 hover:to-rose-600 transition-all duration-200 shadow-sm hover:shadow-md font-medium"
-            >
-              <LogOut size={18} />
-              Déconnexion
-            </button>
-          </div>
-        </div>
+        )}
+      />
 
+      <div className="eli-content">
         {/* Cartes statistiques */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
@@ -166,11 +156,11 @@ export default function VIPDashboard() {
             { label: 'Total payé', value: `${(summary.totalPaid || 0).toLocaleString()} FCFA`, icon: CheckCircle, grad: 'from-emerald-500 to-green-500' },
             { label: 'Solde restant', value: `${(summary.totalBalance || 0).toLocaleString()} FCFA`, icon: AlertCircle, grad: 'from-red-500 to-rose-500' },
           ].map((stat) => (
-            <div key={stat.label} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-shadow">
-              <div className="flex items-start justify-between">
-                <div>
+            <div key={stat.label} className="min-w-0 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition-shadow hover:shadow-md sm:p-5">
+              <div className="flex min-w-0 items-start justify-between gap-3">
+                <div className="min-w-0">
                   <p className="text-sm text-gray-500 font-medium">{stat.label}</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">{stat.value}</p>
+                  <p className="mt-1 break-words text-xl font-bold text-gray-900 sm:text-2xl">{stat.value}</p>
                 </div>
                 <div className={`p-2.5 rounded-xl bg-gradient-to-r ${stat.grad}`}>
                   <stat.icon size={20} className="text-white" />
@@ -345,14 +335,20 @@ export default function VIPDashboard() {
             </div>
           ) : (
             <div className="divide-y divide-gray-100">
-              {repairs.slice(0, 10).map((r) => (
+              {repairs.slice(0, 10).map((r, repairIndex) => (
                 <div key={r._id} className="p-4 flex flex-wrap items-center justify-between gap-3 hover:bg-gray-50/50 transition">
                   <div>
                     <p className="font-semibold text-gray-900">{r.deviceModel}</p>
 
-                {showInvoiceModal && selectedInvoice && (
+                {repairIndex === 0 && showInvoiceModal && selectedInvoice && (
                   <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={closeInvoiceModal}>
-                    <div className="bg-white rounded-2xl max-w-4xl w-full shadow-2xl max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                    <div
+                      className="max-h-[calc(100dvh-2rem)] w-full max-w-4xl overflow-y-auto rounded-2xl bg-white shadow-2xl"
+                      onClick={(e) => e.stopPropagation()}
+                      role="dialog"
+                      aria-modal="true"
+                      aria-label="Consultation de la facture VIP"
+                    >
                       <div className="p-6 border-b">
                         <h3 className="text-xl font-bold text-gray-900">Consultation facture VIP</h3>
                         <p className="text-sm text-gray-500">Numéro: {selectedInvoice.invoiceNumber || `Facture #${String(selectedInvoice._id).slice(-6)}`}</p>

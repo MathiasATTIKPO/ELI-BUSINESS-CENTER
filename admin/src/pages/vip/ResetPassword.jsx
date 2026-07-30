@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import api from '../../services/api'
 import Toast from '../../components/Toast'
+import RecoveryCard from '../../components/auth/RecoveryCard'
 
 export default function VIPReset() {
   const [searchParams] = useSearchParams()
@@ -24,13 +25,41 @@ export default function VIPReset() {
   }
 
   return (
-    <div className="max-w-md mx-auto p-6">
+    <RecoveryCard
+      role="vip"
+      title="Nouveau mot de passe"
+      subtitle="Choisissez un mot de passe d’au moins 8 caractères."
+      backTo="/vip/login"
+    >
       {message && <Toast type={message.type} message={message.text} onClose={() => setMessage(null)} />}
-      <h2 className="text-xl font-bold mb-4">Réinitialisation mot de passe - VIP</h2>
-      <form onSubmit={submit} className="space-y-4">
-        <input placeholder="Nouveau mot de passe" value={newPassword} onChange={e=>setNewPassword(e.target.value)} className="input" type="password" />
-        <button className="btn btn-primary" disabled={loading}>{loading ? 'Traitement...' : 'Réinitialiser'}</button>
-      </form>
-    </div>
+      {(variant) => (
+        <form onSubmit={submit} className="space-y-4">
+          <div>
+            <label htmlFor="vip-new-password" className="label-base">Nouveau mot de passe</label>
+            <input
+              id="vip-new-password"
+              name="newPassword"
+              placeholder="Au moins 8 caractères"
+              value={newPassword}
+              onChange={(event) => setNewPassword(event.target.value)}
+              className={`input-base ${variant.focus}`}
+              type="password"
+              autoComplete="new-password"
+              minLength={8}
+              required
+            />
+          </div>
+          <button
+            type="submit"
+            className={`inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-gradient-to-r px-4 font-bold text-white transition disabled:opacity-60 ${variant.button}`}
+            disabled={loading || !token}
+            aria-busy={loading}
+          >
+            {loading ? 'Traitement…' : 'Réinitialiser'}
+          </button>
+          {!token ? <p className="text-sm text-red-600">Le lien de réinitialisation est incomplet ou invalide.</p> : null}
+        </form>
+      )}
+    </RecoveryCard>
   )
 }

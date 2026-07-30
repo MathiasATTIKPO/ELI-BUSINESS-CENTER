@@ -248,7 +248,7 @@ export default function Employees() {
   }
 
   return (
-    <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12 py-8 space-y-8">
+    <div className="eli-content">
       {error && <Toast message={error} type="error" onClose={() => setError('')} />}
       {success && <Toast message={success} type="success" onClose={() => setSuccess('')} />}
 
@@ -287,7 +287,7 @@ export default function Employees() {
       </div>
 
       {/* Cartes statistiques */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 min-[420px]:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { 
             label: 'Total employés', 

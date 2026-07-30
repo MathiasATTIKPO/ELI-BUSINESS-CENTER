@@ -103,7 +103,7 @@ export default function Table({
         )}
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto" role="region" aria-label="Tableau de données" tabIndex={0}>
         <table className="table-base">
           <thead>
             <tr>
@@ -140,7 +140,7 @@ export default function Table({
                 ))}
                 {actionColumn && (
                   <td>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       {actionColumn(row)}
                     </div>
                   </td>
@@ -155,21 +155,23 @@ export default function Table({
         <p className="text-center text-gray-500 py-4">Aucune donnée trouvée</p>
       ) : (
         pagination && (
-          <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center text-slate-600">
-            <p>
+          <div className="flex flex-col gap-3 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-center sm:text-left">
               Affichage {Math.min((currentPage - 1) * pageSize + 1, filteredData.length)} - {Math.min(currentPage * pageSize, filteredData.length)} sur {filteredData.length}
             </p>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-end">
               <button
+                type="button"
                 onClick={() => changePage(Math.max(1, currentPage - 1))}
                 disabled={currentPage === 1}
-                className="px-3 py-2 rounded-lg border border-gray-300 bg-white disabled:opacity-50"
+                className="min-h-10 rounded-lg border border-gray-300 bg-white px-3 py-2 disabled:opacity-50"
               >Précédent</button>
               <span>Page {currentPage} / {totalPages}</span>
               <button
+                type="button"
                 onClick={() => changePage(Math.min(totalPages, currentPage + 1))}
                 disabled={currentPage === totalPages}
-                className="px-3 py-2 rounded-lg border border-gray-300 bg-white disabled:opacity-50"
+                className="min-h-10 rounded-lg border border-gray-300 bg-white px-3 py-2 disabled:opacity-50"
               >Suivant</button>
             </div>
           </div>

@@ -85,9 +85,9 @@ export default function OverviewTab({ stats, salesEvolution, repairsEvolution, t
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-2 [&>*]:min-w-0">
         <ChartCard title="Évolution des ventes (FCFA)" icon={TrendingUp}>
-          <div className="h-[300px]">
+          <div className="h-[260px] min-w-0 sm:h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={salesEvolution}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -104,7 +104,7 @@ export default function OverviewTab({ stats, salesEvolution, repairsEvolution, t
         </ChartCard>
 
         <ChartCard title="Évolution du nombre de réparations" icon={BarChart3} iconClassName="text-emerald-600">
-          <div className="h-[300px]">
+          <div className="h-[260px] min-w-0 sm:h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={repairsEvolution}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -118,9 +118,9 @@ export default function OverviewTab({ stats, salesEvolution, repairsEvolution, t
         </ChartCard>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-3 [&>*]:min-w-0">
         <ChartCard title="Top 5 marques vendues" icon={Smartphone} iconClassName="text-blue-600">
-          <div className="h-[300px]">
+          <div className="h-[260px] min-w-0 sm:h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={stats.topBrands || []} layout="vertical" margin={{ left: 10, right: 10 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -134,7 +134,7 @@ export default function OverviewTab({ stats, salesEvolution, repairsEvolution, t
         </ChartCard>
 
         <ChartCard title="Répartition des pannes" icon={PieChartIcon}>
-          <div className="h-[300px]">
+          <div className="h-[260px] min-w-0 sm:h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie data={stats.repairIssues || []} dataKey="value" nameKey="issue" cx="50%" cy="50%" innerRadius={50} outerRadius={95}>
@@ -150,7 +150,7 @@ export default function OverviewTab({ stats, salesEvolution, repairsEvolution, t
         </ChartCard>
 
         <ChartCard title="Utilisation techniciens" icon={Wrench} iconClassName="text-emerald-600">
-          <div className="h-[300px] flex items-center justify-center">
+          <div className="flex h-[260px] min-w-0 items-center justify-center sm:h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <RadialBarChart
                 innerRadius="45%"
@@ -168,7 +168,7 @@ export default function OverviewTab({ stats, salesEvolution, repairsEvolution, t
         </ChartCard>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-2 [&>*]:min-w-0">
         <ChartCard title="Top 5 modèles vendus" icon={BarChart3} iconClassName="text-indigo-600">
           <div className="space-y-3">
             {(stats.topModelsSold || []).map((model, idx) => (
@@ -209,9 +209,9 @@ export default function OverviewTab({ stats, salesEvolution, repairsEvolution, t
         </ChartCard>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-2 [&>*]:min-w-0">
         <ChartCard title="Évolution du nombre d'échanges" icon={RefreshCw} iconClassName="text-purple-600">
-          <div className="h-[300px]">
+          <div className="h-[260px] min-w-0 sm:h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={tradeinsEvolution}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -225,7 +225,7 @@ export default function OverviewTab({ stats, salesEvolution, repairsEvolution, t
         </ChartCard>
 
         <ChartCard title="Activité hebdomadaire" icon={Calendar} iconClassName="text-orange-600">
-          <div className="h-[300px]">
+          <div className="h-[260px] min-w-0 sm:h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={weeklyActivity}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -242,9 +242,9 @@ export default function OverviewTab({ stats, salesEvolution, repairsEvolution, t
         </ChartCard>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-2 [&>*]:min-w-0">
         <ChartCard title="Réparations par statut" icon={PieChartIcon}>
-          <div className="h-[280px]">
+          <div className="h-[250px] min-w-0 sm:h-[280px]">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie data={stats.repairsByStatus} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={5} dataKey="value">
@@ -258,7 +258,7 @@ export default function OverviewTab({ stats, salesEvolution, repairsEvolution, t
         </ChartCard>
 
         <ChartCard title="Revenus mensuels" icon={TrendingUp} iconClassName="text-emerald-600">
-          <div className="h-[280px]">
+          <div className="h-[250px] min-w-0 sm:h-[280px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={stats.monthlyRevenue}>
                 <defs>

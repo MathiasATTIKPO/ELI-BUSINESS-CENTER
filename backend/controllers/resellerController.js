@@ -4,6 +4,12 @@ const fs = require('fs');
 const path = require('path');
 const PDFDocument = require('pdfkit');
 const { signToken } = require('../utils/jwt');
+const { createAuthVersion } = require('../utils/authVersion');
+const {
+  CURRENT_PASSWORD_POLICY_VERSION,
+  getNewPasswordValidationError,
+  requiresPasswordChange,
+} = require('../utils/passwordPolicy');
 const Reseller = require('../models/Reseller');
 const ResellerContract = require('../models/ResellerContract');
 const InventoryItem = require('../models/InventoryItem');
@@ -283,9 +289,9 @@ exports.createReseller = async (req, res) => {
 
     if (password) {
       data.password = await bcrypt.hash(password, 12);
-      data.forcePasswordChange = false;
+      data.forcePasswordChange = true;
     } else {
-      const temp = crypto.randomBytes(4).toString('hex');
+      const temp = crypto.randomBytes(12).toString('base64url');
       data.password = await bcrypt.hash(temp, 12);
       data.forcePasswordChange = true;
       data._sendTempPassword = temp;
@@ -303,9 +309,16 @@ exports.createReseller = async (req, res) => {
       });
     }
 
+    const {
+      password: _password,
+      resetPasswordToken: _resetToken,
+      resetPasswordExpires: _resetExpires,
+      ...safeSeller
+    } = seller.toObject();
+
     res.status(201).json({
       success: true,
-      data: seller,
+      data: safeSeller,
       generatedPassword: data._sendTempPassword || undefined
     });
   } catch (error) {
@@ -316,6 +329,10 @@ exports.createReseller = async (req, res) => {
 exports.updateReseller = async (req, res) => {
   try {
     const data = { ...req.body };
+    delete data.forcePasswordChange;
+    delete data.passwordPolicyVersion;
+    delete data.resetPasswordToken;
+    delete data.resetPasswordExpires;
 
     if (data.identity) {
       const identityCheck = validateIdentityPayload(data.identity, { strictRequired: true });
@@ -341,12 +358,18 @@ exports.updateReseller = async (req, res) => {
 
     if (data.password) {
       data.password = await bcrypt.hash(data.password, 12);
-      data.forcePasswordChange = false;
+      data.forcePasswordChange = true;
     }
 
     const seller = await Reseller.findByIdAndUpdate(req.params.id, data, { new: true });
     if (!seller) return res.status(404).json({ success: false, message: 'Reseller not found' });
-    res.json({ success: true, data: seller });
+    const {
+      password: _password,
+      resetPasswordToken: _resetToken,
+      resetPasswordExpires: _resetExpires,
+      ...safeSeller
+    } = seller.toObject();
+    res.json({ success: true, data: safeSeller });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -1160,8 +1183,21 @@ exports.login = async (req, res) => {
     const valid = await bcrypt.compare(password, reseller.password);
     if (!valid) return res.status(401).json({ success: false, message: 'Invalid credentials' });
 
-    const token = signToken({ id: reseller._id, role: 'reseller', name: reseller.name, phone: reseller.phone });
-    const { password: _p, ...user } = reseller.toObject();
+    const token = signToken({
+      id: reseller._id,
+      role: 'reseller',
+      name: reseller.name,
+      phone: reseller.phone,
+      forcePasswordChange: requiresPasswordChange(reseller),
+      authVersion: createAuthVersion(reseller.password),
+    });
+    const {
+      password: _p,
+      resetPasswordToken: _resetToken,
+      resetPasswordExpires: _resetExpires,
+      ...user
+    } = reseller.toObject();
+    user.forcePasswordChange = requiresPasswordChange(reseller);
     res.json({ success: true, data: { user, token }, message: 'Login successful' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -1207,6 +1243,10 @@ exports.resetPassword = async (req, res) => {
   try {
     const { token, newPassword } = req.body;
     if (!token || !newPassword) return res.status(400).json({ success: false, message: 'token and newPassword required' });
+    const passwordValidationError = getNewPasswordValidationError(newPassword);
+    if (passwordValidationError) {
+      return res.status(400).json({ success: false, message: passwordValidationError });
+    }
 
     const reseller = await Reseller.findOne({ resetPasswordToken: token, resetPasswordExpires: { $gt: new Date() } });
     if (!reseller) return res.status(400).json({ success: false, message: 'Invalid or expired token' });
@@ -1215,6 +1255,7 @@ exports.resetPassword = async (req, res) => {
     reseller.resetPasswordToken = undefined;
     reseller.resetPasswordExpires = undefined;
     reseller.forcePasswordChange = false;
+    reseller.passwordPolicyVersion = CURRENT_PASSWORD_POLICY_VERSION;
     await reseller.save();
 
     await notificationService.createNotification({
@@ -1234,6 +1275,10 @@ exports.resetPassword = async (req, res) => {
 exports.changePassword = async (req, res) => {
   try {
     const { oldPassword, newPassword } = req.body;
+    const passwordValidationError = getNewPasswordValidationError(newPassword);
+    if (passwordValidationError) {
+      return res.status(400).json({ success: false, message: passwordValidationError });
+    }
     const user = req.user;
     if (!user || user.role !== 'reseller') return res.status(401).json({ success: false, message: 'Not authorized' });
 
@@ -1248,6 +1293,7 @@ exports.changePassword = async (req, res) => {
 
     reseller.password = await bcrypt.hash(newPassword, 12);
     reseller.forcePasswordChange = false;
+    reseller.passwordPolicyVersion = CURRENT_PASSWORD_POLICY_VERSION;
     await reseller.save();
 
     res.json({ success: true, message: 'Password changed' });

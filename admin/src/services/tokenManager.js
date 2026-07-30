@@ -19,6 +19,21 @@ const USER_KEYS = {
   vip: 'vip_user',
 }
 
+const AUTH_STORAGE_VERSION_KEY = 'auth_storage_version'
+const AUTH_STORAGE_VERSION = 'password-change-v1'
+
+const ensureCurrentStorageVersion = () => {
+  if (typeof localStorage === 'undefined') return
+  if (localStorage.getItem(AUTH_STORAGE_VERSION_KEY) === AUTH_STORAGE_VERSION) return
+
+  Object.values(TOKEN_KEYS).forEach(key => localStorage.removeItem(key))
+  Object.values(USER_KEYS).forEach(key => localStorage.removeItem(key))
+  localStorage.removeItem('active_role')
+  localStorage.setItem(AUTH_STORAGE_VERSION_KEY, AUTH_STORAGE_VERSION)
+}
+
+ensureCurrentStorageVersion()
+
 class TokenManager {
   /**
    * Obtenir le token basé sur le rôle ou l'URL

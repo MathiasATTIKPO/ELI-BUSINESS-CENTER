@@ -159,7 +159,7 @@ export default function TradeIns() {
   }
 
   return (
-    <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12 py-8 space-y-8">
+    <div className="eli-content">
       {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
 
       {/* En-tête avec titre et actions */}
@@ -181,7 +181,7 @@ export default function TradeIns() {
       </div>
 
       {/* Cartes statistiques */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 min-[420px]:grid-cols-2 lg:grid-cols-5 gap-4">
         {[
           { 
             label: 'Total', 

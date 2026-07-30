@@ -10,7 +10,7 @@ export const NotificationProvider = ({ children }) => {
   const [unreadCount, setUnreadCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [pushEnabled, setPushEnabled] = useState(false)
-  const { activeRole, isAuthenticated, getToken } = useAuth()
+  const { user, activeRole, isAuthenticated, getToken } = useAuth()
   const isFetchingRef = useRef(false)
   const failureCountRef = useRef(0)
   const retryAfterRef = useRef(0)
@@ -25,6 +25,10 @@ export const NotificationProvider = ({ children }) => {
     if (isFetchingRef.current) return
     if (Date.now() < retryAfterRef.current) return
     if (Date.now() - lastSuccessfulFetchRef.current < 30000) return
+    if (user?.forcePasswordChange) {
+      setLoading(false)
+      return
+    }
     if (!activeRole || !isAuthenticated(activeRole)) {
       console.log('[NotificationContext] Non authentifié, skip fetch')
       setLoading(false)
@@ -94,7 +98,7 @@ export const NotificationProvider = ({ children }) => {
   }
 
   useEffect(() => {
-    if (activeRole && isAuthenticated(activeRole)) {
+    if (activeRole && isAuthenticated(activeRole) && !user?.forcePasswordChange) {
       failureCountRef.current = 0
       retryAfterRef.current = 0
       lastSuccessfulFetchRef.current = 0
@@ -138,7 +142,7 @@ export const NotificationProvider = ({ children }) => {
         navigator?.serviceWorker?.removeEventListener?.('message', onServiceWorkerMessage)
       }
     }
-  }, [activeRole])
+  }, [activeRole, user?.forcePasswordChange])
 
   return (
     <NotificationContext.Provider value={{

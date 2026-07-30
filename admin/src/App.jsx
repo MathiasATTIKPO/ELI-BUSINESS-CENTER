@@ -1,9 +1,9 @@
 import React from 'react'
-import { BrowserRouter as Router, Routes, Route, Navigate, Link, useLocation, Outlet, useNavigate } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, useNavigate } from 'react-router-dom'
 import {
-  LogOut, LayoutDashboard, Smartphone, Package, Users,
+  LayoutDashboard, Smartphone, Package, Users,
   ShoppingCart, History, FileText, Wrench, RefreshCw,
-  Bell, CheckCheck, BarChart3, ListChecks, Settings as SettingsIcon
+  BarChart3, ListChecks, Settings as SettingsIcon
 } from 'lucide-react'
 import { AuthProvider } from './context/AuthContext'
 import { TechnicianAuthProvider } from './context/TechnicianAuthContext'
@@ -19,61 +19,67 @@ import { useVIPAuth } from './hooks/useVIPAuth'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import TechnicianProtectedRoute from './components/TechnicianProtectedRoute'
 import CashierProtectedRoute from './components/CashierProtectedRoute'
-import NotificationBell from './components/NotificationBell'
-import UpdateBadge from './components/UpdateBadge'
-import Login from './pages/Login'
-import Dashboard from './pages/Dashboard'
-import Products from './pages/Products'
-import ProductForm from './pages/ProductForm'
-import Repairs from './pages/Repairs'
-import RepairDetail from './pages/RepairDetail'
-import TradeIns from './pages/TradeIns'
-import TradeInDetail from './pages/TradeInDetail'
-import Inventory from './pages/Inventory'
-import Employees from './pages/Employees'
-import EmployeeForm from './pages/EmployeeForm'
-import ActivityHistory from './pages/ActivityHistory'
-import Resellers from './pages/Resellers/Resellers'
-import ResellerForm from './pages/Resellers/ResellerForm'
-import ResellerDetail from './pages/Resellers/ResellerDetail'
-import VIPs from './pages/vip/VIPs'
-import VIPForm from './pages/vip/VIPForm'
-import VIPDetail from './pages/vip/VIPDetail'
-import AccountManagement from './pages/Accounts/AccountManagement'
-import ResellerContracts from './pages/Contracts/ResellerContracts'
-import VipStats from './pages/vip/Stats'
-import CashierSales from './pages/cashier/Sales'
-import CashierReport from './pages/cashier/Report'
-import CashierLogin from './pages/cashier/Login'
-import CashierRepairDetail from './pages/cashier/RepairDetail'
-import CashierTradeInDetail from './pages/cashier/TradeInDetail'
-import TechnicianLogin from './pages/technician/Login'
-import TechnicianDashboard from './pages/technician/Dashboard'
-import TechnicianRepairDetail from './pages/technician/RepairDetail'
-import TechnicianHistory from './pages/technician/History'
-import TechnicianTradeInDetail from './pages/technician/TradeInDetail'
-import ResellerLogin from './pages/reseller/Login'
-import ResellerForgot from './pages/reseller/ForgotPassword'
-import ResellerReset from './pages/reseller/ResetPassword'
-import ResellerChangePassword from './pages/reseller/ChangePassword'
-import ResellerDashboard from './pages/reseller/Dashboard'
-import VIPLogin from './pages/vip/Login'
-import VIPForgot from './pages/vip/ForgotPassword'
-import VIPReset from './pages/vip/ResetPassword'
-import VIPChangePassword from './pages/vip/ChangePassword'
-import VIPDashboard from './pages/vip/Dashboard'
+import PortalHeader from './components/layout/PortalHeader'
 import ResellerProtectedRoute from './components/ResellerProtectedRoute'
 import VIPProtectedRoute from './components/VIPProtectedRoute'
-import Settings from './pages/Settings/Setting'
-import ErrorPage from './pages/ErrorPage'
 import ErrorBoundary from './components/ErrorBoundary'
+import ErrorPage from './pages/ErrorPage'
 
-// ========== COMPOSANT ADMIN ==========
-function AdminNav() {
-  const location = useLocation()
+const Login = React.lazy(() => import('./pages/Login'))
+const Dashboard = React.lazy(() => import('./pages/Dashboard'))
+const Products = React.lazy(() => import('./pages/Products'))
+const ProductForm = React.lazy(() => import('./pages/ProductForm'))
+const Repairs = React.lazy(() => import('./pages/Repairs'))
+const RepairDetail = React.lazy(() => import('./pages/RepairDetail'))
+const TradeIns = React.lazy(() => import('./pages/TradeIns'))
+const TradeInDetail = React.lazy(() => import('./pages/TradeInDetail'))
+const Inventory = React.lazy(() => import('./pages/Inventory'))
+const Employees = React.lazy(() => import('./pages/Employees'))
+const EmployeeForm = React.lazy(() => import('./pages/EmployeeForm'))
+const ActivityHistory = React.lazy(() => import('./pages/ActivityHistory'))
+const Resellers = React.lazy(() => import('./pages/Resellers/Resellers'))
+const ResellerForm = React.lazy(() => import('./pages/Resellers/ResellerForm'))
+const ResellerDetail = React.lazy(() => import('./pages/Resellers/ResellerDetail'))
+const VIPs = React.lazy(() => import('./pages/vip/VIPs'))
+const VIPForm = React.lazy(() => import('./pages/vip/VIPForm'))
+const VIPDetail = React.lazy(() => import('./pages/vip/VIPDetail'))
+const AccountManagement = React.lazy(() => import('./pages/Accounts/AccountManagement'))
+const ResellerContracts = React.lazy(() => import('./pages/Contracts/ResellerContracts'))
+const VipStats = React.lazy(() => import('./pages/vip/Stats'))
+const CashierSales = React.lazy(() => import('./pages/cashier/Sales'))
+const CashierReport = React.lazy(() => import('./pages/cashier/Report'))
+const CashierLogin = React.lazy(() => import('./pages/cashier/Login'))
+const CashierRepairDetail = React.lazy(() => import('./pages/cashier/RepairDetail'))
+const CashierTradeInDetail = React.lazy(() => import('./pages/cashier/TradeInDetail'))
+const TechnicianLogin = React.lazy(() => import('./pages/technician/Login'))
+const TechnicianDashboard = React.lazy(() => import('./pages/technician/Dashboard'))
+const TechnicianRepairDetail = React.lazy(() => import('./pages/technician/RepairDetail'))
+const TechnicianHistory = React.lazy(() => import('./pages/technician/History'))
+const TechnicianTradeInDetail = React.lazy(() => import('./pages/technician/TradeInDetail'))
+const ResellerLogin = React.lazy(() => import('./pages/reseller/Login'))
+const ResellerForgot = React.lazy(() => import('./pages/reseller/ForgotPassword'))
+const ResellerReset = React.lazy(() => import('./pages/reseller/ResetPassword'))
+const ResellerDashboard = React.lazy(() => import('./pages/reseller/Dashboard'))
+const VIPLogin = React.lazy(() => import('./pages/vip/Login'))
+const VIPForgot = React.lazy(() => import('./pages/vip/ForgotPassword'))
+const VIPReset = React.lazy(() => import('./pages/vip/ResetPassword'))
+const VIPDashboard = React.lazy(() => import('./pages/vip/Dashboard'))
+const ChangePassword = React.lazy(() => import('./pages/auth/ChangePassword'))
+const Settings = React.lazy(() => import('./pages/Settings/Setting'))
+function RouteLoadingFallback() {
+  return (
+    <div className="flex min-h-[50dvh] items-center justify-center p-6" role="status" aria-live="polite">
+      <div className="flex flex-col items-center gap-3 text-slate-600">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-indigo-600" aria-hidden="true" />
+        <p className="text-sm font-medium">Chargement de votre espace…</p>
+      </div>
+    </div>
+  )
+}
+
+function AdminLayout() {
   const navigate = useNavigate()
   const { logout } = useAuth()
-
   const navItems = [
     { path: '/admin/dashboard', label: 'Tableau de bord', icon: <LayoutDashboard size={18} /> },
     { path: '/admin/repairs', label: 'Réparations', icon: <Wrench size={18} /> },
@@ -86,66 +92,33 @@ function AdminNav() {
     { path: '/admin/settings', label: 'Paramètres', icon: <SettingsIcon size={18} /> },
   ]
 
-  const isActive = (path) => {
+  const isAdminItemActive = (path, pathname) => {
     if (path === '/admin/accounts') {
       return (
-        location.pathname.startsWith('/admin/accounts') ||
-        location.pathname.startsWith('/admin/employees') ||
-        location.pathname.startsWith('/admin/vips') ||
-        location.pathname.startsWith('/admin/resellers')
+        pathname.startsWith('/admin/accounts') ||
+        pathname.startsWith('/admin/employees') ||
+        pathname.startsWith('/admin/vips') ||
+        pathname.startsWith('/admin/resellers')
       )
     }
-    return location.pathname === path || location.pathname.startsWith(`${path}/`)
+    return pathname === path || pathname.startsWith(`${path}/`)
   }
 
   return (
-    <div className="bg-white border-b border-gray-200 sticky top-0 z-50">
-      <div className="px-4 sm:px-6 py-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-xl font-bold text-blue-600">ELI Business Center</span>
-          <span className="text-sm text-gray-500">| Administration</span>
-        </div>
-        <div className="flex flex-wrap items-center gap-3 sm:gap-4">
-          <NotificationBell />
-          <UpdateBadge />
-          <button
-            onClick={() => {
-              logout('admin')
-              navigate('/admin/login')
-            }}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-red-600 hover:bg-red-50 transition"
-          >
-            <LogOut size={16} />
-            Déconnexion
-          </button>
-        </div>
-      </div>
-      <div className="px-6">
-        <nav className="flex gap-1 overflow-x-auto">
-          {navItems.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-lg transition ${isActive(item.path)
-                  ? 'text-blue-600 border-b-2 border-blue-600'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                }`}
-            >
-              {item.icon}
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-      </div>
-    </div>
-  )
-}
-
-function AdminLayout() {
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <AdminNav />
-      <main className="p-3 sm:p-4 lg:p-6">
+    <div className="min-h-screen bg-slate-50">
+      <PortalHeader
+        role="admin"
+        icon={LayoutDashboard}
+        title="ELI Business Center"
+        subtitle="Administration"
+        navItems={navItems}
+        isItemActive={isAdminItemActive}
+        onLogout={() => {
+          logout('admin')
+          navigate('/admin/login')
+        }}
+      />
+      <main className="min-w-0">
         <Outlet />
       </main>
     </div>
@@ -156,57 +129,25 @@ function AdminLayout() {
 function TechnicianLayout() {
   const { user, logout } = useTechnicianAuth()
   const navigate = useNavigate()
-  const location = useLocation()
+  const navItems = [
+    { path: '/technician/dashboard', label: 'Tableau de bord', icon: <LayoutDashboard size={18} /> },
+    { path: '/technician/history', label: 'Historique', icon: <History size={18} /> },
+  ]
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col gap-3 py-3 sm:h-16 sm:flex-row sm:items-center sm:justify-between sm:py-0">
-            <div className="flex items-center gap-4">
-              <div className="p-2 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500">
-                <Wrench size={20} className="text-white" />
-              </div>
-              <div>
-                <h1 className="text-lg font-bold text-gray-900">Espace Technicien</h1>
-                <p className="text-sm text-gray-500">Bienvenue, {user?.name || 'Technicien'}</p>
-              </div>
-            </div>
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-              <NotificationBell />
-              <UpdateBadge />
-              <button
-                onClick={() => navigate('/technician/dashboard')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${location.pathname === '/technician/dashboard'
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'text-gray-600 hover:bg-gray-100'
-                  }`}
-              >
-                <LayoutDashboard size={18} />
-                <span className="hidden sm:inline">Tableau de bord</span>
-              </button>
-              <button
-                onClick={() => navigate('/technician/history')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${location.pathname === '/technician/history'
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'text-gray-600 hover:bg-gray-100'
-                  }`}
-              >
-                <History size={18} />
-                <span className="hidden sm:inline">Historique</span>
-              </button>
-              <button
-                onClick={logout}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-red-600 hover:bg-red-50 transition"
-              >
-                <LogOut size={16} />
-                Déconnexion
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-      <main className="p-3 sm:p-4 lg:p-6">
+    <div className="min-h-screen bg-slate-50">
+      <PortalHeader
+        role="technician"
+        icon={Wrench}
+        title="Espace Technicien"
+        subtitle={`Bienvenue, ${user?.name || 'Technicien'}`}
+        navItems={navItems}
+        onLogout={() => {
+          logout()
+          navigate('/technician/login')
+        }}
+      />
+      <main className="min-w-0">
         <Outlet />
       </main>
     </div>
@@ -217,57 +158,25 @@ function TechnicianLayout() {
 function CashierLayout() {
   const { user, logout } = useCashierAuth()
   const navigate = useNavigate()
-  const location = useLocation()
+  const navItems = [
+    { path: '/cashier/sales', label: 'Ventes', icon: <ListChecks size={18} /> },
+    { path: '/cashier/report', label: 'Rapport', icon: <BarChart3 size={18} /> },
+  ]
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-4">
-              <div className="p-2 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500">
-                <ShoppingCart size={20} className="text-white" />
-              </div>
-              <div>
-                <h1 className="text-lg font-bold text-gray-900">Espace Caissier</h1>
-                <p className="text-sm text-gray-500">Bienvenue, {user?.name || 'Caissier'}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <NotificationBell />
-              <UpdateBadge />
-              <button
-                onClick={() => navigate('/cashier/sales')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${location.pathname === '/cashier/sales'
-                    ? 'bg-emerald-600 text-white shadow-sm'
-                    : 'text-gray-600 hover:bg-gray-100'
-                  }`}
-              >
-                <ListChecks size={18} />
-                <span className="hidden sm:inline">Ventes</span>
-              </button>
-              <button
-                onClick={() => navigate('/cashier/report')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${location.pathname === '/cashier/report'
-                    ? 'bg-emerald-600 text-white shadow-sm'
-                    : 'text-gray-600 hover:bg-gray-100'
-                  }`}
-              >
-                <BarChart3 size={18} />
-                <span className="hidden sm:inline">Rapport</span>
-              </button>
-              <button
-                onClick={logout}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-red-600 hover:bg-red-50 transition"
-              >
-                <LogOut size={16} />
-                Déconnexion
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-      <main className="p-6">
+    <div className="min-h-screen bg-slate-50">
+      <PortalHeader
+        role="cashier"
+        icon={ShoppingCart}
+        title="Espace Caissier"
+        subtitle={`Bienvenue, ${user?.name || 'Caissier'}`}
+        navItems={navItems}
+        onLogout={() => {
+          logout()
+          navigate('/cashier/login')
+        }}
+      />
+      <main className="min-w-0">
         <Outlet />
       </main>
     </div>
@@ -290,19 +199,40 @@ export default function App() {
               <ResellerAuthProvider>
                 <VIPAuthProvider>
                   <NotificationProvider>
-                    <Routes>
+                    <React.Suspense fallback={<RouteLoadingFallback />}>
+                      <Routes>
                       {/* Public routes */}
                       <Route path="/admin/login" element={<Login />} />
                       <Route path="/technician/login" element={<TechnicianLogin />} />
                       <Route path="/reseller/login" element={<ResellerLogin />} />
                       <Route path="/reseller/forgot" element={<ResellerForgot />} />
                       <Route path="/reseller/reset" element={<ResellerReset />} />
-                      <Route path="/reseller/change-password" element={<ResellerChangePassword />} />
                       <Route path="/vip/login" element={<VIPLogin />} />
                       <Route path="/vip/forgot" element={<VIPForgot />} />
                       <Route path="/vip/reset" element={<VIPReset />} />
-                      <Route path="/vip/change-password" element={<VIPChangePassword />} />
                       <Route path="/cashier/login" element={<CashierLogin />} />
+
+                      {/* Authenticated password-change routes */}
+                      <Route
+                        path="/admin/change-password"
+                        element={<ProtectedRoute><ChangePassword role="admin" /></ProtectedRoute>}
+                      />
+                      <Route
+                        path="/technician/change-password"
+                        element={<TechnicianProtectedRoute><ChangePassword role="technician" /></TechnicianProtectedRoute>}
+                      />
+                      <Route
+                        path="/cashier/change-password"
+                        element={<CashierProtectedRoute><ChangePassword role="cashier" /></CashierProtectedRoute>}
+                      />
+                      <Route
+                        path="/reseller/change-password"
+                        element={<ResellerProtectedRoute><ChangePassword role="reseller" /></ResellerProtectedRoute>}
+                      />
+                      <Route
+                        path="/vip/change-password"
+                        element={<VIPProtectedRoute><ChangePassword role="vip" /></VIPProtectedRoute>}
+                      />
 
                       {/* Protected routes */}
                       <Route
@@ -398,7 +328,8 @@ export default function App() {
                       <Route path="/500" element={<ErrorPage type="500" />} />
                       <Route path="/offline" element={<ErrorPage type="offline" />} />
                       <Route path="*" element={<ErrorPage type="404" />} />
-                    </Routes>
+                      </Routes>
+                    </React.Suspense>
                   </NotificationProvider>
                 </VIPAuthProvider>
               </ResellerAuthProvider>

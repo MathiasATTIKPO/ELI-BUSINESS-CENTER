@@ -6,6 +6,8 @@ const rootDir = path.resolve(__dirname, '..');
 const adminDist = path.join(rootDir, 'admin', 'dist');
 const clientDist = path.join(rootDir, 'client', 'dist');
 const mergedAdminOut = path.join(clientDist, 'admin');
+const adminServiceWorker = path.join(adminDist, 'service-worker.js');
+const rootServiceWorker = path.join(clientDist, 'service-worker.js');
 
 const run = (command, extraEnv = {}) => {
   execSync(command, {
@@ -38,3 +40,8 @@ if (fs.existsSync(mergedAdminOut)) {
 
 fs.cpSync(adminDist, mergedAdminOut, { recursive: true });
 console.log(`Merged admin build into ${mergedAdminOut}`);
+
+if (fs.existsSync(adminServiceWorker)) {
+  fs.copyFileSync(adminServiceWorker, rootServiceWorker);
+  console.log(`Copied admin service worker to ${rootServiceWorker}`);
+}

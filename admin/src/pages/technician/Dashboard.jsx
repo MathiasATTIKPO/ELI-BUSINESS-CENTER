@@ -249,7 +249,7 @@ export default function TechnicianDashboard() {
 
       <main className="eli-content">
         {/* Cartes statistiques */}
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 min-[420px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
           {[
             { label: 'Mes réparations', value: stats.totalRepairs, icon: Wrench, gradient: 'from-blue-500 to-cyan-500' },
             { label: 'En cours', value: stats.pendingRepairs, icon: Activity, gradient: 'from-amber-500 to-orange-500' },
@@ -260,7 +260,7 @@ export default function TechnicianDashboard() {
           ].map((stat) => {
             const Icon = stat.icon
             return (
-              <div key={stat.label} className="relative overflow-hidden bg-white rounded-2xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-all duration-200 group">
+              <div key={stat.label} className="relative min-w-0 overflow-hidden bg-white rounded-2xl shadow-sm border border-gray-100 p-4 hover:shadow-md transition-all duration-200 group sm:p-5">
                 <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${stat.gradient}`}></div>
                 <div className="flex items-start justify-between">
                   <div className="space-y-2">
@@ -278,11 +278,11 @@ export default function TechnicianDashboard() {
 
         {/* Onglets */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-            <nav className="flex gap-2">
+          <div className="flex flex-col gap-3 border-b border-gray-100 p-4 min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between sm:px-6">
+            <nav className="flex w-full gap-2 overflow-x-auto scrollbar-hide min-[420px]:w-auto">
               <button
                 onClick={() => { setActiveTab('repairs'); setCurrentPage(prev => ({ ...prev, repairs: 1 })); }}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${activeTab === 'repairs'
+                className={`flex flex-none items-center gap-2 whitespace-nowrap px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${activeTab === 'repairs'
                   ? 'bg-blue-600 text-white shadow-sm'
                   : 'text-gray-600 hover:bg-gray-100'
                   }`}
@@ -297,7 +297,7 @@ export default function TechnicianDashboard() {
 
               <button
                 onClick={() => { setActiveTab('tradeins'); setCurrentPage(prev => ({ ...prev, tradeins: 1 })); }}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${activeTab === 'tradeins'
+                className={`flex flex-none items-center gap-2 whitespace-nowrap px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${activeTab === 'tradeins'
                   ? 'bg-blue-600 text-white shadow-sm'
                   : 'text-gray-600 hover:bg-gray-100'
                   }`}
@@ -313,7 +313,7 @@ export default function TechnicianDashboard() {
 
             <button
               onClick={() => activeTab === 'repairs' ? setShowNewRepair(true) : setShowNewTradein(true)}
-              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-xl hover:from-blue-700 hover:to-cyan-700 transition-all duration-200 shadow-sm hover:shadow-md font-medium"
+              className="flex self-end items-center gap-2 whitespace-nowrap px-4 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-xl hover:from-blue-700 hover:to-cyan-700 transition-all duration-200 shadow-sm hover:shadow-md font-medium min-[420px]:self-auto"
             >
               <Plus size={18} />
               <span className="hidden sm:inline">Nouveau</span>
@@ -321,7 +321,7 @@ export default function TechnicianDashboard() {
           </div>
 
           {/* Barre de recherche et filtres */}
-          <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+          <div className="border-b border-gray-100 bg-gray-50/50 p-4 sm:px-6">
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="relative flex-1">
                 <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
@@ -395,7 +395,7 @@ export default function TechnicianDashboard() {
                   const StatusIcon = statusConfig.icon
 
                   return (
-                    <div key={item._id} className="p-6 hover:bg-gray-50/50 transition-colors duration-150">
+                    <div key={item._id} className="p-4 hover:bg-gray-50/50 transition-colors duration-150 sm:p-6">
                       <div className="flex flex-col lg:flex-row lg:items-center gap-4">
                         <div className="flex-1 space-y-3">
                           <div className="flex items-center flex-wrap gap-3">
@@ -453,7 +453,7 @@ export default function TechnicianDashboard() {
                           )}
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                           <button
                             onClick={() => navigate(`/technician/${activeTab === 'repairs' ? 'repair' : 'tradein'}/${item._id}`)}
                             className="px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md flex items-center gap-2 font-medium"
@@ -496,7 +496,7 @@ export default function TechnicianDashboard() {
 
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100 bg-gray-50/50">
+                <div className="flex flex-col gap-3 border-t border-gray-100 bg-gray-50/50 px-4 py-4 min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between sm:px-6">
                   <div className="text-sm text-gray-600">
                     <span className="font-medium">
                       {((activeTab === 'repairs' ? currentPage.repairs : currentPage.tradeins) - 1) * itemsPerPage + 1}

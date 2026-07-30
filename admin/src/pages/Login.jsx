@@ -25,11 +25,9 @@ export default function AdminLogin() {
       console.log('[AdminLogin] Tentative de connexion avec:', email)
       
       const response = await api.post('/api/admin/login', {
-        email,
+        email: email.trim().toLowerCase(),
         password,
       })
-
-      console.log('[AdminLogin] Réponse reçue:', response.data)
 
       // Vérifier différentes structures de réponse possibles
       let token = null
@@ -54,9 +52,12 @@ export default function AdminLogin() {
         login(user, token, 'admin')
         
         setToast({ type: 'success', message: 'Connexion réussie ! Redirection...' })
-        
+        const destination = user.forcePasswordChange
+          ? '/admin/change-password'
+          : '/admin/dashboard'
+
         setTimeout(() => {
-          navigate('/admin/dashboard')
+          navigate(destination, { replace: true })
         }, 1000)
       } else {
         console.error('[AdminLogin] Structure de réponse invalide:', response.data)
@@ -73,7 +74,7 @@ export default function AdminLogin() {
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-blue-900 via-indigo-900 to-blue-900 flex items-center justify-center p-4">
+    <div className="relative flex min-h-screen min-h-[100dvh] items-start justify-center overflow-x-hidden overflow-y-auto bg-gradient-to-br from-blue-900 via-indigo-900 to-blue-900 px-4 py-6 sm:items-center sm:py-8">
       {/* Cercles décoratifs */}
       <div className="absolute top-0 left-0 w-96 h-96 bg-blue-500/10 rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl"></div>
       <div className="absolute bottom-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full translate-x-1/2 translate-y-1/2 blur-3xl"></div>
@@ -81,9 +82,9 @@ export default function AdminLogin() {
       
       {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
 
-      <div className="relative bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 max-w-md w-full border border-white/20 animate-fadeIn">
+      <div className="relative w-full max-w-md rounded-3xl border border-white/20 bg-white/95 p-6 shadow-2xl backdrop-blur-xl animate-fadeIn sm:p-8">
         {/* Logo et titre */}
-        <div className="text-center mb-8">
+        <div className="mb-6 text-center sm:mb-8">
           <div className="relative inline-flex mb-4">
             <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-2xl shadow-blue-500/30 transform hover:scale-105 transition-transform duration-200">
               <Shield className="text-white" size={36} />
@@ -107,15 +108,18 @@ export default function AdminLogin() {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+            <label htmlFor="admin-email" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
               <Mail size={16} className="text-blue-600" />
               Adresse email
             </label>
             <div className="relative group">
               <input
+                id="admin-email"
+                name="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                autoComplete="username"
                 required
                 className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-gray-50 hover:bg-white"
                 placeholder="admin@elibusiness.com"
@@ -124,15 +128,18 @@ export default function AdminLogin() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+            <label htmlFor="admin-password" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
               <Lock size={16} className="text-blue-600" />
               Mot de passe
             </label>
             <div className="relative group">
               <input
+                id="admin-password"
+                name="password"
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
                 required
                 className="w-full pl-4 pr-12 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-gray-50 hover:bg-white"
                 placeholder="••••••••"
@@ -140,7 +147,9 @@ export default function AdminLogin() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-blue-600 transition-colors"
+                className="absolute right-1 top-1/2 -translate-y-1/2 rounded-lg p-2 text-gray-400 transition-colors hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                aria-pressed={showPassword}
               >
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
@@ -150,11 +159,12 @@ export default function AdminLogin() {
           <button
             type="submit"
             disabled={loading}
+            aria-busy={loading}
             className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3.5 rounded-xl font-bold hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 transform hover:scale-[1.02] active:scale-[0.98]"
           >
             {loading ? (
               <>
-                <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                <div aria-hidden="true" className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
                 Connexion en cours...
               </>
             ) : (
@@ -170,8 +180,9 @@ export default function AdminLogin() {
           <p className="text-center text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">
             Autres espaces
           </p>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <button
+              type="button"
               onClick={() => navigate('/technician/login')}
               className="flex items-center justify-center gap-2 p-3 bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl hover:from-purple-100 hover:to-purple-200 transition-all duration-200 group"
             >
@@ -179,6 +190,7 @@ export default function AdminLogin() {
               <span className="text-sm font-medium text-purple-700">Technicien</span>
             </button>
             <button
+              type="button"
               onClick={() => navigate('/cashier/login')}
               className="flex items-center justify-center gap-2 p-3 bg-gradient-to-r from-emerald-50 to-emerald-100 rounded-xl hover:from-emerald-100 hover:to-emerald-200 transition-all duration-200 group"
             >

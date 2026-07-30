@@ -34,7 +34,7 @@ const vipController = require('../controllers/vipController');
  *       400:
  *         description: Bad request
  */
-router.post('/generate', invoiceController.generateInvoice);
+router.post('/generate', auth, invoiceController.generateInvoice);
 router.get('/:id/pdf', auth, invoiceController.downloadInvoicePdf);
 router.get('/sales/:id', auth, adminController.downloadSaleInvoice);
 router.get('/repairs/:id', auth, adminController.downloadRepairInvoice);
@@ -70,6 +70,6 @@ router.get('/receipts/vip/:id', auth, vipController.downloadVIPReceiptPdf);
  *       400:
  *         description: Bad request
  */
-router.post('/send-whatsapp', invoiceController.sendWhatsapp);
+router.post('/send-whatsapp', auth, invoiceController.sendWhatsapp);
 
 module.exports = router;

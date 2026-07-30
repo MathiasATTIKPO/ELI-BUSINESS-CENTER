@@ -1,8 +1,9 @@
-import { Navigate } from 'react-router-dom'
+import { Navigate, useLocation } from 'react-router-dom'
 import { useResellerAuth } from '../hooks/useResellerAuth'  // ← chemin corrigé
 
 export default function ResellerProtectedRoute({ children }) {
-  const { isAuthenticated, loading } = useResellerAuth()
+  const { user, isAuthenticated, loading } = useResellerAuth()
+  const location = useLocation()
 
   if (loading) {
     return (
@@ -14,6 +15,10 @@ export default function ResellerProtectedRoute({ children }) {
 
   if (!isAuthenticated) {
     return <Navigate to="/reseller/login" replace />
+  }
+
+  if (user?.forcePasswordChange && location.pathname !== '/reseller/change-password') {
+    return <Navigate to="/reseller/change-password" replace />
   }
 
   return children

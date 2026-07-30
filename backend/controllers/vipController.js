@@ -12,6 +12,12 @@ const {
 } = require('../services/vipBillingService');
 const bcrypt = require('bcryptjs');
 const { signToken } = require('../utils/jwt');
+const { createAuthVersion } = require('../utils/authVersion');
+const {
+  CURRENT_PASSWORD_POLICY_VERSION,
+  getNewPasswordValidationError,
+  requiresPasswordChange,
+} = require('../utils/passwordPolicy');
 const path = require('path');
 const fs = require('fs');
 const PDFDocument = require('pdfkit');
@@ -97,9 +103,9 @@ exports.createVIPClient = async (req, res) => {
     const crypto = require('crypto');
     if (password) {
       data.password = await bcrypt.hash(password, 12);
-      data.forcePasswordChange = false;
+      data.forcePasswordChange = true;
     } else {
-      const temp = crypto.randomBytes(4).toString('hex');
+      const temp = crypto.randomBytes(12).toString('base64url');
       data.password = await bcrypt.hash(temp, 12);
       data.forcePasswordChange = true;
       data._sendTempPassword = temp;
@@ -117,9 +123,17 @@ exports.createVIPClient = async (req, res) => {
       });
     }
 
+    const {
+      password: _password,
+      resetPasswordToken: _resetToken,
+      resetPasswordExpires: _resetExpires,
+      ...safeVip
+    } = vip.toObject();
+    safeVip.forcePasswordChange = requiresPasswordChange(vip);
+
     res.status(201).json({
       success: true,
-      data: vip,
+      data: safeVip,
       generatedPassword: data._sendTempPassword || undefined
     });
   } catch (error) {
@@ -130,6 +144,10 @@ exports.createVIPClient = async (req, res) => {
 exports.updateVIPClient = async (req, res) => {
   try {
     const data = { ...req.body };
+    delete data.forcePasswordChange;
+    delete data.passwordPolicyVersion;
+    delete data.resetPasswordToken;
+    delete data.resetPasswordExpires;
     if (data.phone) {
       const normalizedPhone = normalizePhone(data.phone);
       if (!normalizedPhone) return res.status(400).json({ success: false, message: 'Invalid phone format' });
@@ -137,11 +155,17 @@ exports.updateVIPClient = async (req, res) => {
     }
     if (data.password) {
       data.password = await bcrypt.hash(data.password, 12);
-      data.forcePasswordChange = false;
+      data.forcePasswordChange = true;
     }
     const vip = await VIPClient.findByIdAndUpdate(req.params.id, data, { new: true });
     if (!vip) return res.status(404).json({ success: false, message: 'VIP client not found' });
-    res.json({ success: true, data: vip });
+    const {
+      password: _password,
+      resetPasswordToken: _resetToken,
+      resetPasswordExpires: _resetExpires,
+      ...safeVip
+    } = vip.toObject();
+    res.json({ success: true, data: safeVip });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -448,8 +472,21 @@ exports.login = async (req, res) => {
     }
 
     // Générer le token
-    const token = signToken({ id: vip._id, role: 'vip', name: vip.name, phone: vip.phone });
-    const { password: _, ...user } = vip.toObject();
+    const token = signToken({
+      id: vip._id,
+      role: 'vip',
+      name: vip.name,
+      phone: vip.phone,
+      forcePasswordChange: requiresPasswordChange(vip),
+      authVersion: createAuthVersion(vip.password),
+    });
+    const {
+      password: _password,
+      resetPasswordToken: _resetToken,
+      resetPasswordExpires: _resetExpires,
+      ...user
+    } = vip.toObject();
+    user.forcePasswordChange = requiresPasswordChange(vip);
 
     console.log('✅ Login VIP réussi pour:', vip.name);
     res.json({ success: true, data: { user, token }, message: 'Login successful' });
@@ -499,6 +536,10 @@ exports.resetPassword = async (req, res) => {
   try {
     const { token, newPassword } = req.body;
     if (!token || !newPassword) return res.status(400).json({ success: false, message: 'token and newPassword required' });
+    const passwordValidationError = getNewPasswordValidationError(newPassword);
+    if (passwordValidationError) {
+      return res.status(400).json({ success: false, message: passwordValidationError });
+    }
     const vip = await VIPClient.findOne({ resetPasswordToken: token, resetPasswordExpires: { $gt: new Date() } });
     if (!vip) return res.status(400).json({ success: false, message: 'Invalid or expired token' });
 
@@ -506,6 +547,7 @@ exports.resetPassword = async (req, res) => {
     vip.resetPasswordToken = undefined;
     vip.resetPasswordExpires = undefined;
     vip.forcePasswordChange = false;
+    vip.passwordPolicyVersion = CURRENT_PASSWORD_POLICY_VERSION;
     await vip.save();
 
     await notificationService.createNotification({
@@ -525,6 +567,10 @@ exports.resetPassword = async (req, res) => {
 exports.changePassword = async (req, res) => {
   try {
     const { oldPassword, newPassword } = req.body;
+    const passwordValidationError = getNewPasswordValidationError(newPassword);
+    if (passwordValidationError) {
+      return res.status(400).json({ success: false, message: passwordValidationError });
+    }
     const user = req.user;
     if (!user || user.role !== 'vip') return res.status(401).json({ success: false, message: 'Not authorized' });
     const vip = await VIPClient.findById(user.id);
@@ -538,6 +584,7 @@ exports.changePassword = async (req, res) => {
 
     vip.password = await bcrypt.hash(newPassword, 12);
     vip.forcePasswordChange = false;
+    vip.passwordPolicyVersion = CURRENT_PASSWORD_POLICY_VERSION;
     await vip.save();
 
     res.json({ success: true, message: 'Password changed' });
@@ -554,7 +601,11 @@ exports.getVIPInvoices = async (req, res) => {
   try {
     const { vipClientId, status } = req.query;
     const filters = {};
-    if (vipClientId) filters.vipClient = vipClientId;
+    if (req.user?.role === 'vip') {
+      filters.vipClient = req.user.id;
+    } else if (vipClientId) {
+      filters.vipClient = vipClientId;
+    }
     if (status) filters.status = status;
     const invoices = await VIPInvoice.find(filters).populate('vipClient').sort({ createdAt: -1 });
 

@@ -4,6 +4,7 @@ const auth = require('../middleware/auth');
 const authorizeRoles = require('../middleware/authorizeRoles');
 const resellerController = require('../controllers/resellerController');
 const adminController = require('../controllers/adminController');
+const accountController = require('../controllers/accountController');
 
 // Public login for reseller
 router.post('/login', resellerController.login);
@@ -11,7 +12,7 @@ router.post('/login', resellerController.login);
 // Password reset endpoints
 router.post('/forgot', resellerController.forgotPassword);
 router.post('/reset', resellerController.resetPassword);
-router.post('/change-password', auth, authorizeRoles('reseller', 'admin'), resellerController.changePassword);
+router.post('/change-password', auth, authorizeRoles('reseller'), accountController.changePassword);
 
 // Reseller portal endpoints
 router.get('/catalog', auth, authorizeRoles('reseller', 'admin'), resellerController.getAvailableCatalog);

@@ -11,7 +11,8 @@ const vipClientSchema = new mongoose.Schema({
   billingCycleDay: { type: Number, default: 1 },
   notes: { type: String, default: '' },
   // Password reset / first-login flags
-  forcePasswordChange: { type: Boolean, default: false },
+  forcePasswordChange: { type: Boolean, default: true },
+  passwordPolicyVersion: { type: Number, default: 0 },
   resetPasswordToken: { type: String },
   resetPasswordExpires: { type: Date },
   createdAt: { type: Date, default: Date.now },

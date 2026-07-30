@@ -43,7 +43,7 @@ export default function AccountManagement() {
   const CurrentIcon = currentTab.icon
 
   return (
-    <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12 py-8 space-y-8">
+    <div className="eli-content">
       <div>
         <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">Gestion des Comptes</h1>
         <p className="text-gray-500 mt-1">Regroupez la création des comptes employés, VIP et revendeurs dans un seul espace.</p>

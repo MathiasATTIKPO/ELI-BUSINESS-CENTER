@@ -113,7 +113,7 @@ const handleUpdateStatus = async () => {
         amount: parseFloat(paymentData.amount)
       })
 
-      setInvoiceLink(`${API_BASE_URL}/api/admin/tradeins/${id}/invoice`)
+      setInvoiceLink(`${API_BASE_URL}/api/invoice/tradeins/${id}`)
       setToast({ type: 'success', message: 'Paiement validé et facture générée avec succès !' })
       setShowPaymentModal(false)
       setPaymentData({ amount: '', paymentMethod: 'cash', notes: '' })
@@ -158,7 +158,7 @@ const handleUpdateStatus = async () => {
 
   const handleDownloadInvoice = async () => {
     try {
-      const response = await api.get(`/api/admin/tradeins/${id}/invoice`, { responseType: 'blob' })
+      const response = await api.get(`/api/invoice/tradeins/${id}`, { responseType: 'blob' })
       const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }))
       const link = document.createElement('a')
       link.href = url

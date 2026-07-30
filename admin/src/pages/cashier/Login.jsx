@@ -23,14 +23,18 @@ const handleSubmit = async (e) => {
 
   try {
     const response = await api.post('/api/cashier/login', {
-      email,
+      email: email.trim().toLowerCase(),
       password,
     })
 
     if (response.data.success) {
-      login(response.data.data.user, response.data.data.token, 'cashier')  // ← Ajouter 'cashier'
+      const user = response.data.data.user
+      login(user, response.data.data.token, 'cashier')
       setToast({ type: 'success', message: 'Connexion réussie ! Redirection...' })
-      setTimeout(() => navigate('/cashier/sales'), 1000)
+      const destination = user.forcePasswordChange
+        ? '/cashier/change-password'
+        : '/cashier/sales'
+      setTimeout(() => navigate(destination, { replace: true }), 1000)
     }
   } catch (error) {
     const message = error.response?.data?.message || 'Erreur lors de la connexion'
@@ -41,7 +45,7 @@ const handleSubmit = async (e) => {
 }
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-emerald-900 via-green-900 to-emerald-900 flex items-center justify-center p-4">
+    <div className="relative flex min-h-screen min-h-[100dvh] items-start justify-center overflow-x-hidden overflow-y-auto bg-gradient-to-br from-emerald-900 via-green-900 to-emerald-900 px-4 py-6 sm:items-center sm:py-8">
       {/* Cercles décoratifs */}
       <div className="absolute top-0 left-0 w-96 h-96 bg-emerald-500/10 rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl"></div>
       <div className="absolute bottom-0 right-0 w-96 h-96 bg-green-500/10 rounded-full translate-x-1/2 translate-y-1/2 blur-3xl"></div>
@@ -49,9 +53,9 @@ const handleSubmit = async (e) => {
       
       {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
 
-      <div className="relative bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 max-w-md w-full border border-white/20 animate-fadeIn">
+      <div className="relative w-full max-w-md rounded-3xl border border-white/20 bg-white/95 p-6 shadow-2xl backdrop-blur-xl animate-fadeIn sm:p-8">
         {/* Logo et titre */}
-        <div className="text-center mb-8">
+        <div className="mb-6 text-center sm:mb-8">
           <div className="relative inline-flex mb-4">
             <div className="w-20 h-20 bg-gradient-to-br from-emerald-600 to-green-600 rounded-2xl flex items-center justify-center shadow-2xl shadow-emerald-500/30 transform hover:scale-105 transition-transform duration-200">
               <CreditCard className="text-white" size={36} />
@@ -75,15 +79,18 @@ const handleSubmit = async (e) => {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+            <label htmlFor="cashier-email" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
               <Mail size={16} className="text-emerald-600" />
               Adresse email
             </label>
             <div className="relative group">
               <input
+                id="cashier-email"
+                name="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                autoComplete="username"
                 required
                 className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 bg-gray-50 hover:bg-white"
                 placeholder="caissier@elibusiness.com"
@@ -92,15 +99,18 @@ const handleSubmit = async (e) => {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+            <label htmlFor="cashier-password" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
               <Lock size={16} className="text-emerald-600" />
               Mot de passe
             </label>
             <div className="relative group">
               <input
+                id="cashier-password"
+                name="password"
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
                 required
                 className="w-full pl-4 pr-12 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 bg-gray-50 hover:bg-white"
                 placeholder="••••••••"
@@ -108,7 +118,9 @@ const handleSubmit = async (e) => {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-emerald-600 transition-colors"
+                className="absolute right-1 top-1/2 -translate-y-1/2 rounded-lg p-2 text-gray-400 transition-colors hover:text-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                aria-pressed={showPassword}
               >
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
@@ -118,11 +130,12 @@ const handleSubmit = async (e) => {
           <button
             type="submit"
             disabled={loading}
+            aria-busy={loading}
             className="w-full bg-gradient-to-r from-emerald-600 to-green-600 text-white py-3.5 rounded-xl font-bold hover:from-emerald-700 hover:to-green-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:shadow-emerald-500/30 transform hover:scale-[1.02] active:scale-[0.98]"
           >
             {loading ? (
               <>
-                <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                <div aria-hidden="true" className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
                 Connexion en cours...
               </>
             ) : (
@@ -138,8 +151,9 @@ const handleSubmit = async (e) => {
           <p className="text-center text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">
             Autres espaces
           </p>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <button
+              type="button"
               onClick={() => navigate('/admin/login')}
               className="flex items-center justify-center gap-2 p-3 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl hover:from-blue-100 hover:to-blue-200 transition-all duration-200 group"
             >
@@ -147,6 +161,7 @@ const handleSubmit = async (e) => {
               <span className="text-sm font-medium text-blue-700">Administrateur</span>
             </button>
             <button
+              type="button"
               onClick={() => navigate('/technician/login')}
               className="flex items-center justify-center gap-2 p-3 bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl hover:from-purple-100 hover:to-purple-200 transition-all duration-200 group"
             >

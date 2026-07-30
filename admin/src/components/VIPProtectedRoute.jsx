@@ -1,8 +1,9 @@
-import { Navigate } from 'react-router-dom'
+import { Navigate, useLocation } from 'react-router-dom'
 import { useVIPAuth } from '../hooks/useVIPAuth'  // ← chemin corrigé
 
 export default function VIPProtectedRoute({ children }) {
-  const { isAuthenticated, loading } = useVIPAuth()
+  const { user, isAuthenticated, loading } = useVIPAuth()
+  const location = useLocation()
 
   if (loading) {
     return (
@@ -14,6 +15,10 @@ export default function VIPProtectedRoute({ children }) {
 
   if (!isAuthenticated) {
     return <Navigate to="/vip/login" replace />
+  }
+
+  if (user?.forcePasswordChange && location.pathname !== '/vip/change-password') {
+    return <Navigate to="/vip/change-password" replace />
   }
 
   return children

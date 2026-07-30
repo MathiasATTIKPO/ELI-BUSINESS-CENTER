@@ -2,300 +2,332 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background-color: #eef2ff;
-}
-
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
-}
-
-.card-surface {
-  @apply bg-white rounded-3xl shadow-sm ring-1 ring-slate-200/50;
-}
-
-.section-surface {
-  @apply bg-slate-50 rounded-3xl border border-slate-200/70;
-}
-
-.panel-header {
-  @apply flex items-center justify-between gap-3 px-6 py-4 border-b border-slate-200/70;
-}
-
-.badge-soft {
-  @apply inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold bg-slate-100 text-slate-700;
-}
-
-/* Buttons */
-.btn-primary {
-  @apply px-4 py-2 bg-primary text-white rounded-lg hover:opacity-90 transition;
-}
-
-.btn-secondary {
-  @apply px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition;
-}
-
-.btn-danger {
-  @apply px-4 py-2 bg-danger text-white rounded-lg hover:opacity-90 transition;
-}
-
-.btn-success {
-  @apply px-4 py-2 bg-success text-white rounded-lg hover:opacity-90 transition;
-}
-
-.btn-warning {
-  @apply px-4 py-2 bg-warning text-white rounded-lg hover:opacity-90 transition;
-}
-
-.btn-accent {
-  @apply px-4 py-2 bg-accent text-white rounded-lg hover:opacity-90 transition;
-}
-
-.btn-info {
-  @apply px-4 py-2 bg-info text-white rounded-lg hover:opacity-90 transition;
-}
-
-.btn-sm {
-  @apply px-3 py-1 text-sm rounded;
-}
-
-/* Forms */
-.input-base {
-  @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary;
-}
-
-.label-base {
-  @apply block text-sm font-medium text-gray-700 mb-2;
-}
-
-/* Tables */
-.table-base {
-  @apply w-full border-collapse;
-}
-
-.table-base th {
-  @apply bg-primary text-white px-4 py-3 text-left font-semibold;
-}
-
-.table-base td {
-  @apply px-4 py-3 border-b border-gray-200;
-}
-
-.table-base tr:hover {
-  @apply bg-gray-50;
-}
-
-/* Badges */
-.badge-primary {
-  @apply px-3 py-1 rounded-full text-sm font-medium bg-primary bg-opacity-10 text-primary;
-}
-
-.badge-success {
-  @apply px-3 py-1 rounded-full text-sm font-medium bg-success bg-opacity-10 text-success;
-}
-
-.badge-danger {
-  @apply px-3 py-1 rounded-full text-sm font-medium bg-danger bg-opacity-10 text-danger;
-}
-
-.badge-warning {
-  @apply px-3 py-1 rounded-full text-sm font-medium bg-warning bg-opacity-10 text-warning;
-}
-
-.badge-pending {
-  @apply px-3 py-1 rounded-full text-sm font-medium bg-pending bg-opacity-20 text-yellow-800;
-}
-
-.badge-info {
-  @apply px-3 py-1 rounded-full text-sm font-medium bg-info bg-opacity-10 text-info;
-}
-
-.badge-accent {
-  @apply px-3 py-1 rounded-full text-sm font-medium bg-accent bg-opacity-10 text-accent;
-}
-
-/* Role Badges */
-.badge-role-admin {
-  @apply px-3 py-1 rounded-full text-sm font-medium bg-roleAdmin bg-opacity-10 text-roleAdmin;
-}
-
-.badge-role-tech {
-  @apply px-3 py-1 rounded-full text-sm font-medium bg-roleTech bg-opacity-10 text-roleTech;
-}
-
-.badge-role-cashier {
-  @apply px-3 py-1 rounded-full text-sm font-medium bg-roleCashier bg-opacity-10 text-roleCashier;
-}
-
-/* Status Badges for Repairs */
-.badge-status-pending {
-  @apply px-2 py-1 rounded text-xs font-semibold bg-pending bg-opacity-20 text-yellow-800;
-}
-
-.badge-status-quoted {
-  @apply px-2 py-1 rounded text-xs font-semibold bg-info bg-opacity-20 text-info;
-}
-
-.badge-status-accepted {
-  @apply px-2 py-1 rounded text-xs font-semibold bg-success bg-opacity-20 text-success;
-}
-
-.badge-status-repairing {
-  @apply px-2 py-1 rounded text-xs font-semibold bg-warning bg-opacity-20 text-warning;
-}
-
-.badge-status-ready {
-  @apply px-2 py-1 rounded text-xs font-semibold bg-info bg-opacity-20 text-info;
-}
-
-.badge-status-completed {
-  @apply px-2 py-1 rounded text-xs font-semibold bg-success bg-opacity-20 text-success;
-}
-
-.badge-status-cancelled {
-  @apply px-2 py-1 rounded text-xs font-semibold bg-danger bg-opacity-20 text-danger;
-}
-
-.badge-status-paid {
-  @apply px-2 py-1 rounded text-xs font-semibold bg-success bg-opacity-20 text-success;
-}
-
-/* Status Badges for TradeIns */
-.badge-tradein-pending {
-  @apply px-2 py-1 rounded text-xs font-semibold bg-pending bg-opacity-20 text-yellow-800;
-}
-
-.badge-tradein-accepted {
-  @apply px-2 py-1 rounded text-xs font-semibold bg-success bg-opacity-20 text-success;
-}
-
-.badge-tradein-refused {
-  @apply px-2 py-1 rounded text-xs font-semibold bg-danger bg-opacity-20 text-danger;
-}
-
-.badge-tradein-completed {
-  @apply px-2 py-1 rounded text-xs font-semibold bg-success bg-opacity-20 text-success;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
+@layer base {
+  html {
+    min-width: 320px;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+
+  body {
+    min-height: 100vh;
+    margin: 0;
+    overflow-x: hidden;
+    background: #f8fafc;
+    color: #0f172a;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+      "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  #root {
+    min-height: 100vh;
+  }
+
+  img,
+  video {
+    height: auto;
+    max-width: 100%;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+
+  button,
+  [role="button"],
+  a {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  code {
+    font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
   }
 }
 
-.animate-fadeIn {
-  animation: fadeIn 0.3s ease-out;
-}
-
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
-
-/* Unified canvas for dashboard/detail pages */
-.eli-canvas {
-  @apply min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/40;
-}
-
-.eli-content {
-  @apply w-full px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12 py-8 space-y-6;
-}
-
-.eli-shell {
-  @apply bg-white rounded-2xl shadow-sm border border-slate-200/70;
-}
-
-.eli-title {
-  @apply text-3xl font-bold text-slate-900;
-}
-
-.eli-subtitle {
-  @apply text-slate-600 mt-1;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
+@layer components {
+  .card-surface,
+  .eli-shell {
+    @apply min-w-0 rounded-2xl border border-slate-200/80 bg-white shadow-sm;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+
+  .section-surface {
+    @apply min-w-0 rounded-2xl border border-slate-200/80 bg-slate-50;
+  }
+
+  .panel-header {
+    @apply flex flex-col gap-3 border-b border-slate-200/70 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6;
+  }
+
+  .badge-soft {
+    @apply inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700;
+  }
+
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger,
+  .btn-success,
+  .btn-warning,
+  .btn-accent,
+  .btn-info {
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn-primary {
+    @apply bg-primary text-white hover:opacity-90 focus-visible:ring-primary;
+  }
+
+  .btn-secondary {
+    @apply border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 focus-visible:ring-slate-400;
+  }
+
+  .btn-danger {
+    @apply bg-danger text-white hover:opacity-90 focus-visible:ring-danger;
+  }
+
+  .btn-success {
+    @apply bg-success text-white hover:opacity-90 focus-visible:ring-success;
+  }
+
+  .btn-warning {
+    @apply bg-warning text-white hover:opacity-90 focus-visible:ring-warning;
+  }
+
+  .btn-accent {
+    @apply bg-accent text-white hover:opacity-90 focus-visible:ring-accent;
+  }
+
+  .btn-info {
+    @apply bg-info text-white hover:opacity-90 focus-visible:ring-info;
+  }
+
+  .btn-sm {
+    @apply min-h-9 rounded-lg px-3 py-1.5 text-sm;
+  }
+
+  .input,
+  .input-base {
+    @apply min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-slate-100;
+  }
+
+  .label-base {
+    @apply mb-2 block text-sm font-semibold text-slate-700;
+  }
+
+  .table-base {
+    @apply w-full border-collapse;
+    min-width: 42rem;
+  }
+
+  .table-base th {
+    @apply bg-primary px-4 py-3 text-left text-sm font-semibold text-white;
+  }
+
+  .table-base td {
+    @apply border-b border-slate-200 px-4 py-3 align-top text-sm;
+  }
+
+  .table-base tbody tr {
+    @apply transition-colors hover:bg-slate-50;
+  }
+
+  .badge-primary,
+  .badge-success,
+  .badge-danger,
+  .badge-warning,
+  .badge-pending,
+  .badge-info,
+  .badge-accent,
+  .badge-role-admin,
+  .badge-role-tech,
+  .badge-role-cashier {
+    @apply inline-flex items-center rounded-full px-3 py-1 text-sm font-medium;
+  }
+
+  .badge-primary {
+    @apply bg-primary/10 text-primary;
+  }
+
+  .badge-success {
+    @apply bg-success/10 text-success;
+  }
+
+  .badge-danger {
+    @apply bg-danger/10 text-danger;
+  }
+
+  .badge-warning {
+    @apply bg-warning/10 text-warning;
+  }
+
+  .badge-pending {
+    @apply bg-pending/20 text-yellow-800;
+  }
+
+  .badge-info {
+    @apply bg-info/10 text-info;
+  }
+
+  .badge-accent {
+    @apply bg-accent/10 text-accent;
+  }
+
+  .badge-role-admin {
+    @apply bg-roleAdmin/10 text-roleAdmin;
+  }
+
+  .badge-role-tech {
+    @apply bg-roleTech/10 text-roleTech;
+  }
+
+  .badge-role-cashier {
+    @apply bg-roleCashier/10 text-roleCashier;
+  }
+
+  .badge-status-pending,
+  .badge-status-quoted,
+  .badge-status-accepted,
+  .badge-status-repairing,
+  .badge-status-ready,
+  .badge-status-completed,
+  .badge-status-cancelled,
+  .badge-status-paid,
+  .badge-tradein-pending,
+  .badge-tradein-accepted,
+  .badge-tradein-refused,
+  .badge-tradein-completed {
+    @apply inline-flex items-center rounded-md px-2 py-1 text-xs font-semibold;
+  }
+
+  .badge-status-pending,
+  .badge-tradein-pending {
+    @apply bg-pending/20 text-yellow-800;
+  }
+
+  .badge-status-quoted,
+  .badge-status-ready {
+    @apply bg-info/20 text-info;
+  }
+
+  .badge-status-accepted,
+  .badge-status-completed,
+  .badge-status-paid,
+  .badge-tradein-accepted,
+  .badge-tradein-completed {
+    @apply bg-success/20 text-success;
+  }
+
+  .badge-status-repairing {
+    @apply bg-warning/20 text-warning;
+  }
+
+  .badge-status-cancelled,
+  .badge-tradein-refused {
+    @apply bg-danger/20 text-danger;
+  }
+
+  .eli-canvas {
+    min-height: 100dvh;
+    @apply min-w-0 bg-gradient-to-br from-slate-50 via-white to-blue-50/40;
+  }
+
+  .eli-content {
+    @apply mx-auto w-full max-w-[1600px] min-w-0 space-y-5 px-3 py-5 sm:space-y-6 sm:px-5 sm:py-6 lg:px-8 lg:py-8;
+  }
+
+  .eli-title {
+    @apply break-words text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl;
+  }
+
+  .eli-subtitle {
+    @apply mt-1 text-sm text-slate-600 sm:text-base;
+  }
+
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+    @apply gap-3 sm:gap-4;
+  }
+
+  .tab-rail {
+    @apply scrollbar-hide flex min-w-0 gap-2 overflow-x-auto pb-1;
+    overscroll-behavior-inline: contain;
+  }
+
+  .tab-rail > * {
+    @apply flex-none whitespace-nowrap;
+  }
+
+  .chart-frame {
+    @apply h-64 min-h-64 min-w-0 sm:h-[300px];
   }
 }
 
-.animate-fadeIn {
-  animation: fadeIn 0.3s ease-out;
-}
-
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
-
-/* Animation de chargement améliorée */
-@keyframes pulse-dot {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 1; }
-}
-
-.animate-pulse-dot {
-  animation: pulse-dot 1.5s ease-in-out infinite;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
 
-.animate-fadeIn {
-  animation: fadeIn 0.3s ease-out;
-}
-
-/* Animation pour les cartes en grille */
-@keyframes cardAppear {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
   }
-  to {
-    opacity: 1;
-    transform: scale(1);
+
+  .animate-fadeIn {
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  .animate-slideIn {
+    animation: slideIn 0.3s ease-out;
+  }
+
+  .animate-slideUp,
+  .stat-card {
+    animation: slideUp 0.35s ease-out;
+  }
+
+  .animate-pulse-dot {
+    animation: pulse-dot 1.5s ease-in-out infinite;
+  }
+
+  .status-current {
+    animation: progressPulse 2s infinite;
   }
 }
 
 .grid > * {
-  animation: cardAppear 0.3s ease-out;
+  min-width: 0;
+}
+
+.overflow-x-auto {
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.overflow-x-auto > table {
+  min-width: max(100%, 42rem);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes slideIn {
   from {
     opacity: 0;
-    transform: translateX(-20px);
+    transform: translateX(-16px);
   }
   to {
     opacity: 1;
@@ -303,196 +335,54 @@ code {
   }
 }
 
-.animate-slideIn {
-  animation: slideIn 0.3s ease-out;
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-/* Animation pour la barre de progression */
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
 @keyframes progressPulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.5); }
-  50% { box-shadow: 0 0 0 8px rgba(59, 130, 246, 0); }
-}
-
-.status-current {
-  animation: progressPulse 2s infinite;
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(59 130 246 / 0.45);
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+  50% {
+    box-shadow: 0 0 0 8px rgb(59 130 246 / 0);
   }
 }
 
-.animate-slideUp {
-  animation: slideUp 0.3s ease-out;
-}
-
-/* Animation pour la barre d'actions */
-.sticky {
-  animation: slideUp 0.3s ease-out;
-}
-
-/* Effet de flou pour la barre sticky */
-@supports (backdrop-filter: blur(12px)) {
-  .backdrop-blur-sm {
-    backdrop-filter: blur(12px);
+@media (max-width: 639px) {
+  .overflow-x-auto > table {
+    font-size: 0.8125rem;
   }
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
 
-.animate-fadeIn {
-  animation: fadeIn 0.3s ease-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
   }
 }
-
-.animate-fadeIn {
-  animation: fadeIn 0.3s ease-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-fadeIn {
-  animation: fadeIn 0.3s ease-out;
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.sticky {
-  animation: slideUp 0.3s ease-out;
-}
-
-@supports (backdrop-filter: blur(12px)) {
-  .backdrop-blur-sm {
-    backdrop-filter: blur(12px);
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-fadeIn {
-  animation: fadeIn 0.4s ease-out;
-}
-
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
-
-/* Animations pour les cartes */
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.stat-card {
-  animation: slideUp 0.5s ease-out;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.animate-fadeIn {
-  animation: fadeIn 0.4s ease-out;
-}
-
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-fadeIn {
-  animation: fadeIn 0.6s ease-out;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.animate-fadeIn {
-  animation: fadeIn 0.3s ease-out;
-}
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.animate-fadeIn { animation: fadeIn 0.3s ease-out; }

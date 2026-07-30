@@ -17,7 +17,7 @@ const ITEMS = [
 export default function Tabs({ activeMainTab, setActiveMainTab, setActiveSubTab, badges }) {
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-      <nav className="flex gap-1 px-2 overflow-x-auto scrollbar-hide">
+      <nav className="flex min-w-0 gap-1 overflow-x-auto px-2 scrollbar-hide">
         {ITEMS.map((item) => {
           const Icon = item.icon
           const isActive = activeMainTab === item.id
@@ -30,7 +30,7 @@ export default function Tabs({ activeMainTab, setActiveMainTab, setActiveSubTab,
                 setActiveMainTab(item.id)
                 setActiveSubTab(item.id === 'dashboard' ? 'overview' : 'list')
               }}
-              className={`flex items-center gap-2 px-5 py-4 text-sm font-medium whitespace-nowrap transition-all duration-200 border-b-2 ${
+              className={`flex flex-none items-center gap-2 whitespace-nowrap px-5 py-4 text-sm font-medium transition-all duration-200 border-b-2 ${
                 isActive ? 'text-blue-600 border-blue-600 bg-blue-50/50' : 'text-gray-500 border-transparent hover:text-gray-700 hover:bg-gray-50'
               }`}
             >

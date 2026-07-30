@@ -1,6 +1,8 @@
 const { verifyToken } = require('../utils/jwt');
+const { allowRequestOrRespond } = require('./passwordChangeGuard');
+const { resolveCurrentAccount, respondWithAuthError } = require('./currentAccount');
 
-module.exports = (req, res, next) => {
+module.exports = async (req, res, next) => {
   const authHeader = req.headers.authorization;
   
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -11,11 +13,17 @@ module.exports = (req, res, next) => {
   const token = authHeader.split(' ')[1];
   try {
     const decoded = verifyToken(token);
-    req.user = decoded;
+    req.user = await resolveCurrentAccount(decoded);
+    if (!allowRequestOrRespond(req, res, req.user)) {
+      return;
+    }
     //console.log(`[AUTH] Token valide pour : ${decoded.email}`);
     next();
   } catch (error) {
     console.error(`[AUTH] Erreur de vérification du token :`, error.message);
-    res.status(401).json({ success: false, data: null, message: 'Token invalide.' });
+    if (error?.name === 'JsonWebTokenError' || error?.name === 'TokenExpiredError') {
+      return res.status(401).json({ success: false, data: null, message: 'Token invalide.' });
+    }
+    return respondWithAuthError(res, error);
   }
 };

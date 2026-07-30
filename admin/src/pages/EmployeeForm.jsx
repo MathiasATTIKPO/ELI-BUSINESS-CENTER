@@ -52,6 +52,7 @@ export default function EmployeeForm() {
   const [success, setSuccess] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [loadingSkills, setLoadingSkills] = useState(true)
+  const [generatedPassword, setGeneratedPassword] = useState('')
 
   const roles = [
     {
@@ -168,6 +169,8 @@ export default function EmployeeForm() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
+    setSuccess('')
+    setGeneratedPassword('')
 
     // Validation de base
     if (!formData.name || !formData.email || !formData.phone) {
@@ -193,8 +196,14 @@ export default function EmployeeForm() {
       }
 
       if (response.data.success) {
-        setSuccess(isEditing ? 'Employé mis à jour avec succès' : 'Employé créé avec succès')
-        setTimeout(() => navigate('/admin/employees'), 1500)
+        if (!isEditing && response.data.generatedPassword) {
+          setGeneratedPassword(response.data.generatedPassword)
+          setSuccess('Employé créé. Communiquez-lui le mot de passe temporaire.')
+        } else {
+          setGeneratedPassword('')
+          setSuccess(isEditing ? 'Employé mis à jour avec succès' : 'Employé créé avec succès')
+          setTimeout(() => navigate('/admin/employees'), 1500)
+        }
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Erreur lors de la sauvegarde')
@@ -212,9 +221,44 @@ export default function EmployeeForm() {
   }
 
   return (
-    <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12 py-8 space-y-6">
+    <div className="eli-content">
       {error && <Toast message={error} type="error" onClose={() => setError('')} />}
       {success && <Toast message={success} type="success" onClose={() => setSuccess('')} />}
+
+      {generatedPassword && (
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
+          <h3 className="mb-2 text-sm font-bold text-emerald-800">Mot de passe temporaire généré</h3>
+          <p className="mb-3 text-sm text-emerald-700">
+            Communiquez ce mot de passe à l’employé. Il devra le remplacer à sa première connexion.
+          </p>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="rounded-lg border border-emerald-200 bg-white px-4 py-2 font-mono text-sm text-emerald-900">
+              {generatedPassword}
+            </div>
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(generatedPassword)
+                  setSuccess('Mot de passe temporaire copié.')
+                } catch {
+                  setError('Impossible de copier automatiquement le mot de passe.')
+                }
+              }}
+              className="rounded-lg bg-emerald-600 px-4 py-2 text-white transition hover:bg-emerald-700"
+            >
+              Copier
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/admin/employees')}
+              className="rounded-lg border border-emerald-300 px-4 py-2 text-emerald-800 transition hover:bg-emerald-100"
+            >
+              Retour à la liste
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* En-tête */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

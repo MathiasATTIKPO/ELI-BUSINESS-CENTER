@@ -5,6 +5,7 @@ const authorizeRoles = require('../middleware/authorizeRoles');
 const vipController = require('../controllers/vipController');
 const vipStats = require('../controllers/vipStatsController')
 const adminController = require('../controllers/adminController');
+const accountController = require('../controllers/accountController');
 
 // Admin-protected VIP client management
 // Public login for VIP clients
@@ -50,7 +51,7 @@ router.put('/notifications/read-all', auth, authorizeRoles('vip', 'admin', 'supe
 // Password reset endpoints
 router.post('/forgot', vipController.forgotPassword);
 router.post('/reset', vipController.resetPassword);
-router.post('/change-password', auth, authorizeRoles('vip', 'admin', 'super_admin'), vipController.changePassword);
+router.post('/change-password', auth, authorizeRoles('vip'), accountController.changePassword);
 
 router.get('/stats', auth, authorizeRoles('admin', 'cashier', 'super_admin', 'commercial_manager'), vipStats.getStats);
 

@@ -123,6 +123,7 @@ const cashierRoutes = require('./routes/cashier');
 const invoiceRoutes = require('./routes/invoice');
 const technicianRoutes = require('./routes/technician');
 const notificationRoutes = require('./routes/notifications');
+const accountRoutes = require('./routes/account');
 const adminController = require('./controllers/adminController');
 const clientRoutes = require('./routes/clientRoutes');
 const skillRoutes = require('./routes/skill');
@@ -254,6 +255,7 @@ app.use('/api/products', productsRoutes);
 app.use('/api/repair', repairRoutes);
 app.use('/api/tradein', tradeinRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/account', accountRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/technician', technicianRoutes);
 app.use('/api/cashier', cashierRoutes);
@@ -379,7 +381,19 @@ app.get('/api/db-status', (req, res) => {
     });
 });
 
+const immutableAssetOptions = {
+  immutable: true,
+  maxAge: '1y',
+  setHeaders: (res) => {
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+  },
+};
+
 if (fs.existsSync(adminDistPath)) {
+  const adminAssetsPath = path.join(adminDistPath, 'assets');
+  if (fs.existsSync(adminAssetsPath)) {
+    app.use('/admin/assets', express.static(adminAssetsPath, immutableAssetOptions));
+  }
   app.use('/admin', express.static(adminDistPath));
   app.get(
     [
@@ -399,6 +413,10 @@ if (fs.existsSync(adminDistPath)) {
 }
 
 if (fs.existsSync(clientDistPath)) {
+  const clientAssetsPath = path.join(clientDistPath, 'assets');
+  if (fs.existsSync(clientAssetsPath)) {
+    app.use('/assets', express.static(clientAssetsPath, immutableAssetOptions));
+  }
   app.use(express.static(clientDistPath));
   app.get('*', (req, res, next) => {
     if (req.path.startsWith('/api')) {

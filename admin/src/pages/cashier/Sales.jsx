@@ -947,7 +947,7 @@ export default function CashierSales() {
         )}
 
         {/* Statistiques */}
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 min-[420px]:grid-cols-2 lg:grid-cols-5 gap-4">
           {[
             { label: 'Réparations prêtes', value: stats.readyRepairs, sub: `${stats.repairRevenue.toLocaleString()} FCFA`, icon: Wrench, grad: 'from-blue-500 to-cyan-500' },
             { label: 'Échanges à encaisser', value: stats.acceptedTradeins, sub: `${stats.tradeinRevenue.toLocaleString()} FCFA`, icon: RefreshCw, grad: 'from-amber-500 to-orange-500' },
@@ -955,11 +955,11 @@ export default function CashierSales() {
             { label: 'Contrats revendeur à encaisser', value: `${stats.resellerContractsAmount.toLocaleString()} FCFA`, sub: `${stats.resellerContractsToCollect} en attente • ${Number(resellerContractSummary.overdueCount || 0)} depasses`, icon: DollarSign, grad: 'from-indigo-500 to-blue-500' },
             { label: 'Total encaissé', value: `${stats.totalRevenue.toLocaleString()} FCFA`, sub: `${stats.totalTransactions} transactions`, icon: DollarSign, grad: 'from-purple-500 to-violet-500' },
           ].map(s => (
-            <div key={s.label} className="bg-white rounded-2xl shadow-sm border p-5">
-              <div className="flex justify-between">
-                <div>
+            <div key={s.label} className="min-w-0 bg-white rounded-2xl shadow-sm border p-4 sm:p-5">
+              <div className="flex min-w-0 justify-between gap-3">
+                <div className="min-w-0">
                   <p className="text-sm text-gray-500">{s.label}</p>
-                  <p className="text-2xl font-bold">{s.value}</p>
+                  <p className="break-words text-xl font-bold min-[420px]:text-2xl">{s.value}</p>
                   <p className="text-xs text-gray-400">{s.sub}</p>
                 </div>
                 <div className={`p-2.5 rounded-xl bg-gradient-to-r ${s.grad}`}>
@@ -971,10 +971,10 @@ export default function CashierSales() {
         </div>
 
         {/* Graphique */}
-        <div className="bg-white rounded-2xl shadow-sm border p-6">
+        <div className="min-w-0 bg-white rounded-2xl shadow-sm border p-4 sm:p-6">
           <h3 className="font-bold mb-4">Répartition des paiements</h3>
           {paymentMethodData.length > 0 ? (
-            <div className="h-[300px]">
+            <div className="h-[260px] min-w-0 sm:h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie data={paymentMethodData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} innerRadius={55}
@@ -1004,7 +1004,7 @@ export default function CashierSales() {
 
         {/* Onglets et contenu */}
         <div className="bg-white rounded-2xl shadow-sm border overflow-hidden">
-          <div className="flex border-b">
+          <div className="flex overflow-x-auto border-b scrollbar-hide">
             {[
               { id: 'repairs', label: 'Réparations', icon: Wrench, count: readyRepairs.length },
               { id: 'vipRepairs', label: 'Réparations VIP', icon: Wrench, count: vipRepairs.length },
@@ -1015,7 +1015,7 @@ export default function CashierSales() {
             ].map(tab => (
               <button key={tab.id}
                 onClick={() => { setActiveTab(tab.id); setCurrentPage(p => ({...p, [tab.id]: 1})) }}
-                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium border-b-2 ${
+                className={`flex flex-none items-center justify-center gap-2 whitespace-nowrap px-4 py-3 text-sm font-medium border-b-2 ${
                   activeTab === tab.id ? 'text-emerald-600 border-emerald-600 bg-emerald-50/50' : 'text-gray-500 border-transparent hover:text-gray-700'
                 }`}
               >
@@ -1121,7 +1121,7 @@ export default function CashierSales() {
                   </button>
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="w-full">
+                  <table className="w-full min-w-[1120px]">
                     <thead className="bg-gray-50 text-xs uppercase text-gray-500">
                       <tr>
                         <th className="px-3 py-2 text-left">Sélection</th>
@@ -2022,10 +2022,10 @@ function Modal({ title, onClose, children }) {
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
       <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl" onClick={e => e.stopPropagation()}>
-        <div className="p-6 border-b">
+        <div className="border-b p-4 sm:p-6">
           <h3 className="text-xl font-bold">{title}</h3>
         </div>
-        <div className="p-6">{children}</div>
+        <div className="p-4 sm:p-6">{children}</div>
       </div>
     </div>
   )
@@ -2034,7 +2034,7 @@ function Modal({ title, onClose, children }) {
 function Pagination({ page, total, onChange }) {
   if (total <= 1) return null
   return (
-    <div className="flex items-center justify-between px-6 py-3 border-t bg-gray-50/50">
+    <div className="flex items-center justify-between gap-3 border-t bg-gray-50/50 px-4 py-3 sm:px-6">
       <span className="text-sm text-gray-500">Page {page}/{total}</span>
       <div className="flex gap-2">
         <button 

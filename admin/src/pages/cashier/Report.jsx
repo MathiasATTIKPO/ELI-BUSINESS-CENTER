@@ -354,7 +354,7 @@ export default function CashierReport() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         {/* Cartes statistiques */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 min-[420px]:grid-cols-2 lg:grid-cols-4 gap-4">
           {[
             { label: 'Total des ventes', value: `${stats.totalAmount.toLocaleString('fr-FR')} FCFA`, icon: DollarSign, gradient: 'from-emerald-500 to-green-500', trend: '+12%' },
             { label: 'Transactions', value: stats.totalTransactions, icon: Activity, gradient: 'from-blue-500 to-cyan-500', subtitle: `${stats.repairCount} réparations • ${stats.tradeinCount} échanges • ${stats.phoneSalesCount} ventes • ${stats.resellerContractCount} contrats` },
@@ -363,12 +363,12 @@ export default function CashierReport() {
           ].map((stat) => {
             const Icon = stat.icon
             return (
-              <div key={stat.label} className="relative overflow-hidden bg-white rounded-2xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-all duration-200 group">
+              <div key={stat.label} className="relative min-w-0 overflow-hidden bg-white rounded-2xl shadow-sm border border-gray-100 p-4 hover:shadow-md transition-all duration-200 group sm:p-5">
                 <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${stat.gradient}`}></div>
                 <div className="flex items-start justify-between">
-                  <div className="space-y-2">
+                  <div className="min-w-0 space-y-2">
                     <p className="text-sm text-gray-500 font-medium">{stat.label}</p>
-                    <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+                    <p className="break-words text-xl font-bold text-gray-900 min-[420px]:text-2xl">{stat.value}</p>
                     {stat.subtitle && <p className="text-xs text-gray-400">{stat.subtitle}</p>}
                     {stat.trend && (
                       <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600">
@@ -387,13 +387,13 @@ export default function CashierReport() {
         </div>
 
         {/* Graphiques */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <div className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-2 [&>*]:min-w-0">
+          <div className="min-w-0 bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
             <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
               <PieChart size={20} className="text-emerald-600" />
               Répartition par méthode
             </h3>
-            <div className="h-[300px]">
+            <div className="h-[260px] min-w-0 sm:h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <RePieChart>
                   <Pie
@@ -416,12 +416,12 @@ export default function CashierReport() {
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <div className="min-w-0 bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
             <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
               <TrendingUp size={20} className="text-blue-600" />
               Évolution journalière (7 jours)
             </h3>
-            <div className="h-[300px]">
+            <div className="h-[260px] min-w-0 sm:h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={dailyRevenue}>
                   <defs>
@@ -443,7 +443,7 @@ export default function CashierReport() {
 
         {/* Filtres et recherche */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="p-6 space-y-4">
+          <div className="space-y-4 p-4 sm:p-6">
             <div className="flex flex-col lg:flex-row gap-4">
               <div className="relative flex-1">
                 <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
@@ -552,7 +552,7 @@ export default function CashierReport() {
           </div>
           
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full min-w-[860px]">
               <thead>
                 <tr className="bg-gray-50/50">
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
@@ -686,7 +686,7 @@ export default function CashierReport() {
             <div className="px-6 py-10 text-sm text-gray-500">Aucun encaissement en override manager sur la période et les filtres sélectionnés.</div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full min-w-[760px]">
                 <thead>
                   <tr className="bg-amber-50/40">
                     <th className="px-6 py-4 text-left text-xs font-semibold text-amber-700 uppercase tracking-wider">Date</th>

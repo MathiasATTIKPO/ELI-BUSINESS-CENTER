@@ -173,7 +173,7 @@ const filteredRepairs = useMemo(() => {
   }
 
   return (
-    <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12 py-8 space-y-8">
+    <div className="eli-content">
       {toast && <Toast type={toast.type} message={toast.message} />}
 
       {/* En-tête avec stats */}
@@ -198,7 +198,7 @@ const filteredRepairs = useMemo(() => {
         </div>
 
         {/* Cartes statistiques */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 min-[420px]:grid-cols-2 md:grid-cols-5 gap-4">
           {[
             { label: 'Total', value: stats.total, icon: Wrench, color: 'from-indigo-500 to-purple-500' },
             { label: 'En attente', value: stats.pending, icon: Clock, color: 'from-amber-500 to-orange-500' },

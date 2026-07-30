@@ -1,8 +1,9 @@
-import { Navigate } from 'react-router-dom'
+import { Navigate, useLocation } from 'react-router-dom'
 import { useCashierAuth } from '../hooks/useCashierAuth'  // ← chemin corrigé
 
 export default function CashierProtectedRoute({ children }) {
-  const { isAuthenticated, loading } = useCashierAuth()
+  const { user, isAuthenticated, loading } = useCashierAuth()
+  const location = useLocation()
 
   if (loading) {
     return (
@@ -14,6 +15,10 @@ export default function CashierProtectedRoute({ children }) {
 
   if (!isAuthenticated) {
     return <Navigate to="/cashier/login" replace />
+  }
+
+  if (user?.forcePasswordChange && location.pathname !== '/cashier/change-password') {
+    return <Navigate to="/cashier/change-password" replace />
   }
 
   return children

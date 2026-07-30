@@ -1,5 +1,8 @@
 const bcrypt = require('bcryptjs');
 const { signToken } = require('../utils/jwt');
+const { createAuthVersion } = require('../utils/authVersion');
+const { getEnvAdminCredentials } = require('../utils/envAdmin');
+const { requiresPasswordChange } = require('../utils/passwordPolicy');
 const Product = require('../models/Product');
 const RepairRequest = require('../models/RepairRequest');
 const TradeinRequest = require('../models/TradeinRequest');
@@ -23,6 +26,10 @@ const crypto = require('crypto');
 const { sendAttachment, downloadSourceExists } = require('../utils/download');
 
 const getInvoiceApiPath = (invoiceId) => `/api/invoices/${invoiceId}/pdf`;
+const canManageSuperAdmins = (user) => (
+  user?.role === 'super_admin'
+  || user?.id === 'admin_id'
+);
 
 // ==================== NOTIFICATIONS ====================
 
@@ -257,7 +264,7 @@ exports.markAllNotificationsRead = async (req, res) => {
 const loginEmployee = async (req, res, allowedRoles) => {
   try {
     const email = String(req.body?.email || '').trim().toLowerCase();
-    const password = String(req.body?.password || '').trim();
+    const password = String(req.body?.password || '');
     if (!email || !password) return res.status(400).json({ success: false, message: 'Identifiants requis.' });
 
     const employee = await Employee.findOne({ email, isActive: true });
@@ -268,8 +275,16 @@ const loginEmployee = async (req, res, allowedRoles) => {
     const isValid = await bcrypt.compare(password, employee.password);
     if (!isValid) return res.status(401).json({ success: false, message: 'Authentification échouée.' });
 
-    const token = signToken({ id: employee._id, email: employee.email, role: employee.role, name: employee.name });
-    const { password: _, ...user } = employee.toObject();
+    const token = signToken({
+      id: employee._id,
+      email: employee.email,
+      role: employee.role,
+      name: employee.name,
+      forcePasswordChange: requiresPasswordChange(employee),
+      authVersion: createAuthVersion(employee.password),
+    });
+    const { password: _, resetPasswordToken: _resetToken, resetPasswordExpires: _resetExpires, ...user } = employee.toObject();
+    user.forcePasswordChange = requiresPasswordChange(employee);
     res.json({ success: true, data: { user, token }, message: 'Connexion réussie.' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -278,24 +293,45 @@ const loginEmployee = async (req, res, allowedRoles) => {
 
 exports.login = async (req, res) => {
   const email = String(req.body?.email || '').trim().toLowerCase();
-  const password = String(req.body?.password || '').trim();
+  const password = String(req.body?.password || '');
   if (!email || !password) return res.status(400).json({ success: false, message: 'Identifiants requis.' });
 
-  const ADMIN_USER = String(process.env.ADMIN_USER || 'admin@elibusiness.com').trim().toLowerCase();
-  const ADMIN_PASS = process.env.ADMIN_PASS || 'password123';
+  const {
+    email: ADMIN_USER,
+    password: ADMIN_PASS,
+    enabled: ENV_ADMIN_ENABLED,
+  } = getEnvAdminCredentials();
 
-  const isEnvAdmin = email === ADMIN_USER && password === ADMIN_PASS;
+  const isEnvAdmin = ENV_ADMIN_ENABLED && email === ADMIN_USER && password === ADMIN_PASS;
 
   if (isEnvAdmin) {
-    const token = signToken({ id: 'admin_id', email, role: 'admin', name: 'Administrateur' });
-    return res.json({ success: true, data: { user: { id: 'admin_id', email, role: 'admin', name: 'Administrateur' }, token }, message: 'Connexion réussie.' });
+    const user = {
+      id: 'admin_id',
+      email,
+      role: 'admin',
+      name: 'Administrateur',
+      forcePasswordChange: false,
+    };
+    const token = signToken({
+      ...user,
+      authVersion: createAuthVersion(ADMIN_PASS),
+    });
+    return res.json({ success: true, data: { user, token }, message: 'Connexion réussie.' });
   }
 
   try {
     const employee = await Employee.findOne({ email, isActive: true, role: { $in: ['admin', 'super_admin', 'commercial_manager'] } });
     if (employee && await bcrypt.compare(password, employee.password)) {
-      const token = signToken({ id: employee._id, email: employee.email, role: employee.role, name: employee.name });
-      const { password: _, ...user } = employee.toObject();
+      const token = signToken({
+        id: employee._id,
+        email: employee.email,
+        role: employee.role,
+        name: employee.name,
+        forcePasswordChange: requiresPasswordChange(employee),
+        authVersion: createAuthVersion(employee.password),
+      });
+      const { password: _, resetPasswordToken: _resetToken, resetPasswordExpires: _resetExpires, ...user } = employee.toObject();
+      user.forcePasswordChange = requiresPasswordChange(employee);
       return res.json({ success: true, data: { user, token }, message: 'Connexion réussie.' });
     }
   } catch (error) {
@@ -998,7 +1034,7 @@ exports.getEmployees = async (req, res) => {
     res.json({
       success: true,
       data: employees.map(e => {
-        const { password, ...rest } = e.toObject();
+        const { password, resetPasswordToken, resetPasswordExpires, ...rest } = e.toObject();
         return rest;
       })
     });
@@ -1024,6 +1060,13 @@ exports.createEmployee = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Rôle invalide.' });
     }
 
+    if (role === 'super_admin' && !canManageSuperAdmins(req.user)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Seul un super administrateur peut creer un autre super administrateur.',
+      });
+    }
+
     // --- Validation des compétences ---
     let validatedSkills = [];
     if (skills && Array.isArray(skills) && skills.length > 0) {
@@ -1040,9 +1083,11 @@ exports.createEmployee = async (req, res) => {
 
     // Génération du mot de passe si absent
     let rawPassword = password;
-    let forcePasswordChange = false;
+    let forcePasswordChange = true;
+    let generatedPassword;
     if (!rawPassword) {
-      rawPassword = crypto.randomBytes(4).toString('hex');
+      rawPassword = crypto.randomBytes(12).toString('base64url');
+      generatedPassword = rawPassword;
       forcePasswordChange = true;
     }
 
@@ -1059,11 +1104,16 @@ exports.createEmployee = async (req, res) => {
     // Peupler pour le retour
     await employee.populate('skills', 'name category');
 
-    const { password: _p, ...result } = employee.toObject();
+    const {
+      password: _password,
+      resetPasswordToken: _resetToken,
+      resetPasswordExpires: _resetExpires,
+      ...result
+    } = employee.toObject();
     res.status(201).json({
       success: true,
       data: result,
-      generatedPassword: forcePasswordChange ? rawPassword : undefined
+      generatedPassword
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -1073,6 +1123,23 @@ exports.createEmployee = async (req, res) => {
 exports.updateEmployee = async (req, res) => {
   try {
     const { password, skills, ...data } = req.body;
+    delete data.forcePasswordChange;
+    delete data.passwordPolicyVersion;
+    delete data.resetPasswordToken;
+    delete data.resetPasswordExpires;
+    const existingEmployee = await Employee.findById(req.params.id).select('role');
+    if (!existingEmployee) {
+      return res.status(404).json({ success: false, message: 'Employé introuvable.' });
+    }
+    if (
+      (existingEmployee.role === 'super_admin' || data.role === 'super_admin')
+      && !canManageSuperAdmins(req.user)
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: 'Seul un super administrateur peut modifier un super administrateur.',
+      });
+    }
 
     // --- Validation des compétences si fournies ---
     let validatedSkills = undefined;
@@ -1093,7 +1160,10 @@ exports.updateEmployee = async (req, res) => {
     }
 
     // Hash du nouveau mot de passe si présent
-    if (password) data.password = await bcrypt.hash(password, 12);
+    if (password) {
+      data.password = await bcrypt.hash(password, 12);
+      data.forcePasswordChange = true;
+    }
 
     // Construction de l'objet de mise à jour
     const updateData = { ...data };
@@ -1110,7 +1180,12 @@ exports.updateEmployee = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Employé introuvable.' });
     }
 
-    const { password: _, ...result } = employee.toObject();
+    const {
+      password: _password,
+      resetPasswordToken: _resetToken,
+      resetPasswordExpires: _resetExpires,
+      ...result
+    } = employee.toObject();
     res.json({ success: true, data: result });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -1119,6 +1194,17 @@ exports.updateEmployee = async (req, res) => {
 
 exports.deleteEmployee = async (req, res) => {
   try {
+    const existingEmployee = await Employee.findById(req.params.id).select('role');
+    if (!existingEmployee) {
+      return res.status(404).json({ success: false, message: 'Employé introuvable.' });
+    }
+    if (existingEmployee.role === 'super_admin' && !canManageSuperAdmins(req.user)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Seul un super administrateur peut supprimer un super administrateur.',
+      });
+    }
+
     const deleted = await Employee.findByIdAndDelete(req.params.id);
     if (!deleted) {
       return res.status(404).json({ success: false, message: 'Employé introuvable.' });

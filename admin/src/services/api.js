@@ -47,6 +47,12 @@ api.interceptors.request.use((config) => {
   const url = config.url || ''
   const isPublicAuthEndpoint = /\/(admin|cashier|technician|reseller|vip)\/(login|forgot|reset)\b/.test(url)
 
+  if (isPublicAuthEndpoint) {
+    config.headers?.delete?.('Authorization')
+    if (config.headers) delete config.headers.Authorization
+    return config
+  }
+
   if (url.includes('/admin/')) {
     role = 'admin'
   } else if (url.includes('/cashier/')) {
@@ -59,7 +65,7 @@ api.interceptors.request.use((config) => {
     role = 'vip'
   }
   
-  if (role && !isPublicAuthEndpoint) {
+  if (role) {
     const token = TokenManager.getTokenByRole(role)
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
@@ -90,20 +96,51 @@ api.interceptors.response.use(
     if (error.response) {
       const status = error.response.status
       const url = error.config?.url || ''
+      const routeRole = url.match(/\/api\/(admin|cashier|technician|reseller|vip)(?:\/|$)/)?.[1]
       
       // Redirection 404 uniquement. Une erreur serveur doit laisser
       // l'utilisateur sur la page courante afin que le composant puisse
       // afficher son propre message d'erreur.
-      const isAuthEndpoint = /\/login|\/forgot|\/reset|\/admin\/login|\/technician\/login|\/cashier\/login|\/reseller\/login|\/vip\/login/.test(url)
-      if (!isAuthEndpoint && typeof window !== 'undefined') {
+      const isCredentialEndpoint = /\/(login|forgot|reset|change-password)\b/.test(url)
+      if (!isCredentialEndpoint && typeof window !== 'undefined') {
         if (status === 404) {
           window.location.href = '/404?from=' + encodeURIComponent(window.location.pathname)
           return Promise.reject(error)
         }
       }
 
+      if (
+        status === 403
+        && error.response?.data?.data?.code === 'PASSWORD_CHANGE_REQUIRED'
+        && typeof window !== 'undefined'
+      ) {
+        const tokenRole = error.response?.data?.data?.role
+        const activeRole = localStorage.getItem('active_role')
+        const normalizedTokenRole = ['super_admin', 'commercial_manager'].includes(tokenRole)
+          ? 'admin'
+          : tokenRole
+        const role = routeRole || activeRole || normalizedTokenRole
+        if (role && !window.location.pathname.endsWith('/change-password')) {
+          window.location.replace(`/${role}/change-password`)
+        }
+        return Promise.reject(error)
+      }
+
+      if (
+        status === 401
+        && error.response?.data?.data?.code === 'SESSION_STALE'
+        && typeof window !== 'undefined'
+      ) {
+        const role = routeRole || localStorage.getItem('active_role')
+        if (role) {
+          TokenManager.clearRole(role)
+          window.location.replace(`/${role}/login`)
+        }
+        return Promise.reject(error)
+      }
+
       // 🔹 Gestion 401 : déconnexion du rôle concerné
-      if (status === 401) {
+      if (status === 401 && !isCredentialEndpoint) {
         let role = null
         if (url.includes('/admin/')) role = 'admin'
         else if (url.includes('/cashier/')) role = 'cashier'

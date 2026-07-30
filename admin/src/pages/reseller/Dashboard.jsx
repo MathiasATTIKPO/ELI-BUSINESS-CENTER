@@ -1,15 +1,18 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useResellerAuth } from '../../hooks/useResellerAuth'
 import api from '../../services/api'
 import Toast from '../../components/Toast'
+import PortalHeader from '../../components/layout/PortalHeader'
 import {
   ShoppingBag, RefreshCw, DollarSign, TrendingUp,
   Search, X, Clock, Phone, Store,
-  FileText, Calendar, LogOut, AlertCircle, Filter
+  FileText, Calendar, AlertCircle, Filter
 } from 'lucide-react'
 
 export default function ResellerDashboard() {
   const { user, logout } = useResellerAuth()
+  const navigate = useNavigate()
   const [contracts, setContracts] = useState([])
   const [catalog, setCatalog] = useState([])
   const [stats, setStats] = useState(null)
@@ -253,53 +256,46 @@ export default function ResellerDashboard() {
 
   const handleLogout = () => {
     logout()
-    window.location.href = '/reseller/login'
+    navigate('/reseller/login', { replace: true })
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-emerald-50/30">
+    <div className="eli-canvas">
       {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
 
-      <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
-
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
-              Espace Revendeur
-            </h1>
-            <p className="text-gray-500 mt-1">Bienvenue, <span className="font-semibold">{user?.name || 'Revendeur'}</span></p>
-          </div>
-          <div className="flex items-center gap-3">
+      <PortalHeader
+        role="reseller"
+        icon={Store}
+        title="Espace Revendeur"
+        subtitle={`Bienvenue, ${user?.name || 'Revendeur'}`}
+        onLogout={handleLogout}
+        actions={(
             <button
+              type="button"
               onClick={loadDashboard}
-              className="p-2.5 bg-white border border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50 transition-colors"
+              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl text-gray-600 transition-colors hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
               title="Rafraîchir"
+              aria-label="Rafraîchir le tableau de bord"
             >
-              <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
+              <RefreshCw aria-hidden="true" size={18} className={loading ? 'animate-spin' : ''} />
             </button>
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-red-600 hover:bg-red-50 hover:border-red-200 transition-colors"
-            >
-              <LogOut size={18} />
-              <span className="hidden sm:inline font-medium">Déconnexion</span>
-            </button>
-          </div>
-        </div>
+        )}
+      />
 
+      <div className="eli-content">
         {/* ⭐ Cartes statistiques avec la carte "Ventes non encaissées" */}
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 min-[420px]:grid-cols-2 lg:grid-cols-5 gap-4">
           {[
             { label: 'Contrats en cours', value: statsData.activeContracts, icon: ShoppingBag, grad: 'from-emerald-500 to-teal-500' },
             { label: 'Demandes en attente', value: statsData.pendingContracts, icon: Clock, grad: 'from-amber-500 to-orange-500' },
             { label: 'Montant généré', value: `${(statsData.totalGenerated || 0).toLocaleString()} FCFA`, icon: DollarSign, grad: 'from-blue-500 to-cyan-500' },
             { label: 'Taux de réussite', value: `${statsData.successRate || 0}%`, icon: TrendingUp, grad: 'from-purple-500 to-violet-500' },
           ].map((stat) => (
-            <div key={stat.label} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-shadow">
-              <div className="flex items-start justify-between">
-                <div>
+            <div key={stat.label} className="min-w-0 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition-shadow hover:shadow-md sm:p-5">
+              <div className="flex min-w-0 items-start justify-between gap-3">
+                <div className="min-w-0">
                   <p className="text-sm text-gray-500 font-medium">{stat.label}</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">{stat.value}</p>
+                  <p className="mt-1 break-words text-xl font-bold text-gray-900 sm:text-2xl">{stat.value}</p>
                 </div>
                 <div className={`p-2.5 rounded-xl bg-gradient-to-r ${stat.grad}`}>
                   <stat.icon size={20} className="text-white" />
@@ -308,7 +304,7 @@ export default function ResellerDashboard() {
             </div>
           ))}
           {/* ⭐ Carte "Ventes non encaissées" en rouge */}
-          <div className="bg-white border-2 border-red-300 rounded-2xl p-5 hover:shadow-md transition-shadow bg-red-50/30">
+          <div className="min-w-0 rounded-2xl border-2 border-red-300 bg-red-50/30 p-4 transition-shadow hover:shadow-md sm:p-5">
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-xs text-gray-600 font-medium flex items-center gap-1">
@@ -538,7 +534,13 @@ export default function ResellerDashboard() {
       {/* Modal */}
       {confirmModal.open && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={closeConfirmModal}>
-          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl" onClick={e => e.stopPropagation()}>
+          <div
+            className="max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl bg-white shadow-2xl"
+            onClick={e => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Confirmation du contrat"
+          >
             <div className="p-6 border-b border-gray-100">
               <h3 className="text-xl font-bold">
                 {confirmModal.action === 'sold' ? 'Vendre le téléphone' : 'Retourner le téléphone'}
