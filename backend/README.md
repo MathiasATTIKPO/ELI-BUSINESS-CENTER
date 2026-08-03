@@ -106,8 +106,8 @@ Pour ces alternatives, ajoutez l'URL générée dans le `.env`.
 Au démarrage, le backend crée automatiquement ces comptes si ils n'existent pas déjà :
 
 - `Technicien Par Défaut`
-  - Email : `tech@elis.com`
-  - Mot de passe : `tech123`
+   - Email : `<TECHNICIAN_EMAIL>`
+   - Mot de passe : `<TECHNICIAN_PASSWORD>`
   - Rôle : `technician`
 - `Caissier Par Défaut`
   - Email : `cashier@elis.com`

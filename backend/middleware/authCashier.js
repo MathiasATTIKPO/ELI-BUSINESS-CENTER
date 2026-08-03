@@ -1,6 +1,7 @@
 const { verifyToken } = require('../utils/jwt');
 const { allowRequestOrRespond } = require('./passwordChangeGuard');
 const { resolveCurrentAccount, respondWithAuthError } = require('./currentAccount');
+const { MANAGER_ROLES, ROLE } = require('../constants/roles');
 
 const authCashier = async (req, res, next) => {
   try {
@@ -10,7 +11,8 @@ const authCashier = async (req, res, next) => {
     }
 
     const decoded = verifyToken(token);
-    if (decoded.role !== 'cashier' && decoded.role !== 'admin') {
+    const role = String(decoded.role || '').toLowerCase();
+    if (role !== ROLE.CASHIER && !MANAGER_ROLES.has(role)) {
       return res.status(403).json({ success: false, message: 'Accès réservé aux caissiers.' });
     }
 

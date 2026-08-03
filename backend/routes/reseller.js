@@ -15,7 +15,7 @@ router.post('/reset', resellerController.resetPassword);
 router.post('/change-password', auth, authorizeRoles('reseller'), accountController.changePassword);
 
 // Reseller portal endpoints
-router.get('/catalog', auth, authorizeRoles('reseller', 'admin'), resellerController.getAvailableCatalog);
+router.get('/catalog', auth, authorizeRoles('reseller', 'admin', 'super_admin', 'commercial_manager'), resellerController.getAvailableCatalog);
 router.get('/stats/me', auth, authorizeRoles('reseller'), resellerController.getMyStats);
 router.get('/contracts/me', auth, authorizeRoles('reseller'), resellerController.getContracts);
 

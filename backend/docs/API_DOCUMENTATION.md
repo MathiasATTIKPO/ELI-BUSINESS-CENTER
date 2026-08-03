@@ -19,8 +19,8 @@ Obtenir un token JWT pour l'administrateur.
 - **Body:**
 ```json
 {
-  "email": "admin@elis.com",
-  "password": "admin123"
+  "email": "<ADMIN_EMAIL>",
+  "password": "<ADMIN_PASSWORD>"
 }
 ```
 - **Réponse succès (200):**
@@ -31,7 +31,7 @@ Obtenir un token JWT pour l'administrateur.
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
     "user": {
       "id": "user_id",
-      "email": "admin@elis.com",
+      "email": "<ADMIN_EMAIL>",
       "role": "admin"
     }
   },
@@ -47,8 +47,8 @@ Obtenir un token JWT pour un technicien.
 - **Body:**
 ```json
 {
-  "email": "tech@elis.com",
-  "password": "tech123"
+  "email": "<TECHNICIAN_EMAIL>",
+  "password": "<TECHNICIAN_PASSWORD>"
 }
 ```
 - **Réponse succès (200):**
@@ -59,7 +59,7 @@ Obtenir un token JWT pour un technicien.
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
     "technician": {
       "id": "technician_id",
-      "email": "tech@elis.com",
+      "email": "<TECHNICIAN_EMAIL>",
       "name": "Technicien Par Défaut"
     }
   },
@@ -1050,8 +1050,8 @@ Pour utiliser correctement l'API, assurez-vous que les variables d'environnement
 PORT=4001
 MONGO_URI=mongodb+srv://user:password@cluster.mongodb.net/database_name
 CLIENT_URL=http://localhost:3001
-ADMIN_DEFAULT_EMAIL=admin@elis.com
-ADMIN_DEFAULT_PASSWORD=admin123
+ADMIN_DEFAULT_EMAIL=<ADMIN_DEFAULT_EMAIL>
+ADMIN_DEFAULT_PASSWORD=<ADMIN_DEFAULT_PASSWORD>
 JWT_SECRET=your_jwt_secret_key
 ```
 

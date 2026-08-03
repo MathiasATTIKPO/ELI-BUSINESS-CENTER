@@ -23,7 +23,7 @@ INVOICE_ID=""       # À remplir après création
 ```bash
 curl -X POST "$BASE_URL/api/admin/login" \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@elis.com","password":"admin123"}'
+  -d '{"email":"<ADMIN_EMAIL>","password":"<ADMIN_PASSWORD>"}'
 ```
 **→ Copiez le token dans $ADMIN_TOKEN**
 
@@ -31,7 +31,7 @@ curl -X POST "$BASE_URL/api/admin/login" \
 ```bash
 curl -X POST "$BASE_URL/api/technician/login" \
   -H "Content-Type: application/json" \
-  -d '{"email":"tech@elis.com","password":"tech123"}'
+  -d '{"email":"<TECHNICIAN_EMAIL>","password":"<TECHNICIAN_PASSWORD>"}'
 ```
 **→ Copiez le token dans $TECH_TOKEN**
 

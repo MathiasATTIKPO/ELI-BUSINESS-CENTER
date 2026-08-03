@@ -128,7 +128,7 @@ Copiez l'URL générée et mettez-la à jour dans `.env`.
 ### Comptes de test
 
 - **Admin** : admin@elibusiness.com / password123
-- **Technicien** : tech@elis.com / tech123
+- **Technicien** : <TECHNICIAN_EMAIL> / <TECHNICIAN_PASSWORD>
 
 ## 🛠️ Scripts disponibles
 

@@ -79,8 +79,8 @@ curl -X GET "http://localhost:4001/api/health"
 curl -X POST "http://localhost:4001/api/admin/login" `
   -H "Content-Type: application/json" `
   -d '{
-    "email": "admin@elis.com",
-    "password": "admin123"
+    "email": "<ADMIN_EMAIL>",
+    "password": "<ADMIN_PASSWORD>"
   }'
 ```
 
@@ -93,8 +93,8 @@ curl -X GET "http://localhost:4001/api/health"
 curl -X POST "http://localhost:4001/api/admin/login" \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "admin@elis.com",
-    "password": "admin123"
+    "email": "<ADMIN_EMAIL>",
+    "password": "<ADMIN_PASSWORD>"
   }'
 ```
 
@@ -118,7 +118,7 @@ GET http://localhost:4001/api/health
 ### 2️⃣ Se connecter (Admin)
 ```bash
 POST http://localhost:4001/api/admin/login
-Body: { "email": "admin@elis.com", "password": "admin123" }
+Body: { "email": "<ADMIN_EMAIL>", "password": "<ADMIN_PASSWORD>" }
 ```
 
 ### 3️⃣ Obtenir tous les produits
@@ -184,8 +184,8 @@ Body (form-data):
 
 | Rôle | Email | Mot de passe |
 |------|-------|-------------|
-| Admin | admin@elis.com | admin123 |
-| Technician | tech@elis.com | tech123 |
+| Admin | <ADMIN_EMAIL> | <ADMIN_PASSWORD> |
+| Technician | <TECHNICIAN_EMAIL> | <TECHNICIAN_PASSWORD> |
 
 ---
 

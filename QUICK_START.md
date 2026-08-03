@@ -52,7 +52,7 @@ npm run dev
 | Rôle | Email | Mot de passe |
 |------|-------|--------------|
 | Admin | admin@elibusiness.com | password123 |
-| Technicien | tech@elis.com | tech123 |
+| Technicien | <TECHNICIAN_EMAIL> | <TECHNICIAN_PASSWORD> |
 
 ## 🌐 Déploiement en ligne
 

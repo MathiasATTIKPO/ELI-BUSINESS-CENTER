@@ -38,8 +38,8 @@ curl -X GET "http://localhost:4001/api/health"
 curl -X POST "http://localhost:4001/api/admin/login" \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "admin@elis.com",
-    "password": "admin123"
+    "email": "<ADMIN_EMAIL>",
+    "password": "<ADMIN_PASSWORD>"
   }'
 ```
 
@@ -51,7 +51,7 @@ curl -X POST "http://localhost:4001/api/admin/login" \
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
     "user": {
       "id": "user_id",
-      "email": "admin@elis.com",
+      "email": "<ADMIN_EMAIL>",
       "role": "admin"
     }
   },
@@ -72,8 +72,8 @@ curl -X POST "http://localhost:4001/api/admin/login" \
 curl -X POST "http://localhost:4001/api/technician/login" \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "tech@elis.com",
-    "password": "tech123"
+    "email": "<TECHNICIAN_EMAIL>",
+    "password": "<TECHNICIAN_PASSWORD>"
   }'
 ```
 
@@ -85,7 +85,7 @@ curl -X POST "http://localhost:4001/api/technician/login" \
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
     "technician": {
       "id": "technician_id",
-      "email": "tech@elis.com",
+      "email": "<TECHNICIAN_EMAIL>",
       "name": "Technicien Par Défaut"
     }
   },

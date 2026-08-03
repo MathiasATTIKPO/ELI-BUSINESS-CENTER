@@ -37,7 +37,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"admin@elis.com\",\n  \"password\": \"admin123\"\n}"
+              "raw": "{\n  \"email\": \"<ADMIN_EMAIL>\",\n  \"password\": \"<ADMIN_PASSWORD>\"\n}"
             },
             "url": {
               "raw": "{{BASE_URL}}/api/admin/login",
@@ -58,7 +58,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"tech@elis.com\",\n  \"password\": \"tech123\"\n}"
+              "raw": "{\n  \"email\": \"<TECHNICIAN_EMAIL>\",\n  \"password\": \"<TECHNICIAN_PASSWORD>\"\n}"
             },
             "url": {
               "raw": "{{BASE_URL}}/api/technician/login",

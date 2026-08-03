@@ -5,14 +5,7 @@ const VIPClient = require('../models/VIPClient');
 const { matchesAuthVersion } = require('../utils/authVersion');
 const { getEnvAdminCredentials } = require('../utils/envAdmin');
 const { requiresPasswordChange } = require('../utils/passwordPolicy');
-
-const EMPLOYEE_ROLES = new Set([
-  'super_admin',
-  'admin',
-  'commercial_manager',
-  'technician',
-  'cashier',
-]);
+const { EMPLOYEE_ROLES, ROLE } = require('../constants/roles');
 
 const createSessionError = () => {
   const error = new Error('Session expiree. Veuillez vous reconnecter.');
@@ -28,13 +21,13 @@ const findAccount = async (decoded) => {
       role: null,
     };
   }
-  if (decoded.role === 'reseller') {
+  if (decoded.role === ROLE.RESELLER) {
     return {
       account: await Reseller.findById(decoded.id),
       role: 'reseller',
     };
   }
-  if (decoded.role === 'vip') {
+  if (decoded.role === ROLE.VIP) {
     return {
       account: await VIPClient.findById(decoded.id),
       role: 'vip',
@@ -48,7 +41,7 @@ const resolveEnvAdmin = (decoded) => {
   const credentials = getEnvAdminCredentials();
   if (
     !credentials.enabled
-    || decoded.role !== 'admin'
+    || decoded.role !== ROLE.ADMIN
     || String(decoded.email || '').trim().toLowerCase() !== credentials.email
     || !matchesAuthVersion(decoded.authVersion, credentials.password)
   ) {
@@ -59,7 +52,7 @@ const resolveEnvAdmin = (decoded) => {
     ...decoded,
     id: 'admin_id',
     email: credentials.email,
-    role: 'admin',
+    role: ROLE.ADMIN,
     name: decoded.name || 'Administrateur',
     forcePasswordChange: false,
   };

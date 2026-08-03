@@ -35,8 +35,8 @@ echo "---"
 curl -X POST "$BASE_URL/api/admin/login" \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "admin@elis.com",
-    "password": "admin123"
+    "email": "<ADMIN_EMAIL>",
+    "password": "<ADMIN_PASSWORD>"
   }'
 echo ""
 echo ""
@@ -46,8 +46,8 @@ echo "---"
 curl -X POST "$BASE_URL/api/technician/login" \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "tech@elis.com",
-    "password": "tech123"
+    "email": "<TECHNICIAN_EMAIL>",
+    "password": "<TECHNICIAN_PASSWORD>"
   }'
 echo ""
 echo ""

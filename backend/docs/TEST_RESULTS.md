@@ -8,8 +8,8 @@ Utilisez ce fichier pour documenter vos tests et sauvegarder les IDs importants.
 
 ### Admin Login
 - **Endpoint:** `POST /api/admin/login`
-- **Email:** admin@elis.com
-- **Mot de passe:** admin123
+- **Email:** <ADMIN_EMAIL>
+- **Mot de passe:** <ADMIN_PASSWORD>
 - **Statut testé:** ___
 - **Token reçu:**
 ```
@@ -23,8 +23,8 @@ _______________________________________________
 
 ### Technician Login
 - **Endpoint:** `POST /api/technician/login`
-- **Email:** tech@elis.com
-- **Mot de passe:** tech123
+- **Email:** <TECHNICIAN_EMAIL>
+- **Mot de passe:** <TECHNICIAN_PASSWORD>
 - **Statut testé:** ___
 - **Token reçu:**
 ```
