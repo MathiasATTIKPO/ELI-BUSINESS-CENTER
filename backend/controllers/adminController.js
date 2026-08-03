@@ -1578,6 +1578,17 @@ exports.getStats = async (req, res) => {
 // Facture pour une vente de téléphone
 exports.downloadSaleInvoice = async (req, res) => {
   try {
+    const invoiceFromAnySource = async (value) => {
+      if (!value) return null;
+      return Invoice.findOne({
+        requestType: 'product',
+        $or: [
+          { _id: value },
+          { requestId: value }
+        ]
+      }).sort({ sentAt: -1, createdAt: -1 });
+    };
+
     let sale = await SaleRequest.findById(req.params.id);
     if (!sale) {
       // Legacy callers may pass productId instead of saleId.
@@ -1585,10 +1596,7 @@ exports.downloadSaleInvoice = async (req, res) => {
     }
 
     if (!sale) {
-      const existingInvoice = await Invoice.findOne({
-        requestType: 'product',
-        requestId: req.params.id
-      }).sort({ sentAt: -1, createdAt: -1 });
+      const existingInvoice = await invoiceFromAnySource(req.params.id);
 
       if (existingInvoice) {
         const source = [existingInvoice.pdfUrl, existingInvoice.pdfPath];

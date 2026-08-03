@@ -103,8 +103,12 @@ api.interceptors.response.use(
       // l'utilisateur sur la page courante afin que le composant puisse
       // afficher son propre message d'erreur.
       const isCredentialEndpoint = /\/(login|forgot|reset|change-password)\b/.test(url)
+      const isInvoiceDownloadRequest = /\/api\/(admin|cashier)\/(sales|repairs|tradeins)\/[^/]+\/invoice$|\/api\/invoices\/[^/]+\/pdf$|\/api\/invoice\//.test(url)
       if (!isCredentialEndpoint && typeof window !== 'undefined') {
         if (status === 404) {
+          if (isInvoiceDownloadRequest) {
+            return Promise.reject(error)
+          }
           window.location.href = buildErrorRoute('404', window.location)
           return Promise.reject(error)
         }
